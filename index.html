@@ -139,7 +139,7 @@ for(let k=0;k<14;k++){const c=far(5),lk=new THREE.Mesh(new THREE.BoxGeometry(.9,
 const P={scan:false,imp:0,para:0,x:cc(1),z:cc(1),yaw:0,pit:0,st:100,bat:100,san:100,lean:0,hide:null,cards:0,fl:true,tired:false,stT:0,t:0,dead:false,won:false,h:1.7,bob:0};
 const M={rit:18,pause:0,jaw:0,spk:3,x:0,z:0,state:'patrol',path:[],pt:0,search:0,spd:2.2,lost:0,sus:0,knows:false,stT:0,tx:0,tz:0};{const c=far(26);M.x=cc(c[0]);M.z=cc(c[1])}
 const K={};let msgT=0;
-const say=(t,s=4)=>{$('msg').textContent=t;msgT=s};
+const say=(t,s=4)=>{$('msg').textContent=window.keyHint?keyHint(t):t;msgT=s};
 // ---------- audio ----------
 function initAudio(){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=SET.vol;master.connect(AC.destination);SFXB=AC.createGain();AMBB=AC.createGain();MUSB=AC.createGain();SFXB.connect(master);AMBB.connect(master);MUSB.connect(master);
 nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=R()*2-1;
@@ -1199,25 +1199,78 @@ mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest
 try{var pm=document.getElementById('pm'),pmenu=document.getElementById('p-menu');if(pm&&pmenu){var b=document.createElement('div');b.className='bt';b.id='p-snd';b.innerHTML='&#127925; SOUND';b.onclick=function(){openSound()};pm.insertBefore(b,pmenu)}}catch(e){}
 })();
 </script>
-<!-- ===== CONTROLS SCREEN ===== -->
+<!-- ===== CONTROLS SCREEN + KEY REBINDING ===== -->
 <style>
-.ctl h3{margin:0 0 8px;font:bold 18px Georgia,serif;letter-spacing:.15em;color:#f3e7a0}
+.ctl h3{margin:0 0 4px;font:bold 18px Georgia,serif;letter-spacing:.15em;color:#f3e7a0}
+.ctl .hint{font-size:11px;opacity:.75;margin-bottom:6px}
 .ctl h4{margin:12px 0 6px;font-size:12px;letter-spacing:.25em;color:#e4d56a;opacity:.85}
 .ctl .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 18px}
 .ctl .k{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:1px solid #6a5c2033;font-size:12px;line-height:1.4}
 .ctl kbd{display:inline-block;min-width:26px;text-align:center;padding:2px 7px;border:1px solid #e4d56a99;border-bottom-width:3px;border-radius:5px;background:#1a1600;color:#fff;font:bold 11px monospace;white-space:nowrap}
-.ctl .k span{opacity:.9}
-.ctl .tip{margin-top:10px;font-size:11px;opacity:.7}
+.ctl kbd.rb{cursor:pointer;transition:.15s}
+.ctl kbd.rb:hover{background:#3a3000;border-color:#e4d56a;box-shadow:0 0 10px #a808}
+.ctl kbd.rb.chg{border-color:#7fffb0;color:#7fffb0}
+.ctl kbd.wait{background:#e4d56a;color:#000;animation:kbw .8s infinite alternate}
+@keyframes kbw{to{background:#8a7a20}}
+.ctl .msg{min-height:16px;font-size:12px;color:#7fffb0;margin:6px 0 2px}
+.ctl .msg.bad{color:#ff8a7a}
+.ctl .rst{display:inline-block;margin-top:8px;border:1px solid #6a5c20;padding:5px 10px;cursor:pointer;font-size:12px;background:#1a1600}
+.ctl .rst:hover{border-color:#e4d56a}
+.ctl .tip{margin-top:8px;font-size:11px;opacity:.7}
 @media (max-height:500px){.ctl h3{font-size:14px;margin-bottom:2px}.ctl h4{margin:6px 0 2px}.ctl .k{padding:1px 0;font-size:11px}}
 </style>
 <script>
 (function(){
-var KB=[['Move','W A S D'],['Look around','Mouse'],['Sprint','Shift'],['Crouch','C'],['Lean left / right','Z / X'],['Hide in locker / use doors, vents, elevator','F'],['Pick up / open cabinet / equip stun gun','E'],['Fire stun gun','Left click'],['Reload stun gun (or open phone)','R'],['Flashlight on / off','T'],['Scanner on / off','Q'],['Map on / off','M'],['Inventory','I'],['Phone','P'],['Scoreboard (hold)','Tab'],['Turn microphone off','V'],['Pause','Esc']];
+// action -> default key (the game itself always listens for the default key)
+var ACT=[['fwd','Move forward','KeyW'],['left','Move left','KeyA'],['back','Move back','KeyS'],['right','Move right','KeyD'],['sprint','Sprint','ShiftLeft'],['crouch','Crouch','KeyC'],['leanL','Lean left','KeyZ'],['leanR','Lean right','KeyX'],
+ ['use','Hide in locker / use doors, vents, elevator','KeyF'],['grab','Pick up / open cabinet / equip stun gun','KeyE'],['reload','Reload stun gun (or open phone)','KeyR'],['light','Flashlight on / off','KeyT'],['scan','Scanner on / off','KeyQ'],['map','Map on / off','KeyM'],['inv','Inventory','KeyI'],['phone','Phone','KeyP'],['score','Scoreboard (hold)','Tab'],['mic','Turn microphone off','KeyV']];
+var DEF={};ACT.forEach(function(a){DEF[a[0]]=a[2]});
+var BAN={Escape:'Esc is saved for pause',ControlLeft:'Ctrl can close the tab (Ctrl+W)',ControlRight:'Ctrl can close the tab (Ctrl+W)',AltLeft:'Alt opens browser menus',AltRight:'Alt opens browser menus',MetaLeft:'that key opens system menus',MetaRight:'that key opens system menus',F5:'F5 reloads the page',F11:'F11 is fullscreen',F12:'F12 opens dev tools'};
+function binds(){var b={};ACT.forEach(function(a){b[a[0]]=(SET.keys&&SET.keys[a[0]])||a[2]});return b}
+var MAP={},BLOCK={};
+function rebuild(){var b=binds();MAP={};BLOCK={};ACT.forEach(function(a){var phys=b[a[0]];if(phys!=a[2]){MAP[phys]=a[2];BLOCK[a[2]]=1}});ACT.forEach(function(a){var phys=b[a[0]];if(phys==a[2])delete BLOCK[a[2]]});
+ Object.keys(BLOCK).forEach(function(c){if(MAP[c])delete BLOCK[c]});updMic()}
+window.keyName=function(c){if(!c)return'?';var m={ControlLeft:'Ctrl',ControlRight:'Ctrl',AltLeft:'Alt',AltRight:'Alt',MetaLeft:'Windows key',MetaRight:'Windows key',Escape:'Esc',ShiftLeft:'Shift',ShiftRight:'R Shift',Space:'Space',Tab:'Tab',Enter:'Enter',Backspace:'Bksp',CapsLock:'Caps',ArrowUp:'\u2191',ArrowDown:'\u2193',ArrowLeft:'\u2190',ArrowRight:'\u2192',Backquote:'`',Minus:'-',Equal:'=',BracketLeft:'[',BracketRight:']',Backslash:'\\',Semicolon:';',Quote:"'",Comma:',',Period:'.',Slash:'/',Delete:'Del',Insert:'Ins',Home:'Home',End:'End',PageUp:'PgUp',PageDown:'PgDn'};
+ if(m[c])return m[c];if(/^Key[A-Z]$/.test(c))return c.slice(3);if(/^Digit\d$/.test(c))return c.slice(5);if(/^Numpad/.test(c))return 'Num '+c.slice(6);return c};
+// in-game hints like "PRESS E" follow your keys
+window.keyHint=function(t){if(typeof t!='string')return t;var b=binds();return t.replace(/\b(PRESS|Press|press) ([A-Z])\b/g,function(m,w,l){var a=ACT.find(function(x){return x[2]=='Key'+l});return a?w+' '+keyName(b[a[0]]).toUpperCase():m})};
+function updMic(){try{var m=document.getElementById('mic');if(m)m.textContent='\u25cf MIC ON \u2014 press '+keyName(binds().mic)+' to turn off'}catch(e){}}
+
+// ---- translate real key presses to the keys the game expects ----
+var CAP=null;
+function tr(e){if(!e.isTrusted||e._rm)return;
+ if(CAP){e.preventDefault();e.stopImmediatePropagation();if(e.type=='keydown')CAP(e.code);return}
+ var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'||t.isContentEditable))return;
+ var to=MAP[e.code];
+ if(to){e.preventDefault();e.stopImmediatePropagation();var n;try{n=new KeyboardEvent(e.type,{code:to,key:to,bubbles:true,cancelable:true,repeat:e.repeat})}catch(x){return}n._rm=1;window.dispatchEvent(n);return}
+ if(BLOCK[e.code]){e.preventDefault();e.stopImmediatePropagation();if(typeof K!='undefined')K[e.code]=0}}
+window.addEventListener('keydown',tr,true);window.addEventListener('keyup',tr,true);
+rebuild();
+
+// ---- controls screen ----
 var TC=[['Move','Left joystick'],['Sprint','Push joystick to the edge'],['Look around','Drag right side'],['Hide / use','ACT'],['Pick up / equip','GRAB'],['Crouch','CROUCH'],['Fire / reload','FIRE / RLD'],['Lean','&#8630; / &#8631;'],['Scanner, light, map','Right edge buttons'],['Bag, phone, scores','Right edge buttons'],['Pause','&#10074;&#10074;']];
-function rows(a){return '<div class="g">'+a.map(function(r){return '<div class="k"><kbd>'+r[1]+'</kbd><span>'+r[0]+'</span></div>'}).join('')+'</div>'}
-window.openControls=function(){var touch=document.body.classList.contains('touch');
- var kb='<h4>KEYBOARD &amp; MOUSE</h4>'+rows(KB),tc='<h4>PHONE / TOUCHSCREEN</h4>'+rows(TC);
- pnl('<div class="ctl"><h3>&#127918; CONTROLS</h3>'+(touch?tc+kb:kb+tc)+'<div class="tip">Tip: Ctrl does not crouch, so Ctrl+W can\'t close the tab by accident. Use C to crouch.</div></div>')};
+var MSG='',BAD=0,WAIT=null;
+function row(l,k,cls,id){return '<div class="k"><kbd'+(cls?' class="'+cls+'"':'')+(id?' data-rb="'+id+'" title="Click, then press a new key"':'')+'>'+k+'</kbd><span>'+l+'</span></div>'}
+function render(){var b=binds(),touch=document.body.classList.contains('touch');
+ var kb='<h4>KEYBOARD &amp; MOUSE</h4><div class="hint">Click a key to change it, then press the new key on your keyboard. Press Esc to cancel.</div><div class="g">'+
+  ACT.map(function(a){var w=WAIT==a[0];return row(a[1],w?'press a key\u2026':keyName(b[a[0]]),'rb'+(w?' wait':'')+(b[a[0]]!=a[2]?' chg':''),a[0])}).join('')+
+  row('Look around','Mouse')+row('Fire stun gun','Left click')+row('Pause','Esc')+'</div>'+
+  '<div class="msg'+(BAD?' bad':'')+'">'+MSG+'</div><span class="rst" data-rst="1">\u21ba RESET ALL KEYS TO DEFAULT</span>';
+ var tc='<h4>PHONE / TOUCHSCREEN</h4><div class="g">'+TC.map(function(r){return row(r[0],r[1])}).join('')+'</div>';
+ pnl('<div class="ctl"><h3>&#127918; CONTROLS</h3>'+(touch?tc+kb:kb+tc)+'<div class="tip">Ctrl, Alt and Esc can\'t be used, so the browser never steals your keys.</div></div>')}
+function save(keys){SET.keys=keys;try{sv('keys',keys)}catch(e){try{localStorage.setItem('brs',JSON.stringify(SET))}catch(x){}}rebuild()}
+function startWait(id){WAIT=id;MSG='Press the new key for: '+ACT.find(function(a){return a[0]==id})[1];BAD=0;render();
+ CAP=function(code){CAP=null;var a=ACT.find(function(x){return x[0]==WAIT}),b=binds();WAIT=null;
+  if(code=='Escape'){MSG='Cancelled.';BAD=0;render();return}
+  if(BAN[code]){MSG="Can't use "+keyName(code)+': '+BAN[code]+'.';BAD=1;render();return}
+  var keys={};ACT.forEach(function(x){keys[x[0]]=b[x[0]]});var other=ACT.find(function(x){return x[0]!=a[0]&&keys[x[0]]==code}),old=keys[a[0]];
+  keys[a[0]]=code;if(other){keys[other[0]]=old;MSG=keyName(code)+' is now '+a[1]+'. '+other[1]+' moved to '+keyName(old)+'.'}else MSG=a[1]+' is now '+keyName(code)+'.';
+  BAD=0;save(keys);render()}}
+mp.addEventListener('click',function(e){var k=e.target.closest&&e.target.closest('[data-rb]');if(k){e.stopPropagation();if(WAIT){CAP=null;WAIT=null}startWait(k.dataset.rb);return}
+ if(e.target.closest&&e.target.closest('[data-rst]')){CAP=null;WAIT=null;save({});MSG='All keys are back to normal.';BAD=0;render()}});
+// leaving the panel cancels a pending key change
+var oClose=closeP;closeP=function(){CAP=null;WAIT=null;MSG='';return oClose.apply(this,arguments)};
+window.openControls=function(){CAP=null;WAIT=null;MSG='';BAD=0;render()};
 function add(parent,before,id,label){try{var p=document.getElementById(parent);if(!p)return;var b=document.createElement('div');b.className='bt';b.id=id;b.innerHTML=label;b.onclick=function(e){e.stopPropagation();openControls()};p.insertBefore(b,document.getElementById(before)||null)}catch(e){}}
 add('mb','b-cr','b-ctl','CONTROLS');
 add('pm','p-snd','p-ctl','&#127918; CONTROLS');
