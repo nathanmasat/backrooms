@@ -985,4 +985,148 @@ for(let n=0;n<18;n++){const c=open[R()*open.length|0];if(c[0]==0)continue;const 
 $('mb').addEventListener('click',e=>{if(e.target&&e.target.id=='b-ph')phoneOpen()});
 _s=Date.now()|0;
 cam.position.set(P.x,1.7,P.z);loop();
-</script></body></html>
+</script><!-- ===== PHONE / TOUCH CONTROLS ===== -->
+<style>
+#tc{position:fixed;inset:0;z-index:4;display:none;pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:monospace}
+body.touch.tplay #tc{display:block}
+#tc *{box-sizing:border-box}
+#tc-look{position:absolute;top:0;right:0;bottom:0;width:58%;pointer-events:auto;touch-action:none}
+#tc-joy{position:absolute;left:0;bottom:0;width:42%;height:62%;pointer-events:auto;touch-action:none}
+#tc-base{position:absolute;width:128px;height:128px;margin:-64px 0 0 -64px;border-radius:50%;border:2px solid #e4d56a55;background:radial-gradient(circle,#0000 40%,#00000055);left:max(96px,calc(env(safe-area-inset-left) + 86px));top:calc(100% - 96px - env(safe-area-inset-bottom));transition:opacity .2s;opacity:.55}
+#tc-knob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px;border-radius:50%;background:#e4d56a44;border:2px solid #e4d56acc}
+#tc-base.run #tc-knob{background:#ff8a3a66;border-color:#ffb070}
+#tc-base.on{opacity:1}
+#tc-runlbl{position:absolute;left:0;right:0;top:-20px;text-align:center;font-size:10px;letter-spacing:2px;color:#ffb070;opacity:0}
+#tc-base.run #tc-runlbl{opacity:1}
+.tb{position:absolute;pointer-events:auto;touch-action:none;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:50%;border:2px solid #e4d56a99;background:#0b0900aa;color:#e4d56a;text-shadow:0 0 4px #000;line-height:1.05;text-align:center}
+.tb i{font-style:normal;font-size:20px}
+.tb b{font-weight:normal;font-size:9px;letter-spacing:1px;margin-top:2px}
+.tb.dn{background:#e4d56a55;transform:scale(.93)}
+.tb.act{border-color:#7fffb0;color:#7fffb0;box-shadow:0 0 10px #7fffb066}
+.tb.hid{display:none}
+/* main action cluster, bottom right */
+#tc-acts{position:absolute;right:calc(env(safe-area-inset-right) + 74px);bottom:calc(env(safe-area-inset-bottom) + 14px);width:190px;height:190px;pointer-events:none}
+#tc-acts .tb{width:62px;height:62px}
+#b-F{right:0;bottom:0;width:78px!important;height:78px!important;border-color:#e4d56a}
+#b-F i{font-size:26px}
+#b-E{right:86px;bottom:2px}
+#b-C{right:4px;bottom:88px}
+#b-fire{right:84px;bottom:76px;border-color:#ff6a5a;color:#ff8a7a}
+#b-R{right:144px;bottom:58px;width:50px!important;height:50px!important}
+/* lean pair */
+#tc-lean{position:absolute;right:calc(env(safe-area-inset-right) + 84px);bottom:calc(env(safe-area-inset-bottom) + 206px);display:flex;gap:6px;pointer-events:none}
+#tc-lean .tb{position:static;width:46px;height:34px;border-radius:17px}
+#tc-lean .tb i{font-size:14px}
+/* utility column, right edge */
+#tc-col{position:absolute;right:calc(env(safe-area-inset-right) + 10px);top:calc(env(safe-area-inset-top) + 10px);bottom:calc(env(safe-area-inset-bottom) + 10px);width:56px;display:flex;flex-direction:column;justify-content:center;gap:6px;pointer-events:none}
+#tc-col .tb{position:static;width:56px;height:46px;border-radius:12px;flex:0 1 46px;min-height:36px}
+#tc-col .tb i{font-size:16px}
+#tc-col .tb b{font-size:8px}
+#tc-rot{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:6;display:none;padding:6px 12px;border:1px solid #e4d56a88;background:#000c;color:#e4d56a;font:12px monospace;pointer-events:none;border-radius:6px}
+@media (orientation:portrait){body.touch.tplay #tc-rot{display:block}
+ #tc-acts{transform:scale(.85);transform-origin:100% 100%}#tc-base{transform:scale(.9)}}
+@media (max-height:420px){#tc-col .tb{min-height:30px}#tc-col .tb i{font-size:14px}#tc-col .tb b{display:none}}
+/* keep the game HUD clear of the thumbs */
+body.touch.tplay #hud{bottom:auto;top:calc(env(safe-area-inset-top) + 12px);left:50%;transform:translateX(-50%);width:200px;text-align:center}
+body.touch.tplay #gun{bottom:calc(env(safe-area-inset-bottom) + 12px)!important;left:50%!important;transform:translateX(-50%);font-size:11px;white-space:nowrap}
+body.touch.tplay #msg{bottom:auto;top:40%}
+body.touch.tplay #obj{right:calc(env(safe-area-inset-right) + 78px)!important;max-width:34vw;font-size:11px}
+body.touch.tplay #hud{transform:translateX(-50%) scale(.78);transform-origin:50% 0}
+@media (max-height:420px){body.touch.tplay #map{width:110px!important;height:110px!important;left:10px!important;top:10px!important}}
+body.touch.tplay #mic{right:80px!important}
+body.touch canvas{touch-action:none}
+@media (max-height:500px){body.touch .pn{font-size:11px;line-height:1.55;padding:12px 16px;max-height:92vh;-webkit-overflow-scrolling:touch}body.touch .pn .bt{padding:6px 10px;margin:6px auto;font-size:12px}}
+</style>
+<div id="tc">
+ <div id="tc-joy"><div id="tc-base"><div id="tc-runlbl">SPRINT</div><div id="tc-knob"></div></div></div>
+ <div id="tc-look"></div>
+ <div id="tc-lean"><div class="tb" data-hold="KeyZ"><i>&#8630;</i></div><div class="tb" data-hold="KeyX"><i>&#8631;</i></div></div>
+ <div id="tc-acts">
+  <div class="tb" id="b-F" data-key="KeyF"><i>&#9995;</i><b>ACT</b></div>
+  <div class="tb" id="b-E" data-key="KeyE"><i>&#128230;</i><b>GRAB</b></div>
+  <div class="tb" id="b-C" data-tog="KeyC"><i>&#11015;</i><b>CROUCH</b></div>
+  <div class="tb hid" id="b-fire" data-fire="1"><i>&#9889;</i><b>FIRE</b></div>
+  <div class="tb hid" id="b-R" data-key="KeyR"><i>&#8635;</i><b>RLD</b></div>
+ </div>
+ <div id="tc-col">
+  <div class="tb" id="b-Q" data-key="KeyQ"><i>&#128225;</i><b>SCAN</b></div>
+  <div class="tb" id="b-T" data-key="KeyT"><i>&#128294;</i><b>LIGHT</b></div>
+  <div class="tb" id="b-M" data-key="KeyM"><i>&#128506;</i><b>MAP</b></div>
+  <div class="tb" id="b-I" data-key="KeyI"><i>&#127890;</i><b>BAG</b></div>
+  <div class="tb" id="b-P" data-key="KeyP"><i>&#128241;</i><b>PHONE</b></div>
+  <div class="tb" id="b-Tab" data-hold="Tab"><i>&#127942;</i><b>SCORES</b></div>
+  <div class="tb" id="b-pause" data-pause="1"><i>&#10074;&#10074;</i><b>PAUSE</b></div>
+ </div>
+</div>
+<div id="tc-rot">&#8635; Turn your phone sideways for the best view</div>
+<script>
+(function(){
+var TOUCH=/[?&]touch=1/.test(location.search)||('ontouchstart' in window)||navigator.maxTouchPoints>0||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+if(!TOUCH)return;
+document.body.classList.add('touch');
+// stop pinch-zoom and double-tap zoom while playing
+var vm=document.querySelector('meta[name=viewport]');if(vm)vm.content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+document.addEventListener('gesturestart',function(e){e.preventDefault()});
+// touch-friendly start screen text
+try{var ovp=document.querySelector('#ov p');if(ovp)ovp.innerHTML=ovp.innerHTML.replace(/WASD move[^<]*/,'LEFT STICK move (push to the edge to sprint) &middot; DRAG RIGHT SIDE to look &middot; ACT hide in lockers / interact &middot; GRAB pick up / equip &middot; SCAN scanner &middot; LIGHT flashlight').replace('[ CLICK TO BEGIN ]','[ TAP TO BEGIN ]')}catch(e){}
+try{if(typeof gate!='undefined')gate.innerHTML=gate.innerHTML.replace('CLICK','TAP')}catch(e){}
+
+function key(code,down){var ev;try{ev=new KeyboardEvent(down?'keydown':'keyup',{code:code,key:code,bubbles:true,cancelable:true})}catch(e){ev=document.createEvent('Event');ev.initEvent(down?'keydown':'keyup',true,true);ev.code=code}window.dispatchEvent(ev)}
+function tap(code){key(code,1);key(code,0)}
+
+// ---- joystick (left thumb) ----
+var joy=document.getElementById('tc-joy'),base=document.getElementById('tc-base'),knob=document.getElementById('tc-knob'),jid=null,cx=0,cy=0,MOVE=['KeyW','KeyA','KeyS','KeyD','ShiftLeft'],held={};
+function setMove(w,a,s,d,run){var v={KeyW:w,KeyA:a,KeyS:s,KeyD:d,ShiftLeft:run};MOVE.forEach(function(k){if(!!v[k]!=!!held[k]){held[k]=!!v[k];K[k]=v[k]?1:0}})}
+function home(){base.style.left='';base.style.top='';knob.style.transform='';base.classList.remove('on','run');setMove(0,0,0,0,0)}
+joy.addEventListener('pointerdown',function(e){if(jid!==null)return;jid=e.pointerId;try{joy.setPointerCapture(jid)}catch(x){}var r=joy.getBoundingClientRect();cx=e.clientX;cy=e.clientY;base.style.left=(cx-r.left)+'px';base.style.top=(cy-r.top)+'px';base.classList.add('on');e.preventDefault()});
+joy.addEventListener('pointermove',function(e){if(e.pointerId!==jid)return;var dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy),R=56,m=Math.min(d,R),a=Math.atan2(dy,dx);knob.style.transform='translate('+(Math.cos(a)*m)+'px,'+(Math.sin(a)*m)+'px)';
+ if(d<12){setMove(0,0,0,0,0);base.classList.remove('run');return}
+ var nx=dx/d,ny=dy/d,run=d>R*1.15;base.classList.toggle('run',run);
+ setMove(ny<-.38,nx<-.38,ny>.38,nx>.38,run);e.preventDefault()});
+function jend(e){if(e.pointerId!==jid)return;jid=null;home()}
+joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
+
+// ---- look (drag right side) ----
+var look=document.getElementById('tc-look'),lid=null,lx=0,ly=0;
+look.addEventListener('pointerdown',function(e){if(lid!==null)return;lid=e.pointerId;lx=e.clientX;ly=e.clientY;try{look.setPointerCapture(lid)}catch(x){}e.preventDefault()});
+look.addEventListener('pointermove',function(e){if(e.pointerId!==lid)return;var mx=e.clientX-lx,my=e.clientY-ly;lx=e.clientX;ly=e.clientY;
+ if(!started||P.para>0||P.vt>0)return;var s=.0055*(SET.sens||1);P.yaw-=mx*s;if(P.hide)P.yaw=Math.max(P.hyaw-.6,Math.min(P.hyaw+.6,P.yaw));P.pit=Math.max(-1.3,Math.min(1.3,P.pit-my*s*(SET.inv?-1:1)));e.preventDefault()});
+function lend(e){if(e.pointerId===lid)lid=null}
+look.addEventListener('pointerup',lend);look.addEventListener('pointercancel',lend);
+
+// ---- buttons ----
+Array.prototype.forEach.call(document.querySelectorAll('#tc .tb'),function(b){
+ b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();try{b.setPointerCapture(e.pointerId)}catch(x){}b.classList.add('dn');if(navigator.vibrate)try{navigator.vibrate(8)}catch(x){}
+  var d=b.dataset;
+  if(d.key)tap(d.key);
+  else if(d.hold)key(d.hold,1);
+  else if(d.tog){K[d.tog]=K[d.tog]?0:1}
+  else if(d.fire){if(typeof fire=='function')fire()}
+  else if(d.pause){if(started&&!P.dead&&!P.won){started=false;document.getElementById('pm').style.display='flex'}}
+ });
+ function up(e){b.classList.remove('dn');if(b.dataset.hold)key(b.dataset.hold,0)}
+ b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
+ b.addEventListener('contextmenu',function(e){e.preventDefault()});
+});
+
+// ---- show/hide + button states every frame ----
+var $b=function(i){return document.getElementById(i)},body=document.body,wasPlay=false;
+(function tick(){
+ var play=!!started&&!(typeof CUT!='undefined'&&CUT)&&!P.dead&&!P.won;
+ if(play!=wasPlay){body.classList.toggle('tplay',play);wasPlay=play;if(!play){home();lid=null;K.KeyC=0;['KeyZ','KeyX','Tab'].forEach(function(k){if(K[k])key(k,0)})}}
+ if(play){
+  $b('b-Q').classList.toggle('act',!!P.scan);
+  $b('b-T').classList.toggle('act',!!P.fl);
+  $b('b-M').classList.toggle('act',!!MAPON);
+  $b('b-C').classList.toggle('act',!!K.KeyC);
+  $b('b-F').classList.toggle('act',!!P.hide);
+  var g=typeof GUN!='undefined'&&GUN.o;
+  $b('b-fire').classList.toggle('hid',!(g&&GUN.eq));
+  $b('b-R').classList.toggle('hid',!g);
+  $b('b-E').querySelector('b').textContent=g&&!nearPick()?(GUN.eq?'HOLSTER':'EQUIP'):'GRAB';
+ }
+ requestAnimationFrame(tick)})();
+function nearPick(){try{return AMMO.some(function(a){return !a.got&&Math.hypot(P.x-a.x,P.z-a.z)<1.9})||(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2)}catch(e){return false}}
+})();
+</script>
+</body></html>
