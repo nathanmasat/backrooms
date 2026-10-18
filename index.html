@@ -386,12 +386,12 @@ function saveStats(){PS.play+=P.t-lt;lt=P.t;PS.best=Math.max(PS.best,P.t);PS.sc=
 function pnl(h){mp.innerHTML='<div class="pn">'+h+'<div class="bt" data-a="back">BACK</div></div>';mp.style.display='flex'}
 function closeP(){mp.style.display='none';mp.dataset.lock='';if(ELP){ELP=false;started=true;ren.domElement.requestPointerLock()}$('hi').textContent=UN?'Playing as '+UN+'  [edit]':''}
 function nameP(){pnl('<b>CHOOSE A USERNAME</b><br><input id="un" maxlength="16" value="'+UN+'" placeholder="3-16 characters"><div id="ue" style="color:#f44"></div><div class="bt" data-a="ok">CONFIRM</div><div class="bt" data-a="gu">PLAY AS GUEST</div>')}
-function setP(){return}function setP_unused(){const s=(k,l,mn,mx)=>l+'<br><input type="range" data-k="'+k+'" min="'+mn+'" max="'+mx+'" value="'+SET[k]*100+'"><br>';
+function setPnl(){return}function setP_unused(){const s=(k,l,mn,mx)=>l+'<br><input type="range" data-k="'+k+'" min="'+mn+'" max="'+mx+'" value="'+SET[k]*100+'"><br>';
 pnl('<b>SETTINGS</b> (saved automatically)<br>'+s('vol','Master volume',0,100)+s('sens','Mouse sensitivity',20,300)+s('br','Brightness',50,200)+'Quality: '+['Low','Medium','High','Ultra'].map(q=>'<span class="ch" data-a="q:'+q+'" style="'+(SET.q==q?'color:#fff':'')+'">'+q+'</span>').join('')+'<br>Invert mouse: <span class="ch" data-a="inv">'+(SET.inv?'ON':'OFF')+'</span><br>Flashlight tint: '+[['#fffbe0','Warm'],['#ffffff','White'],['#9fffb0','Green'],['#ff9090','Red']].map(c=>'<span class="ch" data-a="fc:'+c[0]+'">'+c[1]+'</span>').join('')+'<br>Fullscreen: <span class="ch" data-a="fs">TOGGLE</span><br><br><b>CONTROLS</b><br>WASD move · Mouse look · Shift sprint · C crouch · F hide/interact · T flashlight · Q scanner · Z/X lean · TAB scores · ESC pause<br><i>Key rebinding, shadow quality and separate music/monster volume sliders are not in this build.</i><br><br>')}
 function statsP(){pnl('<b>'+(UN||'Guest')+'</b> · '+rank(PS.sc)+'<br>Best score '+PS.sc+'<br>Playtime '+Math.floor(PS.play/60)+' min<br>Best survival '+Math.floor(PS.best)+'s<br>Levels discovered '+(SV.max+1)+'/10<br>Escapes '+PS.e+' · Deaths '+PS.d+' · Multiplayer wins 0<br><br><b>LEVELS</b> (tap a discovered level, then press PLAY)<br>'+LV.map((l,i)=>i<=SV.max?'<span class="ch" data-a="lv:'+i+'">'+i+' '+l.n.split('— ')[1]+'</span>':'<span style="color:#444">'+i+' ???</span>').join(' · ')+'<br><br><i>Global leaderboard is offline: it needs a server, which this build does not have. Records are saved in this browser only.</i><br><br>')}
 function startGame(){if(VM.pref=='on'&&!VM.on)micOn(true);titleCard(CF.n);applySpot();MENU=false;ghost.visible=false;P.yaw=SV.lv==0?-Math.PI/2:Math.PI/2;$('mm').style.display='none';$('hud').style.display='block';$('obj').style.display='block';$('ov').onclick()}
 mp.onclick=e=>{if(e.target===mp&&!mp.dataset.lock){closeP();return}const a=e.target.dataset.a;if(!a)return;const i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a.slice(i+1);
-if(k=='use'){useItem(+v);invP()}else if(k=='drop'){dropItem(+v);invP()}else if(k=='wear'){wearSuit(v)}else if(k=='nm'){NG=false;nameP()}else if(k=='vy'){closeP();micOn()}else if(k=='vn'){vpref('off');closeP()}else if(k=='back')closeP();else if(k=='q'||k=='fc'){sv(k,v);if(k=='q')setP()}else if(k=='inv'){sv('inv',SET.inv?0:1);setP()}
+if(k=='use'){useItem(+v);invP()}else if(k=='drop'){dropItem(+v);invP()}else if(k=='wear'){wearSuit(v)}else if(k=='nm'){NG=false;nameP()}else if(k=='vy'){closeP();micOn()}else if(k=='vn'){vpref('off');closeP()}else if(k=='back')closeP();else if(k=='q'||k=='fc'){sv(k,v);if(k=='q')setPnl()}else if(k=='inv'){sv('inv',SET.inv?0:1);setPnl()}
 else if(k=='fs'){try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(x){}}
 else if(k=='el'){ELP=false;closeP();if(v=='next')exitLevel();else elevator(+v,1)}else if(k=='lv'){SV.lv=+v;save();location.reload()}
 else if(k=='ok'||k=='gu'){if(k=='ok'){const n=$('un').value.trim().replace(/\s+/g,' '),er=vName(n);if(er){$('ue').textContent=er;return}UN=n;try{localStorage.setItem('bru',UN)}catch(x){}}else UN='Guest'+(1000+R()*9000|0);const go=NG;NG=false;closeP();if(go)startGame()}};
@@ -670,7 +670,7 @@ const MX=new Uint8Array(W*W),mc=$('map').getContext('2d');let MAPON=true,mapT=0;
 function mapTick(dt){$('map').style.display=MAPON?'block':'none';mapT-=dt;if(mapT>0||!MAPON)return;mapT=.2;const pi=ce(P.x),pj=ce(P.z);
 for(let i=pi-3;i<=pi+3;i++)for(let j=pj-3;j<=pj+3;j++){if(i<0||j<0||i>=W||j>=W||MX[i*W+j])continue;if((Math.abs(i-pi)<=1&&Math.abs(j-pj)<=1)||los(P.x,P.z,cc(i),cc(j)))MX[i*W+j]=1}
 const c=mc;c.clearRect(0,0,164,164);for(let i=0;i<W;i++)for(let j=0;j<W;j++)if(MX[i*W+j]){c.fillStyle=g[i][j]?'#6a5c20':'#2a2610';c.fillRect(i*4,j*4,4,4)}
-if(DRON){items.forEach(it=>{if(it.got)return;c.fillStyle=it.type=='card'?'#ffe033':it.type=='bat'?'#ff9a30':it.type=='water'?'#5cf':'#fff';c.fillRect(it.x/S*4-1,it.z/S*4-1,3,3)});AMMO.forEach(a=>{if(!a.got){c.fillStyle='#69f';c.fillRect(a.x/S*4-1,a.z/S*4-1,3,3)}});lockers.forEach(l=>{c.fillStyle='#aaa';c.fillRect(l.position.x/S*4-1,l.position.z/S*4-1,2,2)});DOORS.forEach(d=>{c.fillStyle='#c84';c.fillRect(d.x/S*4-1,d.z/S*4-1,3,3)});CLO.forEach(q=>{if(!q.done){c.fillStyle='#e6c722';c.fillRect(q.x/S*4,q.z/S*4,2,2)}});if(CAB&&!CAB.done){c.fillStyle='#9fe';c.fillRect(CAB.x/S*4-1,CAB.z/S*4-1,3,3)}}
+if(DRON){items.forEach(it=>{if(it.got)return;c.fillStyle=it.type=='card'?'#ffe033':it.type=='bat'?'#ff9a30':it.type=='water'?'#5cf':'#fff';c.fillRect(it.x/S*4-1,it.z/S*4-1,3,3)});AMMO.forEach(a=>{if(!a.got){c.fillStyle='#69f';c.fillRect(a.x/S*4-1,a.z/S*4-1,3,3)}});lockers.forEach(l=>{c.fillStyle='#aaa';c.fillRect(l.position.x/S*4-1,l.position.z/S*4-1,2,2)});DOORS.forEach(d=>{c.fillStyle='#c84';c.fillRect(d.x/S*4-1,d.z/S*4-1,3,3)});CLO.forEach(q=>{if(!q.done){c.fillStyle='#e6c722';c.fillRect(q.x/S*4,q.z/S*4,2,2)}});if(CAB&&!CAB.done){c.fillStyle='#9fe';c.fillRect(CAB.x/S*4-1,CAB.z/S*4-1,3,3)}if(window.SHROOMS)SHROOMS.map(c)}
 VENTS.forEach(v=>{if(MX[v.ci*W+v.cj]){c.fillStyle='#39f';c.fillRect(v.ci*4,v.cj*4,3,3)}});
 if(MX[EL.i*W+EL.j]){c.fillStyle='#3f8';c.fillRect(EL.i*4-1,EL.j*4-1,6,6)}
 if(MX[ex[0]*W+ex[1]]){c.fillStyle='#f33';c.fillRect(ex[0]*4-1,ex[1]*4-1,6,6)}
@@ -925,12 +925,12 @@ const spd=LM.st=='hunt'?p.sp[2]*(LM.buff>0?1.25:1)*(LM.chg>0?1.5:1):LM.st=='inve
 LM.still=Math.hypot(P.x-(LM.px||P.x),P.z-(LM.pz||P.z))/Math.max(dt,.001)<.4?LM.still+dt:0;LM.px=P.x;LM.pz=P.z;
 if(vis&&LM.st!='hunt'&&LM.st!='warn'){if(SV.lv==7){LM.st='warn';LM.warn=1.5;jam();say('A warning light flashes...',2)}else{LM.st='hunt';LM.lost=0;if(SV.lv==3)lmVoice()}}
 if(LM.st=='warn'&&LM.warn<=0){LM.st='hunt';LM.lost=0}
-if(LM.st=='hunt'){if(vis){LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z)}else{LM.lost+=dt;if(LM.lost>4){LM.st='search';LM.srch=8}}LM.pt-=dt;if(LM.pt<=0){LM.pt=.3;lmGo(LM.tx,LM.tz)}if(!watched)lmWalk(dt,spd)}
+if(LM.st=='hunt'){if(vis){LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z)}else{LM.lost+=dt;if(LM.lost>4){LM.st='search';LM.srch=LM.shroom?30:8}}LM.pt-=dt;if(LM.pt<=0){LM.pt=.3;lmGo(LM.tx,LM.tz)}if(!watched)lmWalk(dt,spd)}
 else if(LM.st=='susp'){LM.ti-=dt;if(LM.ti<=0){LM.st='invest';lmGo(LM.tx,LM.tz)}}
-else if(LM.st=='invest'){if(!watched&&lmWalk(dt,spd)){if(LM.knock){knock3();LM.knock=null;setTimeout(()=>{if(LM.st=='search'){LM.st='hunt';LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z)}},1800);LM.st='search';LM.srch=2.5}else{LM.st='search';LM.srch=7}}}
-else if(LM.st=='search'){LM.srch-=dt;LM.pt-=dt;if(!LM.path.length||LM.pt<=0){LM.pt=3;const px=ce(M.x),pz=ce(M.z),c=open.filter(o=>Math.abs(o[0]-px)<6&&Math.abs(o[1]-pz)<6&&!CL[o[0]*W+o[1]]),k=c[R()*c.length|0]||open[0];lmGo(k[0],k[1]);if(SV.lv==8)openDoor()}if(!watched)lmWalk(dt,p.sp[1]*.8);if(LM.srch<=0){LM.st='cool';LM.cool=3}}
+else if(LM.st=='invest'){if(!watched&&lmWalk(dt,spd)){if(LM.knock){knock3();LM.knock=null;setTimeout(()=>{if(LM.st=='search'){LM.st='hunt';LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z)}},1800);LM.st='search';LM.srch=2.5}else{LM.st='search';LM.srch=LM.shroom?30:7}}}
+else if(LM.st=='search'){LM.srch-=dt;LM.pt-=dt;if(!LM.path.length||LM.pt<=0){LM.pt=3;const px=LM.shroom?LM.tx:ce(M.x),pz=LM.shroom?LM.tz:ce(M.z),rg=LM.shroom?4:6,c=open.filter(o=>Math.abs(o[0]-px)<rg&&Math.abs(o[1]-pz)<rg&&!CL[o[0]*W+o[1]]),k=c[R()*c.length|0]||open[0];lmGo(k[0],k[1]);if(SV.lv==8)openDoor()}if(!watched)lmWalk(dt,p.sp[1]*.8);if(LM.srch<=0){LM.st='cool';LM.cool=3}}
 else if(LM.st=='cool'){LM.cool-=dt;if(!watched)lmWalk(dt,p.sp[0]*.7);if(LM.cool<=0){LM.st='idle';LM.path=[]}}
-else if(LM.st=='idle'){LM.pt-=dt;if(!LM.path.length||LM.pt<=0){LM.pt=SV.lv==6?2.5:5;if(SV.lv==6&&LM.still>5){LM.st='hunt';LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z);LM.shake=2;say('Branches crack all around you...',3)}else if(SV.lv==6)orbit();else{const c=open[R()*open.length|0];if(!CL[c[0]*W+c[1]]&&c[0]>0)lmGo(c[0],c[1])}}if(!watched)lmWalk(dt,spd)}
+else if(LM.st=='idle'){LM.shroom=false;LM.pt-=dt;if(!LM.path.length||LM.pt<=0){LM.pt=SV.lv==6?2.5:5;if(SV.lv==6&&LM.still>5){LM.st='hunt';LM.lost=0;LM.tx=ce(P.x);LM.tz=ce(P.z);LM.shake=2;say('Branches crack all around you...',3)}else if(SV.lv==6)orbit();else{const c=open[R()*open.length|0];if(!CL[c[0]*W+c[1]]&&c[0]>0)lmGo(c[0],c[1])}}if(!watched)lmWalk(dt,spd)}
 if(P.hide&&d<2.6&&(LM.st=='search'||LM.st=='hunt'||M.knows))LM.sus+=dt*(M.knows?3:.4);else LM.sus=Math.max(0,LM.sus-dt);
 if(!P.dead&&((d<1.2&&!P.hide)||LM.sus>1)){GR.k=5;GR.m=p.n;die()}
 M.state=LM.st=='hunt'?'chase':'patrol';LM.abT-=dt;if(LM.abT<=0){LM.abT=p.ab*(.7+R()*.6);ability()}
@@ -1239,7 +1239,7 @@ window.PFX=function(sc,cm){clockT+=1/60;var now=performance.now();if(FT.last&&st
 if(typeof THREE=='undefined'||typeof scene=='undefined')return;
 var LVL=0;try{LVL=SV.lv|0}catch(e){}
 if(LVL!=6)return;
-var rnd=Math.random;
+var fsd=((typeof SEED!='undefined'?SEED:Date.now())^0x74726565)>>>0;function rnd(){fsd=(fsd+0x6D2B79F5)>>>0;var t=fsd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}
 // sky and mist: deep plum-black like a night photo
 try{var sky=new THREE.Color(0x150a13);scene.background=sky;scene.fog.color.copy(sky);scene.fog.density=.085}catch(e){}
 // a little cold moonlight from above so the pale trunks show as shapes
@@ -1295,16 +1295,115 @@ for(var i=0;i<W;i++)for(var j2=0;j2<W;j2++){if(!g[i][j2])continue;
 // the box walls become black woods behind the trees
 try{wm.material.color.setRGB(.13,.11,.12)}catch(e){}
 // only the trees near you are drawn (keeps phones fast)
-var mx=new THREE.Matrix4(),q=new THREE.Quaternion(),e3=new THREE.Euler(),sv3=new THREE.Vector3(),pv=new THREE.Vector3(),lastK='';
+var mx=new THREE.Matrix4(),q=new THREE.Quaternion(),e3=new THREE.Euler(),sv3=new THREE.Vector3(),pv=new THREE.Vector3(),lastK='',SW=0,TT=0;
 function place(){if(typeof P=='undefined')return;var ci=Math.floor(P.x/S),cj=Math.floor(P.z/S),key=ci+','+cj;if(key==lastK)return;lastK=key;
  var cnt=TM.map(function(){return 0}),sc=0,dc=0,R=4;
  for(var a=-R;a<=R;a++)for(var b=-R;b<=R;b++){if(a*a+b*b>R*R+1)continue;var L=BY[(ci+a)+','+(cj+b)];if(!L)continue;
-  for(var n=0;n<L.length;n++){var s=L[n];if(cnt[s.v]<PER){e3.set(0,s.a,0);q.setFromEuler(e3);sv3.set(s.s,s.s*(.95+s.b*.25),s.s);pv.set(s.x,0,s.z);mx.compose(pv,q,sv3);TM[s.v].setMatrixAt(cnt[s.v]++,mx)}
+  for(var n=0;n<L.length;n++){var s=L[n];if(cnt[s.v]<PER){var sw=SW>0?.05*Math.min(1,SW):0;e3.set(sw*Math.sin(TT*13+s.x),s.a,sw*Math.cos(TT*11+s.z));q.setFromEuler(e3);sv3.set(s.s,s.s*(.95+s.b*.25),s.s);pv.set(s.x,0,s.z);mx.compose(pv,q,sv3);TM[s.v].setMatrixAt(cnt[s.v]++,mx)}
    if(s.b<.45&&sc<120){e3.set(0,s.a*3,0);q.setFromEuler(e3);var k=.8+s.b;sv3.set(k,k,k);pv.set(s.bx,.18,s.bz);mx.compose(pv,q,sv3);SH.setMatrixAt(sc++,mx)}
    else if(s.b>.7&&dc<120){e3.set(0,s.a,0);q.setFromEuler(e3);sv3.set(1.1,.45+s.b*.4,1.1);pv.set(s.bx,0,s.bz);mx.compose(pv,q,sv3);DR.setMatrixAt(dc++,mx)}}}
  TM.forEach(function(m,i){m.count=cnt[i];m.instanceMatrix.needsUpdate=true});SH.count=sc;SH.instanceMatrix.needsUpdate=true;DR.count=dc;DR.instanceMatrix.needsUpdate=true}
-place();setInterval(place,250);
-window.FOREST={trees:SLOTS.length,place:function(){lastK='';place()}};
+place();setInterval(place,250);setInterval(function(){if(SW>0){SW-=.05;TT+=.05;lastK='';place()}},50);
+window.FOREST={trees:SLOTS.length,by:BY,shake:function(t){SW=Math.max(SW,t)},place:function(){lastK='';place()}};
+})();
+</script>
+<!-- ===== LEVEL 6: RED & GREEN MUSHROOMS — the Treestalker's hunt ===== -->
+<script>
+(function(){
+if(typeof THREE=='undefined'||typeof scene=='undefined')return;
+var LVL=0;try{LVL=SV.lv|0}catch(e){}
+if(LVL!=6)return;
+// ---- exact distances (1 game unit = 1 metre) ----
+var D={TRIGGER:5,FAST:10,THICK:2,SIGNAL:100,SEARCH:30};
+// ---- same layout for the same run (saved spots reuse the level seed) ----
+var sd=((typeof SEED!='undefined'?SEED:Date.now())^0x6d757368)>>>0;
+function rr(){sd=(sd+0x6D2B79F5)>>>0;var t=sd;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}
+var BY=(window.FOREST&&FOREST.by)||{};
+function nearTree(x,z,i,j){var L=BY[i+','+j]||[];for(var n=0;n<L.length;n++)if(Math.hypot(L[n].x-x,L[n].z-z)<.95)return true;return false}
+function walls(i,j){var s=[];[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(a<0||b<0||a>=W||b>=W||g[a][b])s.push(d)});return s}
+function spot(i,j,edge){var ws=walls(i,j);for(var t=0;t<8;t++){var x=cc(i),z=cc(j);
+  if(edge&&ws.length){var d=ws[(rr()*ws.length)|0],k=.85+rr()*.35,al=(rr()-.5)*2.6;x+=d[0]*k+(d[1]?al:0);z+=d[1]*k+(d[0]?al:0)}else{x+=(rr()-.5)*2.2;z+=(rr()-.5)*2.2}
+  if(!nearTree(x,z,i,j)&&!solid(x,z))return [x,z]}return null}
+var sx=cc(1),sz=cc(1),RED=[],GRN=[];
+// red: common, often in little groups, around roots
+open.forEach(function(c){if(rr()>.3)return;var n=1+(rr()<.55?(1+(rr()*3|0)):0),p=spot(c[0],c[1],true);if(!p)return;
+ for(var k=0;k<n;k++){var x=p[0]+(rr()-.5)*.6,z=p[1]+(rr()-.5)*.6;if(!solid(x,z)&&!nearTree(x,z,c[0],c[1]))RED.push({x:x,z:z,s:.7+rr()*.7,a:rr()*6.3})}});
+// green: rarer, in suspicious places — dead ends and side paths first, some by the roots on the main path
+var dead=open.filter(function(c){return walls(c[0],c[1]).length>=3}),side=open.filter(function(c){return walls(c[0],c[1]).length<3});
+function far(c){return Math.hypot(cc(c[0])-sx,cc(c[1])-sz)>24}
+function pick(list,n,edge){for(var t=0;t<n*6&&n>0;t++){var c=list[(rr()*list.length)|0];if(!c||!far(c))continue;if(GRN.some(function(m){return Math.hypot(m.x-cc(c[0]),m.z-cc(c[1]))<14}))continue;var p=spot(c[0],c[1],edge);if(p){GRN.push({x:p[0],z:p[1],s:1+rr()*.35,a:rr()*6.3,id:GRN.length});n--}}}
+pick(dead,9,false);pick(side,8,true);
+// ---- shapes ----
+function shroomGeo(capCol){var st=new THREE.CylinderGeometry(.028,.045,.17,6,1).toNonIndexed();st.translate(0,.085,0);
+ var cp=new THREE.SphereGeometry(.105,9,4,0,Math.PI*2,0,Math.PI/2).toNonIndexed();cp.scale(1,.62,1);cp.translate(0,.16,0);
+ var parts=[[st,new THREE.Color(0xd8d0c0)],[cp,capCol]],tot=0;parts.forEach(function(q){tot+=q[0].attributes.position.count});
+ var Pa=new Float32Array(tot*3),N=new Float32Array(tot*3),C=new Float32Array(tot*3),o=0;
+ parts.forEach(function(q){var gq=q[0],n=gq.attributes.position.count;Pa.set(gq.attributes.position.array,o*3);N.set(gq.attributes.normal.array,o*3);for(var i=0;i<n;i++){C[(o+i)*3]=q[1].r;C[(o+i)*3+1]=q[1].g;C[(o+i)*3+2]=q[1].b}o+=n});
+ var m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.BufferAttribute(Pa,3));m.setAttribute('normal',new THREE.BufferAttribute(N,3));m.setAttribute('color',new THREE.BufferAttribute(C,3));m.computeBoundingSphere();return m}
+// red — safe, faint red glow
+var redM=new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x5a0806,emissiveIntensity:.55}),redI=new THREE.InstancedMesh(shroomGeo(new THREE.Color(0xb3221a)),redM,Math.max(1,RED.length));
+redI.frustumCulled=false;var mx=new THREE.Matrix4(),q=new THREE.Quaternion(),e3=new THREE.Euler(),s3=new THREE.Vector3(),p3=new THREE.Vector3();
+RED.forEach(function(r,k){e3.set((rr()-.5)*.25,r.a,(rr()-.5)*.25);q.setFromEuler(e3);s3.set(r.s,r.s,r.s);p3.set(r.x,0,r.z);mx.compose(p3,q,s3);redI.setMatrixAt(k,mx)});redI.count=RED.length;scene.add(redI);
+// green — dangerous, eerie glow you can spot through fog without it being blinding
+var gGeo=shroomGeo(new THREE.Color(0x58ff6a)),glowT=(function(){var c=document.createElement('canvas');c.width=c.height=64;var x=c.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(170,255,170,1)');gr.addColorStop(.3,'rgba(80,255,110,.55)');gr.addColorStop(1,'rgba(40,255,80,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);return new THREE.CanvasTexture(c)})();
+GRN.forEach(function(m){m.mat=new THREE.MeshLambertMaterial({vertexColors:true,emissive:0x2aff48,emissiveIntensity:.6});m.mesh=new THREE.Mesh(gGeo,m.mat);m.mesh.rotation.order='YXZ';m.mesh.position.set(m.x,0,m.z);m.mesh.scale.setScalar(m.s);m.mesh.rotation.y=m.a;scene.add(m.mesh);
+ m.sm=new THREE.SpriteMaterial({map:glowT,color:0x6aff7a,blending:THREE.AdditiveBlending,depthWrite:false,fog:false,transparent:true,opacity:.3});m.spr=new THREE.Sprite(m.sm);m.spr.position.set(m.x,.2,m.z);m.spr.scale.set(1,1,1);scene.add(m.spr);
+ m.ph=rr()*6;m.trig=false;m.tilt=0;m.lastD=1e9;m.ps=0});
+// ---- spores ----
+var SN=500,sg=new THREE.BufferGeometry(),sp=new Float32Array(SN*3),SV2=[];for(var i=0;i<SN;i++){sp[i*3+1]=-50;SV2.push({l:0,vx:0,vy:0,vz:0})}
+sg.setAttribute('position',new THREE.BufferAttribute(sp,3));var smat=new THREE.PointsMaterial({color:0x6aff7a,map:glowT,size:.09,transparent:true,opacity:.9,blending:THREE.AdditiveBlending,depthWrite:false,alphaTest:.02}),spores=new THREE.Points(sg,smat);spores.frustumCulled=false;scene.add(spores);var si=0;
+function spore(x,z,n,pow){for(var k=0;k<n;k++){var o=si*3,v=SV2[si];si=(si+1)%SN;sp[o]=x+(Math.random()-.5)*.3;sp[o+1]=.18;sp[o+2]=z+(Math.random()-.5)*.3;v.vx=(Math.random()-.5)*.5*pow;v.vy=.25+Math.random()*.7*pow;v.vz=(Math.random()-.5)*.5*pow;v.l=2.5+Math.random()*2.5}}
+// ---- sounds ----
+function pan(x,z){try{return P3(x,z,.4,false)}catch(e){return null}}
+function pulseSnd(m,loud){if(!AC||!SFXB)return;var o=pan(m.x,m.z);if(!o)return;var v=loud?.42:.16;
+ tone({f:62,f2:38,d:.32,v:v,a:.01,lp:400,out:o});burst({f:900,q:6,d:.06,v:v*.5,out:o})}
+function triggerSnd(m){if(!AC||!SFXB)return;burst({f:110,t:'lowpass',q:.7,d:2.8,v:.9});tone({f:46,f2:30,d:3,v:.5,a:.3,lp:220});
+ [233,247,311,349].forEach(function(f,i){setTimeout(function(){tone({t:'triangle',f:f*2,f2:f*1.94,d:2.2,v:.07,a:.6,lp:1600})},i*90)});var o=pan(m.x,m.z);if(o){tone({f:70,f2:28,d:1.2,v:.6,a:.01,lp:500,out:o});burst({f:1400,q:2,d:.5,v:.5,out:o})}}
+// ---- the warning ----
+var warn=document.createElement('div');warn.style.cssText='position:fixed;left:0;right:0;top:34%;text-align:center;z-index:6;pointer-events:none;font:bold clamp(20px,5vw,44px) Georgia,serif;letter-spacing:.2em;color:#9dffa8;text-shadow:0 0 18px #2aff48,0 0 40px #0a6a14;opacity:0;transition:opacity .6s';warn.textContent='THE FOREST HAS NOTICED YOU';document.body.appendChild(warn);
+// ---- tell the Treestalker ----
+var lastAlert=-99;
+function alertStalker(m){var lx=P.x,lz=P.z,dm=Math.hypot(M.x-m.x,M.z-m.z);if(solid(lx,lz)){var b=null,bd=1e9;open.forEach(function(o){var q2=Math.hypot(cc(o[0])-lx,cc(o[1])-lz);if(q2<bd){bd=q2;b=o}});if(b){lx=cc(b[0]);lz=cc(b[1])}}
+ SH.lkp={x:lx,z:lz,t:performance.now()};
+ if(dm>D.SIGNAL)return 'out of range';
+ LM.shroom=true;LM.tx=ce(lx);LM.tz=ce(lz);
+ if(LM.st=='hunt'||LM.st=='warn')return 'already chasing (target updated)';   // no reset, no second monster
+ LM.st='invest';LM.knock=null;lmGo(LM.tx,LM.tz);LM.crack=1.5;return 'coming'}
+function trigger(m){m.trig=true;m.hot=6;spore(m.x,m.z,160,1.6);triggerSnd(m);
+ warn.style.opacity=1;setTimeout(function(){warn.style.opacity=0},3200);
+ try{LM.shake=Math.max(LM.shake||0,1.2)}catch(e){}try{if(window.FOREST&&FOREST.shake)FOREST.shake(1.6)}catch(e){}
+ var now=performance.now()/1000;m.res=alertStalker(m);lastAlert=now;SH.log.push({id:m.id,res:m.res})}
+// ---- every frame ----
+var last=performance.now();
+function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;if(typeof P=='undefined')return;
+ var play=typeof started!='undefined'&&started&&!P.dead,pd=P.dead;
+ for(var i=0;i<GRN.length;i++){var m=GRN[i];
+  // 3D distance from the player's character (feet) to the centre of the mushroom
+  var dy=.12*m.s,d=Math.sqrt((P.x-m.x)*(P.x-m.x)+(P.z-m.z)*(P.z-m.z)+dy*dy),dT=Math.hypot(M.x-m.x,M.z-m.z);m.d=d;
+  var rate=1.1;if(d<=D.FAST)rate=3.4;if(dT<25)rate+=(1-dT/25)*3.5;if(m.hot>0)rate=6;
+  m.ph+=dt*rate*Math.PI*2;var pulse=.5+.5*Math.sin(m.ph),near=dT<25?(1-dT/25):0,bright=.45+.55*pulse+near*.9+(m.hot>0?1.2:0)+(m.trig?-.15:0);
+  m.mat.emissiveIntensity=Math.max(.2,bright*.8);
+  var fade=Math.max(0,Math.min(1,1-(d-22)/45));m.sm.opacity=Math.min(.75,(.16+.22*pulse+near*.25+(m.hot>0?.3:0))*fade);m.spr.scale.setScalar((.8+.3*pulse+near*.4)*m.s);
+  // caps lean toward the Treestalker when it is near
+  var want=dT<25?.38*(1-dT/25)+.1:0;m.tilt+=(want-m.tilt)*Math.min(1,dt*2);if(m.tilt>.01){m.mesh.rotation.y=Math.atan2(M.x-m.x,M.z-m.z);m.mesh.rotation.x=m.tilt}else m.mesh.rotation.x=0;
+  // spores: thick within 2 m, a few after it fires, and when the monster is very close
+  m.ps-=dt;var sr=0;if(d<=D.THICK)sr=34;else if(m.trig&&d<=D.TRIGGER)sr=5;if(dT<6)sr=Math.max(sr,16);if(m.hot>0)sr=Math.max(sr,40);
+  if(sr&&m.ps<=0){spore(m.x,m.z,1+(d<=D.THICK?2:0),d<=D.THICK?1.2:.8);m.ps=1/sr}
+  // organic pulse sound inside 10 m, louder inside 2 m
+  if(play&&d<=D.FAST){m.snd=(m.snd||0)-dt;if(m.snd<=0){pulseSnd(m,d<=D.THICK);m.snd=1/rate}}
+  if(m.hot>0)m.hot-=dt;
+  // trigger exactly once, when the player crosses into the 5 m radius
+  if(play&&!m.trig&&d<=D.TRIGGER&&m.lastD>D.TRIGGER)trigger(m);
+  m.lastD=play?d:m.lastD}
+ // spores drift up and fade
+ var a=sg.attributes.position.array;for(var k=0;k<SN;k++){var v=SV2[k];if(v.l<=0)continue;v.l-=dt;var o=k*3;a[o]+=v.vx*dt;a[o+1]+=v.vy*dt;a[o+2]+=v.vz*dt;v.vx*=.99;v.vz*=.99;v.vy*=.995;if(v.l<=0)a[o+1]=-50}sg.attributes.position.needsUpdate=true;
+ // the Treestalker cracks branches as it travels to the signal
+ try{if(LM.shroom&&(LM.st=='invest'||LM.st=='search')&&AC&&play){LM.crack=(LM.crack||0)-dt;if(LM.crack<=0){LM.crack=1.6+Math.random()*2.2;var o2=pan(M.x,M.z);if(o2){burst({f:1900+Math.random()*900,q:4,d:.1,v:.7,out:o2});if(Math.random()<.35)tone({t:'sawtooth',f:58,f2:42,d:1.1,v:.3,lp:280,out:o2})}}}}catch(e){}
+}
+tick();
+// ---- the drone map shows green mushrooms in green ----
+var SH=window.SHROOMS={red:RED.length,green:GRN,D:D,log:[],lkp:null,trigger:trigger,
+ map:function(c){GRN.forEach(function(m){var x=m.x/S*4,y=m.z/S*4;c.fillStyle=m.trig?'rgba(60,160,70,.9)':'#3cff4e';c.beginPath();c.arc(x,y,2.2,0,7);c.fill();c.strokeStyle='rgba(60,255,80,.55)';c.lineWidth=1;c.beginPath();c.arc(x,y,4.2,0,7);c.stroke()})}};
 })();
 </script>
 <!-- ===== SAVE FILE PICKER ===== -->
