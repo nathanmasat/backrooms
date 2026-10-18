@@ -1,4 +1,22 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><title>THE BACKROOMS: DON'T LOOK BACK</title>
+<!DOCTYPE html><html><head><meta charset="utf-8"><script>
+/* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
+(function(){
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr'];
+var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
+try{LS=window.localStorage}catch(e){return}
+function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
+function rawSet(k,v){try{oSet.call(LS,k,v)}catch(e){}}
+var slot=+raw('brSlot')||1;if(slot<1||slot>3)slot=1;
+// first run with save files: existing progress becomes File 1
+if(!raw('brSlotInit')){var had=false;SLOT_KEYS.forEach(function(k){var v=raw(k);if(v!==null){had=true;if(raw(k+'@1')===null)rawSet(k+'@1',v)}});if(had&&raw('brT@1')===null)rawSet('brT@1',''+Date.now());rawSet('brSlotInit','1')}
+function map(k){return SLOT_KEYS.indexOf(k)>=0?k+'@'+slot:k}
+SP.getItem=function(k){return this===LS?oGet.call(this,map(k)):oGet.call(this,k)};
+SP.setItem=function(k,v){if(this===LS&&SLOT_KEYS.indexOf(k)>=0){oSet.call(this,map(k),v);try{oSet.call(this,'brT@'+slot,''+Date.now())}catch(e){}return}return oSet.call(this,k,v)};
+SP.removeItem=function(k){return oRem.call(this,this===LS?map(k):k)};
+window.SLOTS={keys:SLOT_KEYS,slot:slot,raw:raw,rawSet:rawSet,rawRem:function(k){try{oRem.call(LS,k)}catch(e){}}};
+})();
+</script>
+<title>THE BACKROOMS: DON'T LOOK BACK</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
 html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georgia,serif;color:#d8cf8a}
@@ -713,7 +731,7 @@ $('mm').style.display='none';
 const A_=f=>{if(AC)f()},clr=(x0,z0,yw)=>{let d=1;while(d<30&&!solid(x0-Math.sin(yw)*d,z0-Math.cos(yw)*d))d+=.5;return d},
 bestYaw=(x0,z0,av)=>{let b=0,bd=0;for(let a=0;a<24;a++){const yw=a*Math.PI/12;if(av!==undefined&&Math.abs(Math.atan2(Math.sin(yw-av),Math.cos(yw-av)))<.8)continue;const d=clr(x0,z0,yw);if(d>bd){bd=d;b=yw}}return b},
 lerpA=(a,b,k)=>a+(((b-a+Math.PI*3)%(Math.PI*2))-Math.PI)*k,fc={},one=(k,t,f)=>{if(ct>=t&&!fc[k]){fc[k]=1;f()}},TGC=Math.atan2(-.9,2.6);
-function finish(){skipB.style.display='none';ren.domElement.style.filter='';if(master)master.gain.value=SET.vol;cl=1;ghost.visible=false;fadeEl.style.opacity=0;$('mm').style.display='flex';CUT=false;cph=9;if(VM.pref=='on'&&!VM.on)micOn(true);if(VM.pref==null&&SRC)setTimeout(voiceP,800)}
+function finish(){skipB.style.display='none';ren.domElement.style.filter='';if(master)master.gain.value=SET.vol;cl=1;ghost.visible=false;fadeEl.style.opacity=0;$('mm').style.display='flex';CUT=false;cph=9;if(VM.pref=='on'&&!VM.on)micOn(true);if(VM.pref==null&&SRC)setTimeout(voiceP,800);if(window.slotAfterCut)slotAfterCut()}
 function endCut(){if(DC){DC.stop();DC=null}finish()}
 function begin3D(){DC=null;if(!CAR){finish();return}cph=1;ct=0;fadeEl.style.opacity=0}
 function cutTick(dt){if(cph!=1)return;ct+=dt;carTick(dt);const t=ct;let px=CAR.x-.4,pz=CAR.z-.5,py=1.0,yw=-Math.PI/2,pt=-.08;
@@ -1046,7 +1064,68 @@ for(let n=0;n<18;n++){const c=open[R()*open.length|0];if(c[0]==0)continue;const 
 $('mb').addEventListener('click',e=>{if(e.target&&e.target.id=='b-ph')phoneOpen()});
 _s=Date.now()|0;
 cam.position.set(P.x,1.7,P.z);loop();
-</script><!-- ===== PHONE / TOUCH CONTROLS ===== -->
+</script><!-- ===== SAVE FILE PICKER ===== -->
+<style>
+#slots{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a1500ee,#000f);color:#e4d56a;font-family:monospace;padding:16px;overflow:auto}
+#slots h2{font:bold 26px Georgia,serif;letter-spacing:.18em;margin:0 0 4px;text-shadow:0 0 18px #a80;text-align:center}
+#slots .sub{font-size:12px;opacity:.75;margin-bottom:16px;text-align:center}
+#slots .row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:960px}
+.sf{position:relative;box-sizing:border-box;width:min(270px,86vw);min-height:168px;border:1px solid #6a5c20;background:#0d0b00d9;padding:14px 16px 12px;cursor:pointer;transition:.18s;display:flex;flex-direction:column}
+.sf:hover,.sf:focus{border-color:#e4d56a;box-shadow:0 0 22px #a808;transform:translateY(-2px)}
+.sf.cur{border-color:#e4d56a}
+.sf .n{font-size:13px;letter-spacing:.3em;opacity:.8}
+.sf .t{font:bold 18px Georgia,serif;margin:6px 0 8px;color:#f3e7a0}
+.sf .i{font-size:12px;line-height:1.7;color:#d8cf8a;flex:1}
+.sf .i b{color:#9f9;font-weight:normal}
+.sf .e{font-size:13px;opacity:.6;flex:1;display:flex;align-items:center;justify-content:center;border:1px dashed #6a5c2088;margin-top:4px}
+.sf .go{margin-top:10px;text-align:center;padding:8px;border:1px solid #e4d56a;letter-spacing:.2em;font-size:13px;background:#2a2300}
+.sf .del{order:5;align-self:center;margin-top:8px;font-size:11px;padding:3px 7px;border:1px solid #7a3a2a;color:#e88;background:#1a0800;letter-spacing:.1em}
+.sf .del.sure{background:#7a1a10;color:#fff}
+.sf .tag{position:absolute;top:10px;right:10px;font-size:10px;color:#9f9;letter-spacing:.15em}
+
+@media (max-height:500px){#slots h2{font-size:18px}#slots .sub{margin-bottom:8px}.sf{min-height:130px;padding:10px 12px}.sf .t{font-size:15px;margin:3px 0 4px}.sf .i{font-size:11px;line-height:1.5}.sf .go{padding:5px;margin-top:6px}#slots .row{gap:8px;flex-wrap:nowrap}.sf{width:min(240px,31vw);min-height:0}.sf .e{min-height:44px}.sf .n{font-size:11px}}
+#slots>*{flex-shrink:0}#slots h2{margin-top:auto}#slots .row{margin-bottom:auto}
+</style>
+<div id="slots" role="dialog" aria-label="Choose a save file"><h2>CHOOSE A SAVE FILE</h2><div class="sub">Everything you do is saved to the file you pick.</div><div class="row" id="slot-row"></div></div>
+<script>
+(function(){
+if(!window.SLOTS)return;
+var S=window.SLOTS,box=document.getElementById('slots'),rowEl=document.getElementById('slot-row'),armed=0;
+function J(k){try{return JSON.parse(S.raw(k))}catch(e){return null}}
+function ago(t){if(!t)return'';var s=(Date.now()-t)/1000;if(s<60)return'just now';if(s<3600)return Math.floor(s/60)+' min ago';if(s<86400)return Math.floor(s/3600)+' hr ago';var d=Math.floor(s/86400);return d==1?'yesterday':d+' days ago'}
+function esc(x){return String(x).replace(/[&<>"']/g,function(c){return'&#'+c.charCodeAt(0)+';'})}
+function info(n){var sv=J('br@'+n),cash=J('brm@'+n),ph=J('brph@'+n),un=S.raw('bru@'+n),t=+S.raw('brT@'+n)||0,used=S.keys.some(function(k){return S.raw(k+'@'+n)!==null});
+ return{used:used,sv:sv||{lv:0,max:0,score:0},cash:cash&&cash.bal||0,photos:ph&&ph.length||0,un:un||'',t:t}}
+function lvName(i){try{return (LV[i]&&LV[i].n)||('LEVEL '+i)}catch(e){return 'LEVEL '+i}}
+function render(){var h='';for(var n=1;n<=3;n++){var f=info(n),cur=n==S.slot;
+ h+='<div class="sf'+(cur?' cur':'')+'" tabindex="0" data-slot="'+n+'">'+(cur?'<div class="tag">● CURRENT</div>':'')+'<div class="n">FILE '+n+'</div>';
+ if(f.used){var r='';try{r=rank(f.sv.score||0)}catch(e){}
+  h+='<div class="t">'+esc(f.un||'Guest')+'</div><div class="i">'+esc(lvName(f.sv.lv||0))+'<br>Best: Level '+(f.sv.max||0)+' &middot; Score '+(f.sv.score||0)+(r?' &middot; '+esc(r):'')+'<br><b>$'+f.cash+'</b> cash &middot; '+f.photos+' photo'+(f.photos==1?'':'s')+(f.t?'<br><span style="opacity:.6">Played '+ago(f.t)+'</span>':'')+'</div>'+
+   '<div class="del'+(armed==n?' sure':'')+'" data-del="'+n+'">'+(armed==n?'TAP TO CONFIRM':'DELETE')+'</div><div class="go">'+(cur?'CONTINUE':'LOAD')+'</div>'}
+ else h+='<div class="t">Empty</div><div class="e">+ NEW GAME</div><div class="go">START HERE</div>';
+ h+='</div>'}rowEl.innerHTML=h}
+function open(){armed=0;render();box.style.display='flex'}
+function close(){box.style.display='none';armed=0}
+function pick(n){try{sessionStorage.setItem('brSlotPicked','1')}catch(e){}
+ if(n==S.slot){close();return}
+ S.rawSet('brSlot',''+n);if(!S.raw('brT@'+n)){S.rawSet('brT@'+n,''+Date.now())}
+ try{sessionStorage.setItem('brseen','1')}catch(e){}try{localStorage.setItem('brseenT',''+Date.now())}catch(e){}
+ box.innerHTML='<h2>LOADING FILE '+n+'...</h2>';setTimeout(function(){location.reload()},250)}
+function del(n){S.keys.forEach(function(k){S.rawRem(k+'@'+n)});S.rawRem('brT@'+n);armed=0;
+ if(n==S.slot){try{sessionStorage.removeItem('brSlotPicked')}catch(e){}try{sessionStorage.setItem('brseen','1')}catch(e){}location.reload();return}render()}
+rowEl.addEventListener('click',function(e){var d=e.target.closest('[data-del]');if(d){e.stopPropagation();var n=+d.dataset.del;if(armed==n)del(n);else{armed=n;render()}return}
+ var c=e.target.closest('[data-slot]');if(c)pick(+c.dataset.slot)});
+rowEl.addEventListener('keydown',function(e){if(e.key=='Enter'){var c=e.target.closest('[data-slot]');if(c)pick(+c.dataset.slot)}});
+// show right after the cutscene (once per visit), and from the menu button
+window.slotAfterCut=function(){var picked=false;try{picked=sessionStorage.getItem('brSlotPicked')=='1'}catch(e){}if(!picked)open()};
+window.openSaveFiles=open;
+if(typeof CUT!='undefined'&&!CUT)slotAfterCut();
+// main menu button + which file is loaded
+try{var mb=document.getElementById('mb');if(mb){var b=document.createElement('div');b.className='bt';b.id='b-sf';b.textContent='SAVE FILES (FILE '+S.slot+')';b.onclick=function(e){e.stopPropagation();open()};var how=document.getElementById('b-how');mb.insertBefore(b,how||null)}}catch(e){}
+try{var ps=document.getElementById('p-save');if(ps){var o=ps.onclick;ps.onclick=function(){o&&o.apply(this,arguments);ps.textContent='SPOT SAVED TO FILE '+S.slot}}}catch(e){}
+})();
+</script>
+<!-- ===== PHONE / TOUCH CONTROLS ===== -->
 <style>
 #tc{position:fixed;inset:0;z-index:4;display:none;pointer-events:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;font-family:monospace}
 body.touch.tplay #tc{display:block}
