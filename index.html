@@ -241,7 +241,7 @@ function loop(){requestAnimationFrame(loop);const dt=Math.min(clock.getDelta(),.
 if(started){P.t+=dt;
 // movement
 const fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),rx=Math.cos(P.yaw),rz=-Math.sin(P.yaw);
-let ix=(K.KeyD?1:0)-(K.KeyA?1:0),iz=(K.KeyW?1:0)-(K.KeyS?1:0);if(P.imp>55&&Math.sin(P.t*.7)>.6)ix=-ix;if(P.para>0||P.vt>0||P.sit){P.para-=dt;P.vt-=dt;ix=iz=0}let mv=ix||iz;const cr=!!(K.KeyC||K.ControlLeft);
+let ix=(K.KeyD?1:0)-(K.KeyA?1:0),iz=(K.KeyW?1:0)-(K.KeyS?1:0);if(P.imp>55&&Math.sin(P.t*.7)>.6)ix=-ix;if(P.para>0||P.vt>0||P.sit){P.para-=dt;P.vt-=dt;ix=iz=0}let mv=ix||iz;const cr=!!K.KeyC;
 if(P.hide){mv=0}
 const sprint=!!K.ShiftLeft&&mv&&!cr&&!P.tired&&P.st>0;
 if(sprint)P.st-=15*dt;else P.st=Math.min(100,P.st+(mv?8:14)*dt);if(P.st<=0)P.tired=true;if(P.tired&&P.st>30)P.tired=false;
@@ -1197,6 +1197,30 @@ mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest
  panel()});
 // pause menu gets a SOUND button too (works on phones from the pause button)
 try{var pm=document.getElementById('pm'),pmenu=document.getElementById('p-menu');if(pm&&pmenu){var b=document.createElement('div');b.className='bt';b.id='p-snd';b.innerHTML='&#127925; SOUND';b.onclick=function(){openSound()};pm.insertBefore(b,pmenu)}}catch(e){}
+})();
+</script>
+<!-- ===== CONTROLS SCREEN ===== -->
+<style>
+.ctl h3{margin:0 0 8px;font:bold 18px Georgia,serif;letter-spacing:.15em;color:#f3e7a0}
+.ctl h4{margin:12px 0 6px;font-size:12px;letter-spacing:.25em;color:#e4d56a;opacity:.85}
+.ctl .g{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:4px 18px}
+.ctl .k{display:flex;align-items:center;gap:10px;padding:3px 0;border-bottom:1px solid #6a5c2033;font-size:12px;line-height:1.4}
+.ctl kbd{display:inline-block;min-width:26px;text-align:center;padding:2px 7px;border:1px solid #e4d56a99;border-bottom-width:3px;border-radius:5px;background:#1a1600;color:#fff;font:bold 11px monospace;white-space:nowrap}
+.ctl .k span{opacity:.9}
+.ctl .tip{margin-top:10px;font-size:11px;opacity:.7}
+@media (max-height:500px){.ctl h3{font-size:14px;margin-bottom:2px}.ctl h4{margin:6px 0 2px}.ctl .k{padding:1px 0;font-size:11px}}
+</style>
+<script>
+(function(){
+var KB=[['Move','W A S D'],['Look around','Mouse'],['Sprint','Shift'],['Crouch','C'],['Lean left / right','Z / X'],['Hide in locker / use doors, vents, elevator','F'],['Pick up / open cabinet / equip stun gun','E'],['Fire stun gun','Left click'],['Reload stun gun (or open phone)','R'],['Flashlight on / off','T'],['Scanner on / off','Q'],['Map on / off','M'],['Inventory','I'],['Phone','P'],['Scoreboard (hold)','Tab'],['Turn microphone off','V'],['Pause','Esc']];
+var TC=[['Move','Left joystick'],['Sprint','Push joystick to the edge'],['Look around','Drag right side'],['Hide / use','ACT'],['Pick up / equip','GRAB'],['Crouch','CROUCH'],['Fire / reload','FIRE / RLD'],['Lean','&#8630; / &#8631;'],['Scanner, light, map','Right edge buttons'],['Bag, phone, scores','Right edge buttons'],['Pause','&#10074;&#10074;']];
+function rows(a){return '<div class="g">'+a.map(function(r){return '<div class="k"><kbd>'+r[1]+'</kbd><span>'+r[0]+'</span></div>'}).join('')+'</div>'}
+window.openControls=function(){var touch=document.body.classList.contains('touch');
+ var kb='<h4>KEYBOARD &amp; MOUSE</h4>'+rows(KB),tc='<h4>PHONE / TOUCHSCREEN</h4>'+rows(TC);
+ pnl('<div class="ctl"><h3>&#127918; CONTROLS</h3>'+(touch?tc+kb:kb+tc)+'<div class="tip">Tip: Ctrl does not crouch, so Ctrl+W can\'t close the tab by accident. Use C to crouch.</div></div>')};
+function add(parent,before,id,label){try{var p=document.getElementById(parent);if(!p)return;var b=document.createElement('div');b.className='bt';b.id=id;b.innerHTML=label;b.onclick=function(e){e.stopPropagation();openControls()};p.insertBefore(b,document.getElementById(before)||null)}catch(e){}}
+add('mb','b-cr','b-ctl','CONTROLS');
+add('pm','p-snd','p-ctl','&#127918; CONTROLS');
 })();
 </script>
 <!-- ===== PHONE / TOUCH CONTROLS ===== -->
