@@ -101,11 +101,15 @@ var F={ // floors
  tile:function(x,w,h,c,g){tiles(x,w,h,64,64,c,g,.1);for(var i=0;i<4;i++)blot(x,rnd()*w,rnd()*h,30+rnd()*50,'#202018',.2)},
  lino:function(x,w,h,c){for(var Y=0;Y<h;Y+=64)for(var X=0;X<w;X+=64){x.fillStyle=((X+Y)/64)%2?shade(c,1.08):shade(c,.9);x.fillRect(X,Y,64,64)}speck(x,w,h,6000,.08,1);for(var i=0;i<5;i++)blot(x,rnd()*w,rnd()*h,30+rnd()*50,'#1a1a10',.22)},
  concrete:function(x,w,h,c){base(x,w,h,c);speck(x,w,h,16000,.14,1);for(var i=0;i<8;i++)blot(x,rnd()*w,rnd()*h,30+rnd()*80,'#000000',.25)},
+ road:function(x,w,h){base(x,w,h,'#2a2624');for(var i=0;i<30000;i++){x.fillStyle='rgba('+(rnd()<.5?'0,0,0':'120,110,105')+','+(rnd()*.22)+')';x.fillRect(rnd()*w,rnd()*h,1+rnd(),1+rnd())}
+  for(var i=0;i<5;i++)blot(x,rnd()*w,rnd()*h,40+rnd()*80,'#000000',.3);
+  for(var i=0;i<220;i++){var X=rnd()*w,Y=rnd()*h,c=['#6a2a14','#8a3a1a','#5a4020','#3a2a18','#7a5a30'][rnd()*5|0];x.fillStyle=c;x.save();x.translate(X,Y);x.rotate(rnd()*6.3);x.beginPath();x.ellipse(0,0,2+rnd()*4,1+rnd()*2,0,0,7);x.fill();x.restore()}
+  for(var i=0;i<40;i++){x.strokeStyle='rgba(30,22,16,.7)';x.lineWidth=1+rnd()*1.5;x.beginPath();var X=rnd()*w,Y=rnd()*h;x.moveTo(X,Y);x.lineTo(X+rnd()*30-15,Y+rnd()*30-15);x.stroke()}},
  dirt:function(x,w,h,c){base(x,w,h,c);for(var i=0;i<20000;i++){x.fillStyle='rgba('+(rnd()<.5?'0,0,0':'60,50,20')+','+(rnd()*.3)+')';x.fillRect(rnd()*w,rnd()*h,2,2)}for(var i=0;i<30;i++){x.strokeStyle='rgba(20,15,5,.5)';x.lineWidth=1+rnd()*2;x.beginPath();var X=rnd()*w,Y=rnd()*h;x.moveTo(X,Y);x.lineTo(X+rnd()*40-20,Y+rnd()*40-20);x.stroke()}}
 };
 GFX.wall=function(x,w,h){(W[lv()]||W[0])(x,w,h)};
 GFX.floor=function(x,w,h){var L=lv(),c=(typeof CF!='undefined'&&CF.c)||'#6d5e25';
- if(L==1)F.tile(x,w,h,'#bfe3e8','#7aa6ac');else if(L==4)F.lino(x,w,h,'#8a8a7c');else if(L==8)F.lino(x,w,h,'#9aaa9e');else if(L==7)F.concrete(x,w,h,'#2a343a');else if(L==6)F.dirt(x,w,h,'#1a1408');else if(L==9){base(x,w,h,'#06030a');speck(x,w,h,3000,.2,0)}else F.carpet(x,w,h,c)};
+ if(L==1)F.tile(x,w,h,'#bfe3e8','#7aa6ac');else if(L==4)F.lino(x,w,h,'#8a8a7c');else if(L==8)F.lino(x,w,h,'#9aaa9e');else if(L==7)F.concrete(x,w,h,'#2a343a');else if(L==6)F.road(x,w,h);else if(L==9){base(x,w,h,'#06030a');speck(x,w,h,3000,.2,0)}else F.carpet(x,w,h,c)};
 GFX.ceil=function(x,w,h){var L=lv(),col={0:'#bdb58c',1:'#e4eeee',2:'#d8c2b8',3:'#3a221a',4:'#d6d8cc',5:'#9c9c96',6:'#0a0a08',7:'#4a5058',8:'#d8e0dc',9:'#0e0616'}[L]||'#bdb58c';
  var T=w/4;for(var r=0;r<4;r++)for(var c=0;c<4;c++){var X=c*T,Y=r*T;x.fillStyle=shade(col,.94+rnd()*.1);x.fillRect(X,Y,T,T);speck(x,w,h,0);for(var i=0;i<500;i++){x.fillStyle='rgba(0,0,0,'+(rnd()*.12)+')';x.fillRect(X+rnd()*T,Y+rnd()*T,1.5,1.5)}
   if(L!=9&&L!=6&&rnd()<.22){var R2=T*(.25+rnd()*.3);blot(x,X+T*(.3+rnd()*.4),Y+T*(.3+rnd()*.4),R2,'#5a3a08',.35);ring(x,X+T/2,Y+T/2,R2*.9,'#4a2a04',.3)}
@@ -1180,7 +1184,7 @@ dg.setAttribute('position',new THREE.BufferAttribute(dp,3));
 var dm=new THREE.PointsMaterial({color:LVL==9?0xc080ff:0xfff0c8,size:.022,transparent:true,opacity:.45,depthWrite:false,sizeAttenuation:true}),dust=new THREE.Points(dg,dm);dust.frustumCulled=false;scene.add(dust);
 // ---------- 4. found-footage camera (film grain, lens, fear) ----------
 var PF={on:true,rt:null,q:null,qs:null,qc:null,u:null,fear:0,w:0,h:0};
-var tint={0:[.10,.08,0],1:[0,.06,.08],2:[.08,0,.04],3:[.08,0,0],4:[0,.05,0],5:[0,.03,.06],6:[0,.05,.01],7:[0,.04,.06],8:[0,.06,.04],9:[.06,0,.1]}[LVL]||[.05,.04,0];
+var tint={0:[.10,.08,0],1:[0,.06,.08],2:[.08,0,.04],3:[.08,0,0],4:[0,.05,0],5:[0,.03,.06],6:[.07,.01,.05],7:[0,.04,.06],8:[0,.06,.04],9:[.06,0,.1]}[LVL]||[.05,.04,0];
 function mkRT(w,h){var o={minFilter:THREE.LinearFilter,magFilter:THREE.LinearFilter,format:THREE.RGBAFormat};
  if(SET.q=='Ultra'&&ren.capabilities.isWebGL2&&THREE.WebGLMultisampleRenderTarget){var r=new THREE.WebGLMultisampleRenderTarget(w,h,o);r.samples=2;return r}return new THREE.WebGLRenderTarget(w,h,o)}
 // phones draw the 3D view a little smaller (grain hides it) so they stay smooth
@@ -1227,6 +1231,80 @@ window.PFX=function(sc,cm){clockT+=1/60;var now=performance.now();if(FT.last&&st
  try{ren.setRenderTarget(PF.rt);ren.render(sc,cm);ren.setRenderTarget(null);ren.render(PF.qs,PF.qc)}
  catch(e){PF.on=false;ren.setRenderTarget(null);ren.render(sc,cm);console.warn('camera effect off',e)}
  if(jit){mon.position.x-=jit[0];mon.position.z-=jit[1]}};
+})();
+</script>
+<!-- ===== LEVEL 6: THE DARK FOREST — twisted trees arching over a dark road ===== -->
+<script>
+(function(){
+if(typeof THREE=='undefined'||typeof scene=='undefined')return;
+var LVL=0;try{LVL=SV.lv|0}catch(e){}
+if(LVL!=6)return;
+var rnd=Math.random;
+// sky and mist: deep plum-black like a night photo
+try{var sky=new THREE.Color(0x150a13);scene.background=sky;scene.fog.color.copy(sky);scene.fog.density=.085}catch(e){}
+// a little cold moonlight from above so the pale trunks show as shapes
+var moon=new THREE.DirectionalLight(0x8a7a9a,.32);moon.position.set(.3,1,.2);scene.add(moon);
+// ---------- bark texture: pale grey-brown, cracked, mossy ----------
+var bc=document.createElement('canvas');bc.width=bc.height=256;var bx=bc.getContext('2d');
+bx.fillStyle='#8a7a70';bx.fillRect(0,0,256,256);
+for(var i=0;i<9000;i++){bx.fillStyle='rgba('+(rnd()<.5?'40,30,26':'200,190,180')+','+(rnd()*.12)+')';bx.fillRect(rnd()*256,rnd()*256,2,2)}
+for(var i=0;i<70;i++){var Y0=rnd()*256;bx.strokeStyle='rgba(30,22,18,'+(.25+rnd()*.35)+')';bx.lineWidth=1+rnd()*2.5;bx.beginPath();bx.moveTo(0,Y0);for(var X=0;X<=256;X+=16)bx.lineTo(X,Y0+(rnd()-.5)*10);bx.stroke()}
+for(var i=0;i<14;i++){var X=rnd()*256,Y=rnd()*256,r=6+rnd()*18,gm=bx.createRadialGradient(X,Y,0,X,Y,r);gm.addColorStop(0,'rgba(60,80,40,.45)');gm.addColorStop(1,'rgba(60,80,40,0)');bx.fillStyle=gm;bx.fillRect(X-r,Y-r,r*2,r*2)}
+for(var i=0;i<10;i++){var X=rnd()*256,Y=rnd()*256;bx.fillStyle='rgba(25,18,14,.6)';bx.beginPath();bx.ellipse(X,Y,5+rnd()*7,3+rnd()*4,0,0,7);bx.fill()}
+var barkT=new THREE.CanvasTexture(bc);barkT.wrapS=barkT.wrapT=THREE.RepeatWrapping;
+var barkM=new THREE.MeshLambertMaterial({map:barkT,color:0xd8ccc4,emissive:0xffffff,emissiveMap:barkT,emissiveIntensity:.13});
+// ---------- build twisted trees out of bending tubes ----------
+function V(x,y,z){return new THREE.Vector3(x,y,z)}
+function tube(pts,r0,r1,seg,rad,rep){var c=new THREE.CatmullRomCurve3(pts),tg=new THREE.TubeGeometry(c,seg,1,rad,false),p=tg.attributes.position,uv=tg.attributes.uv;
+ // taper: scale each ring towards the curve by its radius
+ for(var i=0;i<=seg;i++){var t=i/seg,r=r0+(r1-r0)*Math.pow(t,.8),cp=c.getPointAt(t);for(var k=0;k<=rad;k++){var idx=i*(rad+1)+k;p.setXYZ(idx,cp.x+(p.getX(idx)-cp.x)*r,cp.y+(p.getY(idx)-cp.y)*r,cp.z+(p.getZ(idx)-cp.z)*r)}}
+ for(var i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*rep,uv.getY(i));tg.computeVertexNormals();return tg.toNonIndexed()}
+function merge(list){var tot=0;list.forEach(function(q){tot+=q.attributes.position.count});var Pa=new Float32Array(tot*3),N=new Float32Array(tot*3),U=new Float32Array(tot*2),o=0;
+ list.forEach(function(q){Pa.set(q.attributes.position.array,o*3);N.set(q.attributes.normal.array,o*3);U.set(q.attributes.uv.array,o*2);o+=q.attributes.position.count;q.dispose()});
+ var m=new THREE.BufferGeometry();m.setAttribute('position',new THREE.BufferAttribute(Pa,3));m.setAttribute('normal',new THREE.BufferAttribute(N,3));m.setAttribute('uv',new THREE.BufferAttribute(U,2));m.computeBoundingSphere();return m}
+// one tree leans out over the road (+x) and throws long crooked limbs up and across
+function mkTree(seed){var parts=[],j=function(a){return (rnd()-.5)*a};
+ var lean=.9+rnd()*.7,top=V(lean,2.8+rnd()*.7,j(.7));
+ var trunk=[V(0,0,0),V(j(.3)-.15,.9,j(.4)),V(lean*.35+j(.4),1.8,j(.6)),V(lean*.7+j(.3),2.4,j(.5)),top];
+ parts.push(tube(trunk,.42+rnd()*.14,.22,14,8,3));
+ // root flare
+ parts.push(tube([V(-.2,-.05,0),V(.05,.25,0),V(.08,.6,0)],.62,.3,3,8,1));
+ var nb=5+(rnd()*3|0);
+ for(var b=0;b<nb;b++){var a=(b/nb)*Math.PI*2+j(.8),out=b==0?1:(rnd()<.6?1:-.4),reach=1.6+rnd()*1.8;
+  var s=V(top.x*(.75+rnd()*.25),top.y*(.75+rnd()*.25),top.z),
+   m1=V(s.x+out*reach*.35+Math.cos(a)*.4,s.y+.9+rnd()*.7,s.z+Math.sin(a)*.9),
+   m2=V(s.x+out*reach*.75+Math.cos(a)*.3,s.y+1.6+rnd()*1.0,s.z+Math.sin(a)*1.4+j(.6)),
+   e=V(s.x+out*reach+j(.5),s.y+1.9+rnd()*1.4-(out>0?rnd()*.6:0),s.z+Math.sin(a)*1.8+j(1));
+  parts.push(tube([s,m1,m2,e],.24+rnd()*.08,.035,8,6,2));
+  // crooked twigs off each limb
+  for(var t=0;t<2;t++){var q=t==0?m2:e,te=V(q.x+j(2)+out*.6,q.y+.4+rnd()*1.3,q.z+j(2));parts.push(tube([q,V((q.x+te.x)/2+j(.5),(q.y+te.y)/2+j(.4),(q.z+te.z)/2+j(.5)),te],t?.04:.08,.01,4,3,1))}}
+ return merge(parts)}
+var VAR=[mkTree(1),mkTree(2),mkTree(3),mkTree(4)],PER=70;
+var TM=VAR.map(function(geo){var m=new THREE.InstancedMesh(geo,barkM,PER);m.frustumCulled=false;m.count=0;scene.add(m);return m});
+// red-leaved shrubs at the roots (like the photo)
+var shG=new THREE.IcosahedronGeometry(.5,2);(function(){var p=shG.attributes.position;for(var i=0;i<p.count;i++){var f=.9+rnd()*.18;p.setXYZ(i,p.getX(i)*f,p.getY(i)*f*.7,p.getZ(i)*f)}shG.computeVertexNormals()})();
+var shM=new THREE.MeshLambertMaterial({color:0x6a1c12,emissive:0x1a0402}),SH=new THREE.InstancedMesh(shG,shM,120);SH.frustumCulled=false;SH.count=0;scene.add(SH);
+var dryM=new THREE.MeshLambertMaterial({color:0x4e4636}),DR=new THREE.InstancedMesh(new THREE.SphereGeometry(.55,8,5,0,Math.PI*2,0,Math.PI/2),dryM,120);DR.frustumCulled=false;DR.count=0;scene.add(DR);
+// ---------- every spot where a wall meets the road gets a tree ----------
+var SLOTS=[],BY={};
+for(var i=0;i<W;i++)for(var j2=0;j2<W;j2++){if(!g[i][j2])continue;
+ [[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var ni=i+d[0],nj=j2+d[1];if(ni<0||nj<0||ni>=W||nj>=W||g[ni][nj])return;
+  var along=(rnd()-.5)*2.4,px=cc(i)+d[0]*(S/2-.32)+(d[1]?along:0),pz=cc(j2)+d[1]*(S/2-.32)+(d[0]?along:0);
+  var ang=Math.atan2(-d[1],d[0])+(rnd()-.5)*.5,sc=.85+rnd()*.4,s={x:px,z:pz,a:ang,s:sc,v:(rnd()*VAR.length)|0,b:rnd(),bx:px+d[0]*.55+(rnd()-.5)*1.4,bz:pz+d[1]*.55+(rnd()-.5)*1.4};
+  SLOTS.push(s);var k=ni+','+nj;(BY[k]=BY[k]||[]).push(s)})}
+// the box walls become black woods behind the trees
+try{wm.material.color.setRGB(.13,.11,.12)}catch(e){}
+// only the trees near you are drawn (keeps phones fast)
+var mx=new THREE.Matrix4(),q=new THREE.Quaternion(),e3=new THREE.Euler(),sv3=new THREE.Vector3(),pv=new THREE.Vector3(),lastK='';
+function place(){if(typeof P=='undefined')return;var ci=Math.floor(P.x/S),cj=Math.floor(P.z/S),key=ci+','+cj;if(key==lastK)return;lastK=key;
+ var cnt=TM.map(function(){return 0}),sc=0,dc=0,R=4;
+ for(var a=-R;a<=R;a++)for(var b=-R;b<=R;b++){if(a*a+b*b>R*R+1)continue;var L=BY[(ci+a)+','+(cj+b)];if(!L)continue;
+  for(var n=0;n<L.length;n++){var s=L[n];if(cnt[s.v]<PER){e3.set(0,s.a,0);q.setFromEuler(e3);sv3.set(s.s,s.s*(.95+s.b*.25),s.s);pv.set(s.x,0,s.z);mx.compose(pv,q,sv3);TM[s.v].setMatrixAt(cnt[s.v]++,mx)}
+   if(s.b<.45&&sc<120){e3.set(0,s.a*3,0);q.setFromEuler(e3);var k=.8+s.b;sv3.set(k,k,k);pv.set(s.bx,.18,s.bz);mx.compose(pv,q,sv3);SH.setMatrixAt(sc++,mx)}
+   else if(s.b>.7&&dc<120){e3.set(0,s.a,0);q.setFromEuler(e3);sv3.set(1.1,.45+s.b*.4,1.1);pv.set(s.bx,0,s.bz);mx.compose(pv,q,sv3);DR.setMatrixAt(dc++,mx)}}}
+ TM.forEach(function(m,i){m.count=cnt[i];m.instanceMatrix.needsUpdate=true});SH.count=sc;SH.instanceMatrix.needsUpdate=true;DR.count=dc;DR.instanceMatrix.needsUpdate=true}
+place();setInterval(place,250);
+window.FOREST={trees:SLOTS.length,place:function(){lastK='';place()}};
 })();
 </script>
 <!-- ===== SAVE FILE PICKER ===== -->
