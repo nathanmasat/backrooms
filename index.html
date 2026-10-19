@@ -47,7 +47,7 @@ canvas{display:block;width:100%;height:100%}
 <div id='pm'><h1 id='tt2' style='color:#e4d56a'>PAUSED</h1><div class='bt pl' id='p-res'>RESUME</div><div class='bt' id='p-save'>SAVE SPOT</div><div class='bt' id='p-menu'>MAIN MENU</div></div><canvas id='map' width='164' height='164' style='position:fixed;left:16px;top:16px;opacity:.85;pointer-events:none;background:#0008;border:1px solid #6a5c20;display:none'></canvas><div id='nz' style='position:fixed;top:14px;left:50%;transform:translateX(-50%);font:16px monospace;color:#9cf;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='mic' style='position:fixed;top:44px;right:16px;font:12px monospace;color:#f66;display:none;pointer-events:none'>● MIC ON — press V to turn off</div><div id='gun' style='position:fixed;left:16px;bottom:150px;font:13px monospace;color:#9fe;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='xh' style='position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px;border:1px solid #9fe;border-radius:50%;display:none;pointer-events:none'></div><div id='hz'></div><div id='mp'></div>
 <div id="ov"><h1>THE BACKROOMS</h1><h1 style="font-size:.5em;margin-top:-6px">DON'T LOOK BACK</h1>
 <p>You wake up on damp carpet. The lights hum. You are not alone.<br><br><b>THE BOILED ONE</b> manifests through television static. It speaks a forbidden language that imprints on the mind. Once you have heard it, it appears at the edge of your sight, and your body begins to fail you. Don't look. Don't listen. Don't let it reach you.<br><br>Collect the required items, then reach the red EXIT door. You have no weapons.<br><br>
-WASD move · MOUSE look · SHIFT sprint · C crouch · Z/X lean · Q scanner · TAB scores · T flashlight · F hide in lockers / interact<br><br>Headphones strongly recommended.<br><br><b>[ CLICK TO BEGIN ]</b></p></div>
+<span id="ov-keys">WASD move · MOUSE look · SHIFT sprint · C crouch · Z/X lean · Q scanner · TAB scores · T flashlight · F hide in lockers / interact</span><br><br>Headphones strongly recommended.<br><br><b>[ CLICK TO BEGIN ]</b></p></div>
 <script>(function(){var shown=0;function show(m,src,line){if(shown)return;shown=1;var d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:99;background:#000;color:#e4d56a;font:14px monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;line-height:1.8';d.innerHTML='<h2 style="color:#f44">THE GAME HIT AN ERROR</h2><div style="max-width:640px;word-break:break-word">'+String(m)+'<br><small>'+(line?('line '+line):'')+'</small></div><br><div id="eb1" style="cursor:pointer;border:1px solid #e4d56a;padding:8px 14px;margin:6px">RELOAD</div><div id="eb2" style="cursor:pointer;border:1px solid #888;padding:8px 14px;margin:6px">BACK TO LEVEL 0 AND RELOAD</div><small>Tell me the message above so I can fix it.</small>';document.body.appendChild(d);document.getElementById('eb1').onclick=function(){location.reload()};document.getElementById('eb2').onclick=function(){try{var s=JSON.parse(localStorage.getItem('br')||'{}');s.lv=0;localStorage.setItem('br',JSON.stringify(s))}catch(e){}location.reload()}}window.onerror=function(m,s,l){show(m,s,l)};window.addEventListener('unhandledrejection',function(e){show(e.reason&&e.reason.message||e.reason)})})()</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script>
 /* ===== GRAPHICS: level textures (run by the game when it builds each level) ===== */
@@ -1094,7 +1094,7 @@ cam.aspect=W/H;cam.fov=Math.max(28,Math.min(80,22+PV3.dist*12));cam.updateProjec
 try{ren.setRenderTarget(LVS.rt);ren.clear();ren.render(scene,cam);lvRead(o,W,H)}
 finally{ren.setRenderTarget(null);cam.position.copy(sv.p);cam.rotation.copy(sv.r);cam.aspect=sv.asp;cam.fov=sv.fov;cam.updateProjectionMatrix();cam.updateMatrixWorld(true);pl.intensity=sv.pi;gunG.visible=sv.g;phG.visible=sv.ph}}
 function lvSelfie(){const o=pv3Out(),W=o.width,H=o.height;lvInit(W,H);
-const sig=SUIT+'|'+CAM.pose+'|'+JSON.stringify(EQC);if(sig!=LVS.sig||!LVS.grp){LVS.sig=sig;LVS.grp=char3()}
+const sig=SUIT+'|'+CAM.pose+'|'+JSON.stringify(EQC);if(sig!=LVS.sig||!LVS.grp){LVS.sig=sig;if(LVS.grp)LVS.grp.traverse(function(o){if(o.geometry)o.geometry.dispose()});LVS.grp=char3()}
 const G=LVS.grp,th=P.yaw+Math.PI;G.position.set(P.x,0,P.z);G.rotation.y=th;LVS.blob.position.set(P.x,.02,P.z);
 // camera orbit around you, turned with the way you face, pulled in so it never goes through walls
 const a=PV3.ang+th,dx=Math.sin(a),dz=Math.cos(a);let d=.4;while(d<PV3.dist&&!solid(P.x+dx*d,P.z+dz*d))d+=.08;d=Math.max(.9,d-.35);
@@ -1748,7 +1748,7 @@ today();
 #rec-ind i{width:10px;height:10px;border-radius:50%;background:#ff2a1a;box-shadow:0 0 8px #f00;animation:recb 1s infinite}
 #rec-ind.pz{color:#ffcc55}#rec-ind.pz i{background:#ffaa00;animation:none}
 @keyframes recb{50%{opacity:.2}}
-body.touch.tplay #rec-ind{right:80px;top:auto;bottom:calc(env(safe-area-inset-bottom) + 210px)}
+body.touch.tplay #rec-ind{right:auto;left:calc(env(safe-area-inset-left) + 132px);top:calc(env(safe-area-inset-top) + 12px)}
 .gw{position:relative;margin:-6px -12px;padding:8px 10px 10px;min-height:470px;background:#020a04;color:#7dff8a;font:12px/1.45 monospace;overflow:hidden;animation:mgfl 7s infinite}
 .gw:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
 .gw h3{margin:2px 0 6px;font:bold 15px monospace;letter-spacing:.2em;color:#b8ffbf;text-shadow:0 0 8px #2f8}
@@ -1841,7 +1841,7 @@ function track(){if(typeof P=='undefined'||typeof items=='undefined')return;var 
   if(window.SHROOMS&&SHROOMS.log.length>(s.sh||0)){event('forest','The forest noticed you');s.sh=SHROOMS.log.length}
   if(P.dead&&!s.dead){RUN.deaths++;RUN.result='died';event('death','Death');endRun()}s.dead=P.dead;
   if(P.won&&!s.won){RUN.result='escaped';event('escape','Escape');endRun()}s.won=P.won}catch(e){}
- if(REC.on)REC.meta&&(function(){var m=REC.meta;m.dur=recTime();m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.bm=REC.bm;m.score=score();if(performance.now()-(REC.lastSave||0)>2000){REC.lastSave=performance.now();saveRL()}})();
+ if(REC.on)REC.meta&&(function(){var m=REC.meta;if(RUN.next!=null)m.levels=[m.lv,RUN.next];m.dur=recTime();m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.bm=REC.bm;m.score=score();if(performance.now()-(REC.lastSave||0)>2000){REC.lastSave=performance.now();saveRL()}})();
  recUI()}
 function score(){try{return ST.score|0}catch(e){return 0}}
 setInterval(track,250);
@@ -1875,7 +1875,7 @@ function recStart(){if(REC.on)return;try{if(!PHN.ing){toast('Recording only work
 function recPause(){if(!REC.on||REC.paused)return;REC.acc=recTime();REC.paused=true;REC.t1=0;try{REC.mr&&REC.mr.state=='recording'&&REC.mr.pause()}catch(e){}recUI()}
 function recResume(){if(!REC.on||!REC.paused)return;REC.paused=false;REC.t1=performance.now();try{REC.mr&&REC.mr.state=='paused'&&REC.mr.resume()}catch(e){}recUI()}
 // stop: flush the last piece, then cb(meta)
-function recStop(cb){if(!REC.on){cb&&cb(REC.last||null);return}var m=REC.meta;m.dur=recTime();REC.acc=m.dur;REC.on=false;REC.paused=false;m.status='stopped';m.result=RUN.result;if(RUN.result=='escaped')m.levels=[m.lv,m.lv+1];m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.score=score();if(!m.thumb)try{m.thumb=thumb()}catch(e){}
+function recStop(cb){if(!REC.on){cb&&cb(REC.last||null);return}var m=REC.meta;m.dur=recTime();REC.acc=m.dur;REC.on=false;REC.paused=false;m.status='stopped';m.result=RUN.result;if(RUN.result=='escaped')m.levels=[m.lv,RUN.next!=null?RUN.next:m.lv+1];m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.score=score();if(!m.thumb)try{m.thumb=thumb()}catch(e){}
  REC.last=m;var t0=performance.now(),done=function(){if((REC.pend||0)>0&&performance.now()-t0<4000){setTimeout(done,60);return}m.size=REC.size;saveRL();recUI();cb&&cb(m)};
  if(REC.mr&&REC.mr.state!='inactive'){REC.stopping=true;REC.mr.onstop=function(){REC.stopping=false;setTimeout(done,60)};try{REC.mr.stop()}catch(e){done()}}else done();REC.mr=null}
 function recSave(m,name){m.name=(name||'').trim()||defName(m);m.status='done';m.saved=1;saveRL();REC.last=null}
@@ -1888,8 +1888,8 @@ function recUI(){ind.style.display=REC.on?'flex':'none';ind.classList.toggle('pz
  if(PHN&&PHN.scr=='rec'&&mp.style.display=='flex'&&Date.now()-(recUI.l||0)>500){recUI.l=Date.now();var t=document.getElementById('rc-live');if(t)t.textContent=REC.on?(REC.paused?'PAUSED':'RECORDING')+' · '+fmt(recTime())+' · '+mb(REC.size):'Not recording'}}
 // ================= RUN COMPLETE =================
 var RC=document.getElementById('runc'),RCB=document.getElementById('runc-b');
-function endRun(){if(RUN.done)return;RUN.done=true;var was=REC.on;
- var show=function(m){var st=[['Time survived',fmt(runT())],['Levels visited',(RUN.result=='escaped'?'Level '+SV.lv+' → Level '+(SV.lv+1):'Level '+SV.lv)+' ('+lvName(SV.lv)+')'],['Items collected',RUN.items],['VHS tapes found',RUN.tapes],['Monsters encountered',Object.keys(RUN.mons).join(', ')||'none'],['Deaths / rescues',RUN.deaths+' / '+RUN.rescues],['Final score',score()],['Escape status',RUN.result=='escaped'?'ESCAPED':RUN.result=='died'?'DIED':RUN.result]];
+function endRun(cont){if(RUN.done)return;RUN.done=true;var was=REC.on;RC._cb=cont||null;
+ var show=function(m){var st=[['Time survived',fmt(runT())],['Levels visited',(RUN.result=='escaped'?'Level '+SV.lv+' → Level '+(RUN.next!=null?RUN.next:SV.lv+1):'Level '+SV.lv)+' ('+lvName(SV.lv)+')'],['Items collected',RUN.items],['VHS tapes found',RUN.tapes],['Monsters encountered',Object.keys(RUN.mons).join(', ')||'none'],['Deaths / rescues',RUN.deaths+' / '+RUN.rescues],['Final score',score()],['Escape status',RUN.result=='escaped'?'ESCAPED':RUN.result=='died'?'DIED':RUN.result]];
   var base={id:m?m.id:'s'+Date.now().toString(36),num:m?m.num:(+localStorage.getItem('brrecn')||0)+1,lv:SV.lv,result:RUN.result};var dn=m?defName(m):'Run '+base.num+' — Level '+SV.lv+' '+(RUN.result=='escaped'?'Escape':'Death');
   RCB.innerHTML='<h2>RUN COMPLETE</h2><table>'+st.map(function(r){return '<tr><td>'+r[0]+'</td><td style="text-align:right;color:#dfd">'+esc(r[1])+'</td></tr>'}).join('')+'</table>'+
    (m?'<div style="color:#ff8;margin-bottom:6px">'+(REC.auto?'Your recording ('+fmt(m.dur)+', '+mb(m.size)+') is ready to save.':'A recording ('+fmt(m.dur)+') was running.')+'</div>':'<div style="opacity:.7;margin-bottom:6px">No recording was running. Start one from the phone’s RECORDER app next time.</div>')+
@@ -1898,15 +1898,16 @@ function endRun(){if(RUN.done)return;RUN.done=true;var was=REC.on;
   RC.style.display='flex';RC._m=m;RC._base=base;
   // autosave: if the player never chooses, the recording is still saved
   if(m&&REC.auto){recSave(m,dn);m.status='done'}};
- setTimeout(function(){if(was){RCB.innerHTML='<h2>RUN COMPLETE</h2><div>Saving the last part of your recording…</div>';RC.style.display='flex';recStop(function(m){show(m)})}else show(null)},RUN.result=='died'?2600:1200)}
+ setTimeout(function(){if(was){RCB.innerHTML='<h2>RUN COMPLETE</h2><div>Saving the last part of your recording…</div>';RC.style.display='flex';recStop(function(m){show(m)})}else show(null)},RUN.result=='died'?15500:(cont?250:1200))}
 RC.addEventListener('click',function(e){var a=e.target.closest('[data-rc]');if(!a)return;e.stopPropagation();var k=a.dataset.rc,m=RC._m,nm=(document.getElementById('rc-name')||{}).value;
  if(k=='video'&&m){recSave(m,nm);toast('Recording saved to IMAGES')}
  else if(k=='sum'){if(m){m.kind='summary';m.size=0;delChunks(m.id);recSave(m,nm)}else{var s=summaryRec(nm);RL.unshift(s);saveRL()}toast('Run summary saved to IMAGES')}
  else if(k=='drop'){if(m)recDiscard(m)}
- RC.style.display='none'},true);
+ RC.style.display='none';if(RC._cb){var f=RC._cb;RC._cb=null;setTimeout(f,50)}},true);
 RC.addEventListener('pointerdown',function(e){e.stopPropagation()},true);
 function summaryRec(nm){var b=RC._base;return {id:b.id,num:b.num,name:(nm||'').trim()||('Run '+b.num+' — Level '+SV.lv+' '+(RUN.result=='escaped'?'Escape':'Death')),ts:Date.now(),lv:SV.lv,levels:RUN.result=='escaped'?[SV.lv,SV.lv+1]:[SV.lv],dur:runT(),result:RUN.result,items:RUN.items,tapes:RUN.tapes,monsters:Object.keys(RUN.mons),score:score(),kind:'summary',size:0,thumb:'',bm:RUN.ev.filter(function(e){return ['monster','chase','close','tape','death','escape','forest'].indexOf(e.type)>=0}).map(function(e){return {t:e.rt,name:e.label,auto:1}}),fav:0,status:'done',saved:1}}
 // ================= photos: no duplicates, favourites, names =================
+try{var oNext=nextLv;nextLv=function(n){if(RUN.done||P.dead)return oNext.apply(this,arguments);RUN.result='escaped';RUN.next=n;event('escape','Escaped to Level '+n);var args=arguments,self=this;endRun(function(){oNext.apply(self,args)})}}catch(e){}
 var oAct=phAct;phAct=function(a){if(a=='savep'&&CAM.shot&&typeof PHT!='undefined'&&PHT.some(function(p){return p.img===CAM.shot})){toast('That photo is already in IMAGES.');CAM.shot=null;PHN.scr='img';G.tab='photos';phScr();return}
  if(a=='app:img'){G.view='list'}var out=oAct.apply(this,arguments);if(a=='savep'&&PHN.scr=='files'){PHN.scr='img';G.tab='photos';G.view='list';phScr()}return out};
 function savePhotos(){try{return ls_('brph',PHT)}catch(e){return false}}
@@ -2111,7 +2112,7 @@ if(SET.muted)muted=true;
 var MZ={trk:null,bus:null,t:0,step:0,nodes:[],lfo:null};
 function N(f){return 440*Math.pow(2,(f-69)/12)}
 function env(g,t,a,h,r,v){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.setValueAtTime(v,t+a+h);g.gain.exponentialRampToValueAtTime(.0001,t+a+h+r)}
-function note(o){var t=o.t,os=AC.createOscillator(),g=AC.createGain();os.type=o.w||'sine';os.frequency.value=o.f;if(o.det)os.detune.value=o.det;if(o.wob&&MZ.lfo)MZ.lfo.connect(os.detune);var out=g;if(o.lp){var f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;g.connect(f);out=f}os.connect(g);out.connect(MZ.bus);env(g,t,o.a||.01,o.h||0,o.r||.5,o.v||.1);os.start(t);os.stop(t+(o.a||.01)+(o.h||0)+(o.r||.5)+.1)}
+function note(o){var t=o.t,os=AC.createOscillator(),g=AC.createGain();os.type=o.w||'sine';os.frequency.value=o.f;if(o.det)os.detune.value=o.det;if(o.wob&&MZ.lfo)MZ.lfo.connect(os.detune);var out=g;if(o.lp){var f=AC.createBiquadFilter();f.type='lowpass';f.frequency.value=o.lp;g.connect(f);out=f}os.connect(g);out.connect(MZ.bus);env(g,t,o.a||.01,o.h||0,o.r||.5,o.v||.1);os.start(t);os.stop(t+(o.a||.01)+(o.h||0)+(o.r||.5)+.1);if(o.wob&&MZ.lfo){var lf=MZ.lfo;os.onended=function(){try{lf.disconnect(os.detune)}catch(e){}try{g.disconnect()}catch(e){}}}else os.onended=function(){try{g.disconnect()}catch(e){}}}
 var TR={
  liminal:{n:'Liminal',d:'slow, empty hallway chords',len:8,
   ev:function(t,s){var ch=[[45,48,52,57],[41,45,48,52],[43,47,50,55],[40,47,52,55]][s%4];ch.forEach(function(m){[-7,7].forEach(function(d){note({t:t,f:N(m),w:'sawtooth',det:d,lp:620,a:2.6,h:3.2,r:3.4,v:.035})})});
@@ -2194,7 +2195,8 @@ window.keyName=function(c){if(!c)return'?';var m={ControlLeft:'Ctrl',ControlRigh
  if(m[c])return m[c];if(/^Key[A-Z]$/.test(c))return c.slice(3);if(/^Digit\d$/.test(c))return c.slice(5);if(/^Numpad/.test(c))return 'Num '+c.slice(6);return c};
 // in-game hints like "PRESS E" follow your keys
 window.keyHint=function(t){if(typeof t!='string')return t;var b=binds();return t.replace(/\b(PRESS|Press|press) ([A-Z])\b/g,function(m,w,l){var a=ACT.find(function(x){return x[2]=='Key'+l});return a?w+' '+keyName(b[a[0]]).toUpperCase():m})};
-function updMic(){try{var m=document.getElementById('mic');if(m)m.textContent='\u25cf MIC ON \u2014 press '+keyName(binds().mic)+' to turn off'}catch(e){}}
+function updOv(){try{var e=document.getElementById('ov-keys');if(!e||document.body.classList.contains('touch'))return;var b=binds(),n=function(k){return keyName(b[k]).toUpperCase()};e.textContent=n('fwd')+n('left')+n('back')+n('right')+' move · MOUSE look · '+n('sprint')+' sprint · '+n('crouch')+' crouch · '+n('leanL')+'/'+n('leanR')+' lean · '+n('scan')+' scanner · '+n('score')+' scores · '+n('light')+' flashlight · '+n('use')+' hide in lockers / interact · '+n('grab')+' pick up'}catch(x){}}
+function updMic(){updOv();try{var m=document.getElementById('mic');if(m)m.textContent='\u25cf MIC ON \u2014 press '+keyName(binds().mic)+' to turn off'}catch(e){}}
 
 // ---- translate real key presses to the keys the game expects ----
 var CAP=null;
