@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
-var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg'];
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec'];
 var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
 try{LS=window.localStorage}catch(e){return}
 function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
@@ -1730,6 +1730,288 @@ MAKE.look=function(){var g={side:Math.random()*3|0,dist:100,pow:100,light:-1,sw:
 // opening the app always starts at the game list
 var oAct=phAct;phAct=function(a){if(a=='app:mg'){today();MG.view='list'}return oAct.apply(this,arguments)};
 today();
+})();
+</script>
+<!-- ===== PHONE IMAGES APP + RUN RECORDER ===== -->
+<style>
+#rec-ind{position:fixed;right:16px;top:36px;z-index:6;display:none;align-items:center;gap:6px;padding:3px 8px;border-radius:4px;background:#000a;font:bold 12px monospace;color:#ff5a4a;pointer-events:none;letter-spacing:.1em}
+#rec-ind i{width:10px;height:10px;border-radius:50%;background:#ff2a1a;box-shadow:0 0 8px #f00;animation:recb 1s infinite}
+#rec-ind.pz{color:#ffcc55}#rec-ind.pz i{background:#ffaa00;animation:none}
+@keyframes recb{50%{opacity:.2}}
+body.touch.tplay #rec-ind{right:80px;top:auto;bottom:calc(env(safe-area-inset-bottom) + 210px)}
+.gw{position:relative;margin:-6px -12px;padding:8px 10px 10px;min-height:470px;background:#020a04;color:#7dff8a;font:12px/1.45 monospace;overflow:hidden;animation:mgfl 7s infinite}
+.gw:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
+.gw h3{margin:2px 0 6px;font:bold 15px monospace;letter-spacing:.2em;color:#b8ffbf;text-shadow:0 0 8px #2f8}
+.gw .b{display:inline-block;border:1px solid #2f8f3f;background:#04140a;color:#9f9;padding:6px 8px;cursor:pointer;user-select:none;touch-action:manipulation;margin:2px 0}
+.gw .b:hover{background:#0b3a18;color:#dfd}.gw .b.on{background:#0f4a1e;color:#fff;border-color:#7f7}.gw .b.red{border-color:#a33;color:#f99;background:#1a0505}.gw .b.big{display:block;text-align:center;padding:10px;font-size:14px}
+.gw .b.dis{opacity:.35;pointer-events:none}
+.gw .tabs{display:flex;gap:4px;margin:4px 0}.gw .tabs .b{flex:1;text-align:center;padding:5px 2px;font-size:10px;line-height:1.25;white-space:normal;display:flex;align-items:center;justify-content:center}
+.gw input[type=text],.gw select{width:100%;box-sizing:border-box;background:#031006;color:#9f9;border:1px solid #1d5a28;padding:5px;font:12px monospace;margin:2px 0}
+.gw .grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.gw .card{border:1px solid #1d5a28;background:#03100699;cursor:pointer;position:relative}.gw .card:hover{border-color:#5f5}
+.gw .card img,.gw .card .ph0{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;background:#000}
+.gw .card .ph0{display:flex;align-items:center;justify-content:center;font-size:22px;color:#3a7a46}
+.gw .card .meta{padding:3px 4px;font-size:10px;line-height:1.3}.gw .card .meta b{display:block;font-size:11px;color:#cfc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gw .card .dur{position:absolute;right:3px;top:3px;background:#000c;padding:0 4px;font-size:10px;color:#fff}
+.gw .card .fav{position:absolute;left:3px;top:2px;color:#ffd84a;text-shadow:0 0 4px #000}
+.gw .card .rp{position:absolute;left:3px;bottom:38px;background:#000c;padding:0 4px;font-size:9px;color:#ffcf6a}
+.gw .stor{margin-top:6px;font-size:10px;opacity:.8}.gw .stor .bar{height:5px;background:#062a10;border:1px solid #1d5a28;margin-top:2px}.gw .stor .bar i{display:block;height:100%;background:#5f5}
+.gw .warn{border:1px solid #f55;color:#f99;background:#200404;padding:8px;margin:6px 0;text-align:center}
+.gw .row{display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.gw .stars span{cursor:pointer;font-size:18px;color:#3a5a3a}.gw .stars span.on{color:#ffd84a}
+.gw table{width:100%;border-collapse:collapse}.gw td{padding:2px;border-bottom:1px solid #0d3a16}
+/* player */
+.vp{position:relative;background:#000;border:1px solid #1d5a28}
+.vp video,.vp img.snap{width:100%;display:block;aspect-ratio:16/9;background:#000;object-fit:contain}
+.vp .lbl{position:absolute;left:4px;top:3px;font-size:10px;background:#000b;color:#ffcf6a;padding:1px 5px}
+.tl{position:relative;height:22px;margin:4px 0}
+.tl input{position:absolute;inset:0;width:100%;margin:0;accent-color:#5f5}
+.tl .bm{position:absolute;top:0;width:3px;height:8px;background:#ffd84a;transform:translateX(-1px);pointer-events:none}
+.tl .bm.a{background:#ff7a5a}
+.pc{display:flex;gap:3px;flex-wrap:wrap;justify-content:center}.pc .b{min-width:34px;text-align:center;padding:6px 4px}
+#vp-full{position:fixed;inset:0;z-index:40;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;color:#9f9;font:12px monospace}
+#vp-full .vp{width:min(100%,calc((100vh - 120px) * 16 / 9))}
+#vp-full .tl,#vp-full .pc{width:min(100%,calc((100vh - 120px) * 16 / 9))}
+/* run complete */
+#runc{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:#000c;font:13px monospace;color:#9f9}
+#runc .box{width:min(440px,92vw);max-height:92vh;overflow:auto;background:#020a04;border:1px solid #2f8f3f;padding:14px 16px;box-shadow:0 0 30px #0f04}
+#runc h2{margin:0 0 8px;font:bold 20px Georgia,serif;letter-spacing:.2em;color:#cfc;text-align:center}
+#runc td{padding:3px 2px;border-bottom:1px solid #0d3a16}#runc table{width:100%;border-collapse:collapse;margin-bottom:8px}
+#runc .b{display:block;text-align:center;border:1px solid #2f8f3f;background:#04140a;color:#9f9;padding:9px;cursor:pointer;margin:5px 0}
+#runc .b:hover{background:#0b3a18}#runc .b.dis{opacity:.35;pointer-events:none}
+#runc input{width:100%;box-sizing:border-box;background:#031006;color:#cfc;border:1px solid #1d5a28;padding:6px;font:13px monospace}
+@media (max-height:500px){#runc .box{padding:8px 10px}#runc h2{font-size:15px;margin-bottom:4px}#runc td{padding:1px 2px;font-size:11px}#runc .b{padding:6px;margin:3px 0}}
+</style>
+<div id="rec-ind"><i></i><span>REC</span><span id="rec-t">00:00</span></div>
+<div id="vp-full"></div>
+<div id="runc"><div class="box" id="runc-b"></div></div>
+<script>
+(function(){
+if(typeof APPS=='undefined'||typeof phScr!='function')return;
+var mp=document.getElementById('mp');
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return'&#'+c.charCodeAt(0)+';'})}
+function fmt(s){s=Math.max(0,Math.floor(s||0));var m=Math.floor(s/60),h=Math.floor(m/60);return (h?h+':'+('0'+m%60).slice(-2):m)+':'+('0'+s%60).slice(-2)}
+function fdate(t){var d=new Date(t);return d.toLocaleDateString(undefined,{month:'short',day:'numeric'})+' '+d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}
+function mb(b){return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+function lvName(i){try{return LV[i].n.split('— ')[1]||('Level '+i)}catch(e){return 'Level '+i}}
+// ================= storage: run list per save file, video pieces in IndexedDB =================
+var RL=[];try{RL=JSON.parse(localStorage.getItem('brrec'))||[]}catch(e){}
+function saveRL(){try{localStorage.setItem('brrec',JSON.stringify(RL));return true}catch(e){return false}}
+var DB=null,dbq=[];
+(function(){try{var r=indexedDB.open('brGallery',1);r.onupgradeneeded=function(){r.result.createObjectStore('chunks')};r.onsuccess=function(){DB=r.result;dbq.forEach(function(f){f()});dbq=[];cleanup()};r.onerror=function(){DB=false}}catch(e){DB=false}})();
+function withDB(f){if(DB)f();else if(DB===null)dbq.push(f);else f(null)}
+function putChunk(id,seq,blob,cb){withDB(function(){if(!DB){cb&&cb(false);return}try{var tx=DB.transaction('chunks','readwrite');tx.objectStore('chunks').put(blob,[id,seq]);tx.oncomplete=function(){cb&&cb(true)};tx.onerror=tx.onabort=function(){cb&&cb(false)}}catch(e){cb&&cb(false)}})}
+function getChunks(id,cb){withDB(function(){if(!DB){cb([]);return}var out=[],tx=DB.transaction('chunks','readonly'),rq=tx.objectStore('chunks').openCursor(IDBKeyRange.bound([id,0],[id,1e9]));rq.onsuccess=function(){var c=rq.result;if(c){out.push(c.value);c.continue()}else cb(out)};rq.onerror=function(){cb(out)}})}
+function delChunks(id,cb){withDB(function(){if(!DB){cb&&cb();return}var tx=DB.transaction('chunks','readwrite');tx.objectStore('chunks').delete(IDBKeyRange.bound([id,0],[id,1e9]));tx.oncomplete=function(){cb&&cb()};tx.onerror=function(){cb&&cb()}})}
+// pieces nobody's save file points to any more get removed
+function cleanup(){try{var keep={};[1,2,3].forEach(function(n){try{(JSON.parse(SLOTS.raw('brrec@'+n))||[]).forEach(function(r){keep[r.id]=1})}catch(e){}});RL.forEach(function(r){keep[r.id]=1});if(REC.id)keep[REC.id]=1;
+ var tx=DB.transaction('chunks','readwrite'),st=tx.objectStore('chunks'),rq=st.openKeyCursor();rq.onsuccess=function(){var c=rq.result;if(!c)return;if(!keep[c.key[0]])st.delete(c.key);c.continue()}}catch(e){}}
+var EST={u:0,q:0};function estimate(cb){try{navigator.storage.estimate().then(function(e){EST.u=e.usage||0;EST.q=e.quota||0;cb&&cb()}).catch(function(){cb&&cb()})}catch(e){cb&&cb()}}
+function lsBytes(){var n=0;try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);n+=(k.length+(localStorage.getItem(k)||'').length)*2}}catch(e){}return n}
+// recover a recording cut off by a reload / closing the game
+RL.forEach(function(r){if(r.status=='rec'||r.status=='stopped'){r.status='done';var lvNow=0;try{lvNow=SV.lv}catch(e){}r.result=lvNow>r.lv?'escaped':'interrupted';r.note='Recovered after the game closed or changed level.';if(r.result=='escaped'){r.levels=[r.lv,lvNow]}if(!r.saved)r.saved=1;if(!r.name)r.name=defName(r)}});saveRL();
+function defName(r){var n=RL.filter(function(x){return x.kind!='summary'||1}).length;return 'Run '+(r.num||n)+' — Level '+r.lv+' '+({escaped:'Escape',died:'Death',abandoned:'Abandoned',interrupted:'Cut off','in progress':'In progress'}[r.result]||'')}
+// ================= run tracker (always on during play) =================
+var RUN={t0:0,ev:[],items:0,tapes:0,mons:{},deaths:0,rescues:0,result:'in progress',done:false,_:{}};
+function runT(){try{return P.t||0}catch(e){return 0}}
+function event(type,label,auto){var e={rt:runT(),t:REC.on?recTime():null,type:type,label:label};RUN.ev.push(e);if(REC.on&&auto!==false&&e.t!=null)REC.bm.push({t:e.t,name:label,auto:1})}
+function mons(name){if(!RUN.mons[name]){RUN.mons[name]=1;event('monster','Monster spotted: '+name)}}
+var S0=null;
+function track(){if(typeof P=='undefined'||typeof items=='undefined')return;var s=RUN._;
+ var got=0;try{got=items.filter(function(i){return i.got}).length+(typeof AMMO!='undefined'?AMMO.filter(function(a){return a.got}).length:0)}catch(e){}
+ if(S0===null){S0={got:got,cards:P.cards};s.got=got;s.cards=P.cards}
+ if(got>s.got){RUN.items+=got-s.got;event('item','Item picked up',false)}s.got=got;
+ if(P.cards>s.cards){RUN.tapes+=P.cards-s.cards;event('tape','VHS tape found')}s.cards=P.cards;
+ try{var chase=(typeof M!='undefined'&&M.state=='chase');if(chase&&!s.chase){var nm=SV.lv>=3&&typeof MP!='undefined'&&MP[SV.lv]?MP[SV.lv].n:'The Boiled One';mons(nm);event('chase',nm+' is chasing you')}s.chase=chase;
+  if(typeof ghost!='undefined'&&ghost.visible&&!s.gh){mons('The Boiled One')}s.gh=typeof ghost!='undefined'&&ghost.visible;
+  if(typeof GR!='undefined'&&GR.on&&!s.gr){mons(['','The Grinner','The Deep Hunter','The Party Ghosts'][GR.k]||'The Grinner')}s.gr=typeof GR!='undefined'&&GR.on;
+  var near=chase&&Math.hypot(M.x-P.x,M.z-P.z)<3.2;if(near&&!s.near&&(!s.nearT||runT()-s.nearT>8)){event('close','Almost caught');s.nearT=runT()}s.near=near;
+  if(P.hide&&!s.hide)event('hide','Hid in a locker',false);s.hide=!!P.hide;
+  if(P.scan&&!s.scan)event('scan','Scanner on',false);s.scan=!!P.scan;
+  if(window.SHROOMS&&SHROOMS.log.length>(s.sh||0)){event('forest','The forest noticed you');s.sh=SHROOMS.log.length}
+  if(P.dead&&!s.dead){RUN.deaths++;RUN.result='died';event('death','Death');endRun()}s.dead=P.dead;
+  if(P.won&&!s.won){RUN.result='escaped';event('escape','Escape');endRun()}s.won=P.won}catch(e){}
+ if(REC.on)REC.meta&&(function(){var m=REC.meta;m.dur=recTime();m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.bm=REC.bm;m.score=score();if(performance.now()-(REC.lastSave||0)>2000){REC.lastSave=performance.now();saveRL()}})();
+ recUI()}
+function score(){try{return ST.score|0}catch(e){return 0}}
+setInterval(track,250);
+// ================= the recorder =================
+var REC={on:false,paused:false,id:null,mr:null,seq:0,size:0,acc:0,t1:0,bm:[],meta:null,kind:'',err:'',stopping:false,auto:1};
+try{var as=localStorage.getItem('brrecauto');if(as!=null)REC.auto=+as}catch(e){}
+var rc=document.createElement('canvas');rc.width=640;rc.height=360;var rx=rc.getContext('2d');
+function recTime(){return REC.acc+(REC.on&&!REC.paused&&REC.t1?(performance.now()-REC.t1)/1000:0)}
+function pickMime(){if(!window.MediaRecorder)return '';var L=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm','video/mp4;codecs=avc1,mp4a','video/mp4'];for(var i=0;i<L.length;i++)try{if(MediaRecorder.isTypeSupported(L[i]))return L[i]}catch(e){}return ''}
+// copy the 3D view into the (small) recording canvas right after each frame is drawn, with a camcorder timestamp
+var oP=window.PFX;window.PFX=function(sc,cm){if(oP)oP(sc,cm);else ren.render(sc,cm);if(REC.on&&!REC.paused){try{var c=ren.domElement,w=c.width,h=c.height,s=Math.max(640/w,360/h),dw=w*s,dh=h*s;rx.drawImage(c,(640-dw)/2,(360-dh)/2,dw,dh);
+ rx.font='bold 15px monospace';rx.fillStyle='rgba(0,0,0,.4)';rx.fillRect(8,332,250,22);rx.fillStyle='#fff';rx.fillText('● REC  LV'+SV.lv+'  '+fmt(recTime()),14,348);
+ if(REC.kind=='snap'){REC.ft=(REC.ft||0)+1;if(performance.now()-(REC.lastF||0)>240){REC.lastF=performance.now();var d=rc.toDataURL('image/jpeg',.55);REC.size+=d.length;putChunk(REC.id,REC.seq++,d)}}
+ if(!REC.meta.thumb&&recTime()>1.5){REC.meta.thumb=thumb();saveRL()}}catch(e){}}};
+function thumb(){var t=document.createElement('canvas');t.width=192;t.height=108;t.getContext('2d').drawImage(rc,0,0,192,108);return t.toDataURL('image/jpeg',.6)}
+var aDest=null;
+function recStart(){if(REC.on)return;try{if(!PHN.ing){toast('Recording only works during a run.');return}}catch(e){}
+ REC.id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);REC.seq=0;REC.size=0;REC.acc=0;REC.t1=performance.now();REC.bm=RUN.ev.length?[]:[];REC.err='';REC.paused=false;REC.lastF=0;
+ var mime=pickMime(),num=(+localStorage.getItem('brrecn')||0)+1;try{localStorage.setItem('brrecn',num)}catch(e){}
+ REC.meta={id:REC.id,num:num,name:'',ts:Date.now(),lv:SV.lv,levels:[SV.lv],dur:0,result:'in progress',items:0,tapes:0,monsters:[],score:0,kind:mime?'video':'snap',mime:mime,size:0,thumb:'',bm:REC.bm,fav:0,status:'rec'};
+ REC.kind=REC.meta.kind;RL.unshift(REC.meta);
+ if(!saveRL()){RL.shift();toast('Not enough space to start recording. Delete some files in IMAGES.');return}
+ REC.on=true;try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+ if(mime){try{var st=rc.captureStream(24);try{if(typeof AC!='undefined'&&AC&&master){if(!aDest){aDest=AC.createMediaStreamDestination();master.connect(aDest)}var at=aDest.stream.getAudioTracks()[0];if(at)st.addTrack(at)}}catch(e){}
+   var mr=new MediaRecorder(st,{mimeType:mime,videoBitsPerSecond:1100000,audioBitsPerSecond:64000});REC.mr=mr;
+   mr.ondataavailable=function(e){if(!e.data||!e.data.size)return;REC.size+=e.data.size;if(REC.meta)REC.meta.size=REC.size;REC.pend=(REC.pend||0)+1;putChunk(mr._id,mr._seq++,e.data,function(ok){REC.pend--;if(!ok){REC.err='Could not save part of the recording (storage full?).'}})};
+   mr._id=REC.id;mr._seq=0;mr.onerror=function(){REC.err='The recorder stopped unexpectedly.';recStop()};mr.start(1000)}
+  catch(e){REC.kind=REC.meta.kind='snap';REC.meta.note='Snapshot recording (video recording was not available).'}}
+ else REC.meta.note='Snapshot recording: this device cannot record video, so pictures were saved 4 times a second (no sound).';
+ RUN.ev.forEach(function(){});toast('Recording started');recUI()}
+function recPause(){if(!REC.on||REC.paused)return;REC.acc=recTime();REC.paused=true;REC.t1=0;try{REC.mr&&REC.mr.state=='recording'&&REC.mr.pause()}catch(e){}recUI()}
+function recResume(){if(!REC.on||!REC.paused)return;REC.paused=false;REC.t1=performance.now();try{REC.mr&&REC.mr.state=='paused'&&REC.mr.resume()}catch(e){}recUI()}
+// stop: flush the last piece, then cb(meta)
+function recStop(cb){if(!REC.on){cb&&cb(REC.last||null);return}var m=REC.meta;m.dur=recTime();REC.acc=m.dur;REC.on=false;REC.paused=false;m.status='stopped';m.result=RUN.result;if(RUN.result=='escaped')m.levels=[m.lv,m.lv+1];m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.score=score();if(!m.thumb)try{m.thumb=thumb()}catch(e){}
+ REC.last=m;var t0=performance.now(),done=function(){if((REC.pend||0)>0&&performance.now()-t0<4000){setTimeout(done,60);return}m.size=REC.size;saveRL();recUI();cb&&cb(m)};
+ if(REC.mr&&REC.mr.state!='inactive'){REC.stopping=true;REC.mr.onstop=function(){REC.stopping=false;setTimeout(done,60)};try{REC.mr.stop()}catch(e){done()}}else done();REC.mr=null}
+function recSave(m,name){m.name=(name||'').trim()||defName(m);m.status='done';m.saved=1;saveRL();REC.last=null}
+function recDiscard(m){RL=RL.filter(function(r){return r.id!=m.id});saveRL();delChunks(m.id);REC.last=null}
+function toast(t){try{say(t,2.5)}catch(e){}}
+var ind=document.getElementById('rec-ind'),indT=document.getElementById('rec-t');
+function recUI(){ind.style.display=REC.on?'flex':'none';ind.classList.toggle('pz',REC.paused);ind.children[1].textContent=REC.paused?'PAUSED':'REC';indT.textContent=fmt(recTime());
+ if(REC.on&&recTime()>30*60){toast('Recording reached 30 minutes and was stopped.');recStop(function(m){if(m)recSave(m)})}
+ if(REC.on&&REC.size>300*1048576&&!REC.big){REC.big=1;toast('This recording is over 300 MB. Consider stopping it.')}
+ if(PHN&&PHN.scr=='rec'&&mp.style.display=='flex'&&Date.now()-(recUI.l||0)>500){recUI.l=Date.now();var t=document.getElementById('rc-live');if(t)t.textContent=REC.on?(REC.paused?'PAUSED':'RECORDING')+' · '+fmt(recTime())+' · '+mb(REC.size):'Not recording'}}
+// ================= RUN COMPLETE =================
+var RC=document.getElementById('runc'),RCB=document.getElementById('runc-b');
+function endRun(){if(RUN.done)return;RUN.done=true;var was=REC.on;
+ var show=function(m){var st=[['Time survived',fmt(runT())],['Levels visited',(RUN.result=='escaped'?'Level '+SV.lv+' → Level '+(SV.lv+1):'Level '+SV.lv)+' ('+lvName(SV.lv)+')'],['Items collected',RUN.items],['VHS tapes found',RUN.tapes],['Monsters encountered',Object.keys(RUN.mons).join(', ')||'none'],['Deaths / rescues',RUN.deaths+' / '+RUN.rescues],['Final score',score()],['Escape status',RUN.result=='escaped'?'ESCAPED':RUN.result=='died'?'DIED':RUN.result]];
+  var base={id:m?m.id:'s'+Date.now().toString(36),num:m?m.num:(+localStorage.getItem('brrecn')||0)+1,lv:SV.lv,result:RUN.result};var dn=m?defName(m):'Run '+base.num+' — Level '+SV.lv+' '+(RUN.result=='escaped'?'Escape':'Death');
+  RCB.innerHTML='<h2>RUN COMPLETE</h2><table>'+st.map(function(r){return '<tr><td>'+r[0]+'</td><td style="text-align:right;color:#dfd">'+esc(r[1])+'</td></tr>'}).join('')+'</table>'+
+   (m?'<div style="color:#ff8;margin-bottom:6px">'+(REC.auto?'Your recording ('+fmt(m.dur)+', '+mb(m.size)+') is ready to save.':'A recording ('+fmt(m.dur)+') was running.')+'</div>':'<div style="opacity:.7;margin-bottom:6px">No recording was running. Start one from the phone’s RECORDER app next time.</div>')+
+   'Name:<input id="rc-name" maxlength="60" value="'+esc(dn)+'">'+
+   '<div class="b'+(m?'':' dis')+'" data-rc="video" style="'+(m?'border-color:#7f7;color:#fff':'')+'">💾 SAVE RECORDING</div><div class="b" data-rc="sum">📄 SAVE SUMMARY ONLY</div><div class="b" data-rc="drop">🗑 DISCARD</div>'+(REC.err?'<div style="color:#f99">'+esc(REC.err)+' The run summary is still kept.</div>':'');
+  RC.style.display='flex';RC._m=m;RC._base=base;
+  // autosave: if the player never chooses, the recording is still saved
+  if(m&&REC.auto){recSave(m,dn);m.status='done'}};
+ setTimeout(function(){if(was){RCB.innerHTML='<h2>RUN COMPLETE</h2><div>Saving the last part of your recording…</div>';RC.style.display='flex';recStop(function(m){show(m)})}else show(null)},RUN.result=='died'?2600:1200)}
+RC.addEventListener('click',function(e){var a=e.target.closest('[data-rc]');if(!a)return;e.stopPropagation();var k=a.dataset.rc,m=RC._m,nm=(document.getElementById('rc-name')||{}).value;
+ if(k=='video'&&m){recSave(m,nm);toast('Recording saved to IMAGES')}
+ else if(k=='sum'){if(m){m.kind='summary';m.size=0;delChunks(m.id);recSave(m,nm)}else{var s=summaryRec(nm);RL.unshift(s);saveRL()}toast('Run summary saved to IMAGES')}
+ else if(k=='drop'){if(m)recDiscard(m)}
+ RC.style.display='none'},true);
+RC.addEventListener('pointerdown',function(e){e.stopPropagation()},true);
+function summaryRec(nm){var b=RC._base;return {id:b.id,num:b.num,name:(nm||'').trim()||('Run '+b.num+' — Level '+SV.lv+' '+(RUN.result=='escaped'?'Escape':'Death')),ts:Date.now(),lv:SV.lv,levels:RUN.result=='escaped'?[SV.lv,SV.lv+1]:[SV.lv],dur:runT(),result:RUN.result,items:RUN.items,tapes:RUN.tapes,monsters:Object.keys(RUN.mons),score:score(),kind:'summary',size:0,thumb:'',bm:RUN.ev.filter(function(e){return ['monster','chase','close','tape','death','escape','forest'].indexOf(e.type)>=0}).map(function(e){return {t:e.rt,name:e.label,auto:1}}),fav:0,status:'done',saved:1}}
+// ================= photos: no duplicates, favourites, names =================
+var oAct=phAct;phAct=function(a){if(a=='savep'&&CAM.shot&&typeof PHT!='undefined'&&PHT.some(function(p){return p.img===CAM.shot})){toast('That photo is already in IMAGES.');CAM.shot=null;PHN.scr='img';G.tab='photos';phScr();return}
+ if(a=='app:img'){G.view='list'}var out=oAct.apply(this,arguments);if(a=='savep'&&PHN.scr=='files'){PHN.scr='img';G.tab='photos';G.view='list';phScr()}return out};
+function savePhotos(){try{return ls_('brph',PHT)}catch(e){return false}}
+// ================= the IMAGES app =================
+var G=window.GALLERY={tab:'photos',view:'list',q:'',sort:'new',sel:null,confirm:null,REC:REC,RUN:RUN,RL:function(){return RL},recStart:recStart,recStop:recStop,recPause:recPause,recResume:recResume,recSave:recSave,getChunks:getChunks};
+APPS.push(['🖼 IMAGES','img'],['⏺ RECORDER','rec']);
+function root(){var ph=mp.querySelector('.ph');return ph?ph.children[1]:null}
+function title(t){try{var tt=mp.querySelector('.ph>div:first-child span:nth-child(2)');if(tt)tt.textContent=t;var tb=mp.querySelector('.ph>div:first-child span:nth-child(3)');if(tb)tb.textContent='$'+CASH.bal}catch(e){}}
+function items0(){var L=[];
+ if(G.tab!='runs')(PHT||[]).forEach(function(p){if(G.tab=='fav'&&!p.fav)return;L.push({k:'p',id:p.id,ts:p.ts||p.id,lv:p.lv,name:p.name||p.cap||'Photo L'+p.lv,img:p.img,fav:p.fav,sub:'★'.repeat(p.rate||0),type:'photo'})});
+ if(G.tab!='photos')RL.forEach(function(r){if(r.status=='rec'&&r.id!=REC.id)return;if(G.tab=='fav'&&!r.fav)return;if(r.status!='done'&&r.id!=REC.id)return;L.push({k:'r',id:r.id,ts:r.ts,lv:r.lv,name:r.name||(r.id==REC.id?'Recording…':defName(r)),img:r.thumb,fav:r.fav,dur:r.dur,type:r.kind,res:r.result,live:r.id==REC.id&&REC.on})});
+ var q=G.q.trim().toLowerCase();if(q)L=L.filter(function(x){return (x.name+' level '+x.lv+' '+lvName(x.lv)+' '+x.type+' '+(x.res||'')).toLowerCase().indexOf(q)>=0});
+ L.sort(function(a,b){return G.sort=='old'?a.ts-b.ts:G.sort=='lv'?(a.lv-b.lv)||(b.ts-a.ts):G.sort=='type'?(a.type<b.type?-1:a.type>b.type?1:b.ts-a.ts):b.ts-a.ts});return L}
+function stor(){var used=lsBytes(),vid=RL.reduce(function(a,r){return a+(r.kind!='summary'?(r.size||0):0)},0);var q=EST.q,u=EST.u;
+ return '<div class="stor">Storage: photos & data '+mb(used)+' of ~5 MB · recordings '+mb(vid)+(q?' · device '+mb(u)+' used of '+mb(q)+' available':'')+'<div class="bar"><i style="width:'+Math.min(100,used/50000)+'%"></i></div></div>'}
+function list(){var L=items0();
+ var h='<div class="gw"><h3>IMAGES</h3><div class="tabs"><span class="b'+(G.tab=='photos'?' on':'')+'" data-g="tab:photos">📷 PHOTOS</span><span class="b'+(G.tab=='runs'?' on':'')+'" data-g="tab:runs">🎞 RUN RECORDINGS</span><span class="b'+(G.tab=='fav'?' on':'')+'" data-g="tab:fav">★ FAVORITES</span></div>'+
+  '<input type="text" id="g-q" placeholder="Search: level, name, caption…" value="'+esc(G.q)+'"><select id="g-s"><option value="new"'+(G.sort=='new'?' selected':'')+'>Newest first</option><option value="old"'+(G.sort=='old'?' selected':'')+'>Oldest first</option><option value="lv"'+(G.sort=='lv'?' selected':'')+'>By level</option><option value="type"'+(G.sort=='type'?' selected':'')+'>By file type</option></select>';
+ if(!L.length)h+='<div style="opacity:.7;margin:12px 0">'+(G.q?'Nothing matches “'+esc(G.q)+'”.':G.tab=='photos'?'No photos yet. Take some with the CAMERA app.':G.tab=='runs'?'No recordings yet. Use the RECORDER app during a run.':'No favorites yet. Tap ★ on a photo or recording.')+'</div>';
+ h+='<div class="grid">'+L.map(function(x){return '<div class="card" data-g="open:'+x.k+':'+x.id+'">'+(x.img?'<img src="'+x.img+'" alt="">':'<div class="ph0">'+(x.type=='summary'?'📄':'🎞')+'</div>')+(x.fav?'<span class="fav">★</span>':'')+(x.dur!=null?'<span class="dur">'+(x.live?'● ':'')+fmt(x.dur)+'</span>':'')+(x.type=='snap'?'<span class="rp">SNAPSHOTS</span>':x.type=='summary'?'<span class="rp">SUMMARY</span>':'')+'<div class="meta"><b>'+esc(x.name)+'</b>'+fdate(x.ts)+' · L'+x.lv+(x.sub?' '+x.sub:'')+(x.res?' · '+x.res:'')+'</div></div>'}).join('')+'</div>'+stor()+'</div>';return h}
+function photoView(p){var cf=G.confirm=='p'+p.id;
+ return '<div class="gw"><div class="row"><span class="b" data-g="back">◀ GALLERY</span><span class="b" data-g="pfull">⛶ FULL SCREEN</span><span class="b" data-g="pfav">'+(p.fav?'★ FAVORITE':'☆ ADD TO FAVORITES')+'</span></div><img src="'+p.img+'" style="width:100%;border:1px solid #1d5a28;margin:4px 0;cursor:zoom-in" data-g="pfull">'+
+  'Name<input type="text" id="p-name" maxlength="50" value="'+esc(p.name||'')+'" placeholder="Photo L'+p.lv+'">Caption<input type="text" id="p-cap" maxlength="80" value="'+esc(p.cap||'')+'">'+
+  '<div class="stars">Rating '+[1,2,3,4,5].map(function(i){return '<span class="'+(i<=(p.rate||0)?'on':'')+'" data-g="prate:'+i+'">★</span>'}).join('')+'</div>'+
+  '<table><tr><td>Taken</td><td>'+fdate(p.ts||p.id)+'</td></tr><tr><td>Level</td><td>'+p.lv+' — '+esc(lvName(p.lv))+'</td></tr><tr><td>Outfit</td><td>'+esc(p.suit||'—')+(p.acc&&p.acc.length?' + '+esc(p.acc.join(', ')):'')+'</td></tr>'+(p.rev?'<tr><td>Review</td><td>'+esc(p.rev)+'</td></tr>':'')+'</table>'+
+  '<span class="b" data-g="psave">✔ SAVE CHANGES</span> '+(cf?'<div class="warn">Delete this photo forever?<br><span class="b red" data-g="pdel">YES, DELETE</span> <span class="b" data-g="nodel">KEEP IT</span></div>':'<span class="b red" data-g="pask">🗑 DELETE</span>')+'</div>'}
+// ---------- playback ----------
+var PL=null;
+function runView(r){var cf=G.confirm=='r'+r.id,vid=r.kind=='video'||r.kind=='snap';
+ var h='<div class="gw"><div class="row"><span class="b" data-g="back">◀ GALLERY</span><span class="b" data-g="rfav">'+(r.fav?'★ FAVORITE':'☆ FAVORITE')+'</span></div>';
+ if(vid)h+='<div id="pl-host"></div>';else h+='<div class="warn" style="color:#9f9;border-color:#2f8f3f;background:#031006">RUN SUMMARY ONLY — no video was saved for this run.</div>';
+ h+='Name<input type="text" id="r-name" maxlength="60" value="'+esc(r.name||defName(r))+'"><span class="b" data-g="rsave">✔ RENAME</span>'+
+  '<table><tr><td>Date</td><td>'+fdate(r.ts)+'</td></tr><tr><td>Levels</td><td>'+(r.levels||[r.lv]).map(function(l){return l+' '+lvName(l)}).join(' → ')+'</td></tr><tr><td>Duration</td><td>'+fmt(r.dur)+'</td></tr><tr><td>Result</td><td>'+esc((r.result||'').toUpperCase())+'</td></tr><tr><td>Items collected</td><td>'+(r.items|0)+'</td></tr><tr><td>VHS tapes</td><td>'+(r.tapes|0)+'</td></tr><tr><td>Monsters</td><td>'+esc((r.monsters||[]).join(', ')||'none')+'</td></tr><tr><td>Teammates rescued</td><td>0 (solo)</td></tr><tr><td>Score</td><td>'+(r.score|0)+'</td></tr>'+(r.kind!='summary'?'<tr><td>File</td><td>'+(r.kind=='snap'?'Snapshot recording':'Video '+(r.mime||'').split(';')[0])+' · '+mb(r.size||0)+'</td></tr>':'')+(r.note?'<tr><td colspan=2 style="color:#ffcf6a">'+esc(r.note)+'</td></tr>':'')+'</table>'+
+  '<div style="margin-top:6px"><b>Bookmarks</b> <small class="dim">(orange = suggested automatically)</small></div><div id="bm-list">'+bmList(r)+'</div>'+
+  (vid?'<div class="row" style="margin-top:4px"><select id="bm-pre" style="width:auto;flex:1"><option>Monster spotted</option><option>Almost caught</option><option>Secret discovered</option><option>VHS tape found</option><option>Teammate rescued</option><option>Escape</option><option value="">Custom name…</option></select><input type="text" id="bm-name" placeholder="custom name" style="flex:1;width:auto"><span class="b" data-g="bmadd">＋ BOOKMARK</span></div>':'')+
+  '<div style="margin-top:8px">'+(cf?'<div class="warn">Delete this recording forever?<br><span class="b red" data-g="rdel">YES, DELETE</span> <span class="b" data-g="nodel">KEEP IT</span></div>':'<span class="b red" data-g="rask">🗑 DELETE</span>')+'</div></div>';return h}
+function bmList(r){var B=(r.bm||[]).slice().sort(function(a,b){return a.t-b.t});if(!B.length)return '<div class="dim">No bookmarks yet.</div>';return B.map(function(b,i){return '<div class="row" style="justify-content:space-between"><span class="b" data-g="bmgo:'+b.t+'" style="color:'+(b.auto?'#ff9a7a':'#ffd84a')+'">'+fmt(b.t)+' '+esc(b.name)+'</span>'+(r.kind!='summary'?'':'')+'<span class="b red" data-g="bmdel:'+(r.bm.indexOf(b))+'">✕</span></div>'}).join('')}
+// a player that works for both real video and snapshot recordings
+function Player(r,host){var self=this;this.r=r;this.dur=r.dur||0;this.rate=1;this.rew=null;host.innerHTML='<div class="vp"><span class="lbl">'+(r.kind=='snap'?'SNAPSHOT RECORDING':'RECORDED VIDEO')+'</span>'+(r.kind=='snap'?'<img class="snap" alt="">':'<video playsinline preload="auto"></video>')+'</div><div class="tl"><input type="range" min="0" max="1000" value="0" class="pl-t">'+(r.bm||[]).map(function(b){return '<span class="bm'+(b.auto?' a':'')+'" style="left:'+(self.dur?Math.min(100,b.t/self.dur*100):0)+'%"></span>'}).join('')+'</div><div class="row" style="justify-content:space-between;font-size:11px"><span class="pl-c">0:00</span><span>'+fmt(this.dur)+'</span></div>'+
+ '<div class="pc"><span class="b" data-pl="b10">⟲10</span><span class="b" data-pl="rew">⏪</span><span class="b" data-pl="play">▶</span><span class="b" data-pl="ff">⏩</span><span class="b" data-pl="f10">10⟳</span><span class="b" data-pl="s.5">0.5x</span><span class="b on" data-pl="s1">1x</span><span class="b" data-pl="s2">2x</span><span class="b" data-pl="full">⛶</span></div><div class="pl-msg" style="color:#ffcf6a;font-size:11px"></div>';
+ this.host=host;this.t=0;this.playing=false;this.ready=false;
+ var msg=host.querySelector('.pl-msg');msg.textContent='Loading recording…';
+ getChunks(r.id,function(ch){if(!ch.length){msg.textContent='This recording’s video could not be found (it may have been cleared by the browser). The run summary is still here.';return}
+  if(r.kind=='snap'){self.frames=ch;self.img=host.querySelector('img');self.fps=self.frames.length/Math.max(.1,self.dur);self.show(0);self.ready=true;msg.textContent=''}
+  else{var blob=new Blob(ch,{type:(r.mime||'video/webm').split(';')[0]});self.url=URL.createObjectURL(blob);var v=self.v=host.querySelector('video');v.src=self.url;
+   var fin=function(){if(self.ready)return;self.ready=true;msg.textContent='';try{v.currentTime=self.pend!=null?self.pend:0}catch(e){}self.pend=null;if(self.wantPlay)self.play(true)};
+   v.addEventListener('loadedmetadata',function(){if(!isFinite(v.duration)){v.currentTime=1e7;var f=function(){if(isFinite(v.duration)){v.removeEventListener('durationchange',f);v.removeEventListener('timeupdate',f);fin()}};v.addEventListener('durationchange',f);v.addEventListener('timeupdate',f);setTimeout(fin,2500)}else fin()});
+   v.addEventListener('error',function(){msg.textContent='The video could not be played on this device.'})}});
+ host.addEventListener('click',function(e){var a=e.target.closest('[data-pl]');if(!a)return;e.stopPropagation();self.cmd(a.dataset.pl)});
+ var tl=host.querySelector('.pl-t');tl.addEventListener('input',function(){self.seek(tl.value/1000*self.dur);self.drag=true});tl.addEventListener('change',function(){self.drag=false});
+ this.tick=setInterval(function(){self.upd()},100)}
+Player.prototype.cur=function(){if(this.v&&!this.ready)return this.pend||0;return this.v?Math.min(this.v.currentTime,this.dur||this.v.currentTime):this.t};
+Player.prototype.show=function(t){if(!this.frames)return;var i=Math.max(0,Math.min(this.frames.length-1,Math.floor(t*this.fps)));if(this.img&&this.img._i!==i){this.img.src=this.frames[i];this.img._i=i}};
+Player.prototype.seek=function(t){t=Math.max(0,Math.min(this.dur,t));if(this.v){if(!this.ready){this.pend=t}else try{this.v.currentTime=t}catch(e){}}else{this.t=t;this.show(t)}this.upd()};
+Player.prototype.play=function(on){this.playing=on;if(this.v&&!this.ready){this.wantPlay=on;this.mark();return}if(this.v){if(on){var p=this.v.play();p&&p.catch&&p.catch(function(){})}else this.v.pause()}this.last=performance.now();this.mark()};
+Player.prototype.speed=function(s){this.rate=s;if(this.v)this.v.playbackRate=s;this.host.querySelectorAll('[data-pl^="s"]').forEach(function(b){b.classList.toggle('on',b.dataset.pl=='s'+(s==.5?'.5':s))})};
+Player.prototype.mark=function(){var b=this.host.querySelector('[data-pl="play"]');if(b)b.textContent=this.playing?'❚❚':'▶'};
+Player.prototype.cmd=function(c){var self=this;if(c=='play')this.play(!this.playing);else if(c=='b10')this.seek(this.cur()-10);else if(c=='f10')this.seek(this.cur()+10);
+ else if(c=='rew'){if(this.rew){clearInterval(this.rew);this.rew=null}else{this.play(false);this.rew=setInterval(function(){var t=self.cur()-.5;self.seek(t);if(t<=0){clearInterval(self.rew);self.rew=null}},100)}}
+ else if(c=='ff'){if(this.rate>2){this.speed(1)}else{this.speed(4);this.play(true)}}
+ else if(c=='s.5')this.speed(.5);else if(c=='s1')this.speed(1);else if(c=='s2')this.speed(2);else if(c=='full')full(this)};
+Player.prototype.upd=function(){var now=performance.now();if(!this.v&&this.playing&&this.frames){this.t+=(now-(this.last||now))/1000*this.rate;if(this.t>=this.dur){this.t=this.dur;this.playing=false;this.mark()}this.show(this.t)}this.last=now;
+ if(this.v&&this.v.ended&&this.playing){this.playing=false;this.mark()}var c=this.cur(),tl=this.host.querySelector('.pl-t');if(tl&&!this.drag)tl.value=this.dur?Math.round(c/this.dur*1000):0;var cl=this.host.querySelector('.pl-c');if(cl)cl.textContent=fmt(c)};
+Player.prototype.kill=function(){clearInterval(this.tick);if(this.rew)clearInterval(this.rew);if(this.v)this.v.pause();if(this.url)URL.revokeObjectURL(this.url)};
+var FULL=document.getElementById('vp-full');
+function full(pl){var holder=pl.host.parentNode,ph=document.createComment('pl');holder.replaceChild(ph,pl.host);FULL.innerHTML='';FULL.appendChild(pl.host);var x=document.createElement('div');x.className='b';x.style.cssText='margin-top:8px;border:1px solid #2f8f3f;padding:8px 14px;cursor:pointer;color:#9f9';x.textContent='✕ EXIT FULL SCREEN';FULL.appendChild(x);FULL.style.display='flex';
+ try{FULL.requestFullscreen&&FULL.requestFullscreen().catch(function(){})}catch(e){}
+ var out=function(){try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}FULL.style.display='none';if(ph.parentNode)ph.parentNode.replaceChild(pl.host,ph);document.removeEventListener('fullscreenchange',fc)};var fc=function(){if(!document.fullscreenElement&&FULL.style.display=='flex')out()};
+ x.onclick=out;document.addEventListener('fullscreenchange',fc)}
+function photoFull(p){FULL.innerHTML='<img src="'+p.img+'" style="max-width:100%;max-height:calc(100vh - 80px);border:1px solid #2f8f3f"><div style="margin:6px 0">'+esc(p.name||p.cap||'')+'</div><div class="b" style="border:1px solid #2f8f3f;padding:8px 14px;cursor:pointer" id="pf-x">✕ CLOSE</div>';FULL.style.display='flex';try{FULL.requestFullscreen&&FULL.requestFullscreen().catch(function(){})}catch(e){}
+ document.getElementById('pf-x').onclick=function(){try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}FULL.style.display='none'}}
+// ---------- recorder app ----------
+function recView(){var m=REC.last;
+ var h='<div class="gw"><h3>⏺ RUN RECORDER</h3><div id="rc-live" style="font-size:14px;color:'+(REC.on?'#ff7a6a':'#9f9')+';margin:4px 0">'+(REC.on?(REC.paused?'PAUSED':'RECORDING')+' · '+fmt(recTime())+' · '+mb(REC.size):'Not recording')+'</div>';
+ if(!PHN.ing&&!REC.on&&!m)h+='<div class="warn" style="color:#ffcf6a;border-color:#a80;background:#1a1204">Start a run first. The recorder captures your first-person view and game sound while you play.</div>';
+ if(m&&!REC.on)h+='<div style="color:#ff8">Recording stopped: '+fmt(m.dur)+' · '+mb(m.size)+'</div>Name<input type="text" id="rc-nm" maxlength="60" value="'+esc(defName(Object.assign({},m,{result:RUN.result})))+'">'+(m.size>100*1048576?'<div class="warn">This file is large ('+mb(m.size)+'). Make sure you have space.</div>':'')+'<span class="b big" data-g="rsavenew">💾 SAVE RUN</span><span class="b big red" data-g="rdropnew">🗑 DISCARD</span>';
+ else{h+='<span class="b big'+(REC.on||!PHN.ing?' dis':'')+'" data-g="rstart">● START RECORDING</span>'+
+  (REC.on?(REC.paused?'<span class="b big" data-g="rresume">▶ RESUME RECORDING</span>':'<span class="b big" data-g="rpause">❚❚ PAUSE RECORDING</span>')+'<span class="b big red" data-g="rstop">■ STOP RECORDING</span>':'')}
+ h+='<div style="margin-top:8px" class="row"><span class="b'+(REC.auto?' on':'')+'" data-g="rauto">'+(REC.auto?'☑':'☐')+' Auto-save when I die or escape</span></div>'+
+  '<div class="dim" style="margin-top:6px;font-size:11px">Records only the game’s first-person view and game sound — never anything else on your screen or device. Recording keeps going while you use the phone, scanner or map. Pausing the recording does not pause the game. Max 30 minutes per recording. Voice chat is not recorded (this build has no multiplayer).</div>'+stor()+'<span class="b" data-g="goimg" style="margin-top:6px">🖼 OPEN IMAGES</span></div>';return h}
+// ---------- rendering + actions ----------
+function render(){var r=root();if(!r)return;if(PL&&(G.view!='run')){PL.kill();PL=null}
+ if(PHN.scr=='img'){title('IMAGES');var h;
+  if(G.view=='photo'){var p=(PHT||[]).find(function(x){return String(x.id)==String(G.sel)});if(!p){G.view='list';return render()}h=photoView(p)}
+  else if(G.view=='run'){var rr=RL.find(function(x){return x.id==G.sel});if(!rr){G.view='list';return render()}h=runView(rr)}
+  else h=list();r.innerHTML=h;
+  if(G.view=='list'){var q=document.getElementById('g-q');q.oninput=function(){G.q=q.value;var pos=q.selectionStart;render();var q2=document.getElementById('g-q');q2.focus();try{q2.setSelectionRange(pos,pos)}catch(e){}};document.getElementById('g-s').onchange=function(e){G.sort=e.target.value;render()}}
+  if(G.view=='run'){var rr2=RL.find(function(x){return x.id==G.sel});var host=document.getElementById('pl-host');if(host&&rr2){if(PL)PL.kill();PL=new Player(rr2,host)}}}
+ else if(PHN.scr=='rec'){title('RECORDER');r.innerHTML=recView()}}
+var oScr=phScr;phScr=function(){oScr.apply(this,arguments);if(PHN.scr=='img'||PHN.scr=='rec'){render();if(!render.est){render.est=1;estimate(function(){render.est=0;if(PHN.scr=='img'||PHN.scr=='rec'){var s=mp.querySelector('.gw .stor');if(s)s.outerHTML=stor()}})}}};
+mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-g]');if(!a)return;e.stopPropagation();var v=a.dataset.g,k=v.split(':')[0],arg=v.slice(k.length+1);
+ var P0=(PHT||[]).find(function(x){return String(x.id)==String(G.sel)}),R0=RL.find(function(x){return x.id==G.sel});
+ if(k=='tab'){G.tab=arg;G.view='list'}
+ else if(k=='open'){var t=arg.split(':');G.sel=t[1];G.view=t[0]=='p'?'photo':'run';G.confirm=null}
+ else if(k=='back'){G.view='list';G.confirm=null}
+ else if(k=='pfull'&&P0){photoFull(P0);return}
+ else if(k=='pfav'&&P0){P0.fav=P0.fav?0:1;savePhotos();mp.querySelectorAll('[data-g="pfav"]').forEach(function(b){if(b.tagName!='IMG')b.textContent=P0.fav?'★ FAVORITE':'☆ ADD TO FAVORITES'});return}
+ else if(k=='prate'&&P0){P0.rate=+arg;savePhotos();mp.querySelectorAll('[data-g^="prate:"]').forEach(function(sp){sp.classList.toggle('on',+sp.dataset.g.split(':')[1]<=P0.rate)});return}
+ else if(k=='psave'&&P0){P0.name=document.getElementById('p-name').value.trim();P0.cap=document.getElementById('p-cap').value.trim();savePhotos();toast('Photo updated')}
+ else if(k=='pask'){G.confirm='p'+G.sel}else if(k=='nodel'){G.confirm=null}
+ else if(k=='pdel'&&P0){PHT=PHT.filter(function(x){return x!==P0});savePhotos();G.view='list';G.confirm=null;toast('Photo deleted')}
+ else if(k=='rfav'&&R0){R0.fav=R0.fav?0:1;saveRL();a.textContent=R0.fav?'★ FAVORITE':'☆ FAVORITE';return}
+ else if(k=='rsave'&&R0){R0.name=document.getElementById('r-name').value.trim()||defName(R0);saveRL();toast('Renamed')}
+ else if(k=='rask'){G.confirm='r'+G.sel}
+ else if(k=='rdel'&&R0){if(R0.id==REC.id&&REC.on){toast('Stop the recording first.');return}RL=RL.filter(function(x){return x!==R0});saveRL();delChunks(R0.id);G.view='list';G.confirm=null;toast('Recording deleted')}
+ else if(k=='bmgo'){if(PL){PL.seek(+arg)}return}
+ else if(k=='bmdel'&&R0){R0.bm.splice(+arg,1);saveRL();var l=document.getElementById('bm-list');if(l)l.innerHTML=bmList(R0);return}
+ else if(k=='bmadd'&&R0&&PL){var nm=document.getElementById('bm-name').value.trim()||document.getElementById('bm-pre').value||'Bookmark';R0.bm=R0.bm||[];var b={t:Math.round(PL.cur()*10)/10,name:nm,auto:0};R0.bm.push(b);saveRL();document.getElementById('bm-list').innerHTML=bmList(R0);var tl=mp.querySelector('.tl');if(tl&&PL.dur){var mk=document.createElement('span');mk.className='bm';mk.style.left=Math.min(100,b.t/PL.dur*100)+'%';tl.appendChild(mk)}document.getElementById('bm-name').value='';toast('Bookmark added');return}
+ else if(k=='rstart'){recStart()}else if(k=='rpause'){recPause()}else if(k=='rresume'){recResume()}
+ else if(k=='rstop'){recStop(function(){render()});return}
+ else if(k=='rsavenew'&&REC.last){var m=REC.last;recSave(m,(document.getElementById('rc-nm')||{}).value);toast('Saved to IMAGES')}
+ else if(k=='rdropnew'&&REC.last){recDiscard(REC.last);toast('Recording discarded')}
+ else if(k=='rauto'){REC.auto=REC.auto?0:1;try{localStorage.setItem('brrecauto',REC.auto)}catch(e){}}
+ else if(k=='goimg'){PHN.scr='img';G.tab='runs';G.view='list';phScr();return}
+ render()},true);
 })();
 </script>
 <!-- ===== SAVE FILE PICKER ===== -->
