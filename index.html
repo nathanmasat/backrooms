@@ -257,7 +257,7 @@ addEventListener('keydown',e=>{K[e.code]=1;if(!started)return;
 if(e.code=='Tab'){e.preventDefault();$('sb').style.display='block'}if(e.code=='KeyT'&&P.bat>0)P.fl=!P.fl;if(e.code=='KeyQ'&&P.bat>0){P.scan=!P.scan;RB.t=0}if(e.code=='KeyM')MAPON=!MAPON;if(e.code=='KeyE'&&ePress())return;if(e.code=='KeyR'){if(GUN.eq)reload();else phoneOpen()}if(e.code=='KeyP')phoneOpen();if(e.code=='KeyI'&&!P.hide)invP();if(e.code=='KeyV'&&VM.on)micOff();
 if(e.code=='KeyF'&&interact())return;if(e.code=='KeyF'&&ventNear()>=0){crawl();return}if(e.code=='KeyF'&&!P.hide&&elNear()){if(P.cards>=CF.k)elevP();return}if(e.code=='KeyF'){if(P.hide){P.hide=null;$('vig').className='';P.x=P.hx;P.z=P.hz}else{const l=lockers.find(l=>Math.hypot(l.position.x-P.x,l.position.z-P.z)<2.4);if(l){P.hide=l;P.hx=P.x;P.hz=P.z;P.hyaw=l.rotation.y+Math.PI;P.yaw=P.hyaw;P.pit=0;P.x=l.position.x;P.z=l.position.z;$('vig').className='hide';M.knows=M.state=='chase'&&los(M.x,M.z,P.x,P.z)&&Math.hypot(M.x-P.x,M.z-P.z)<14;noise(5)}}}});
 addEventListener('keyup',e=>{K[e.code]=0;if(e.code=='Tab')$('sb').style.display='none'});
-addEventListener('mousemove',e=>{if(document.pointerLockElement&&!(P.para>0)&&!(P.vt>0)){P.yaw-=e.movementX*.0022*SET.sens;if(P.hide)P.yaw=Math.max(P.hyaw-.6,Math.min(P.hyaw+.6,P.yaw));P.pit=Math.max(-1.3,Math.min(1.3,P.pit-e.movementY*.0022*SET.sens*(SET.inv?-1:1)))}});
+addEventListener('mousemove',e=>{if(Math.abs(e.movementX)>300||Math.abs(e.movementY)>300)return;if(document.pointerLockElement&&!(P.para>0)&&!(P.vt>0)){P.yaw-=e.movementX*.0022*SET.sens;if(P.hide)P.yaw=Math.max(P.hyaw-.6,Math.min(P.hyaw+.6,P.yaw));P.pit=Math.max(-1.3,Math.min(1.3,P.pit-e.movementY*.0022*SET.sens*(SET.inv?-1:1)))}});
 $('ov').onclick=()=>{if(P.dead||P.won){location.reload();return}if(!AC)initAudio();AC.resume();ren.domElement.requestPointerLock();$('ov').style.display='none';started=true;say('Find '+CF.k+' '+CF.kn+'. Find the red door.',6)};
 document.addEventListener('pointerlockchange',()=>{if(document.pointerLockElement)window._pl=performance.now();else if(started&&!P.dead&&!P.won&&window._pl&&performance.now()-window._pl>400){started=false;$('pm').style.display='flex'}});
 addEventListener('resize',()=>{ren.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()});
@@ -329,12 +329,22 @@ if(P.hide){mv=0}
 const sprint=!!K.ShiftLeft&&mv&&!cr&&!P.tired&&P.st>0;
 if(sprint)P.st-=15*dt;else P.st=Math.min(100,P.st+(mv?8:14)*dt);if(P.st<=0)P.tired=true;if(P.tired&&P.st>30)P.tired=false;
 const sp2=(cr?1.5:sprint?5.5:3)*(CF.tile||CF.flood?.7:1);
-if(mv){const l=Math.hypot(ix,iz),vx=(fx*iz+rx*ix)/l*sp2*dt,vz=(fz*iz+rz*ix)/l*sp2*dt;if(!blocked(P.x+vx,P.z,.35)&&!fb(P.x+vx,P.z))P.x+=vx;if(!blocked(P.x,P.z+vz,.35)&&!fb(P.x,P.z+vz))P.z+=vz;
-P.stT-=dt;P.bob+=dt*sp2*2.2;if(P.stT<=0){P.stT=cr?.8:sprint?.32:.53;if(AC)step(null,cr?.12:sprint?.5:.3,false);noise(cr?4:sprint?20:9)}}
+// smooth movement: speed ramps up and down instead of snapping; phone stick is analog
+let ax=ix,az=iz;const TMV=window.TOUCHMOVE;if(TMV&&(TMV.x||TMV.y)&&!(P.para>0||P.vt>0||P.sit)){ax=TMV.x;az=-TMV.y;if(P.imp>55&&Math.sin(P.t*.7)>.6)ax=-ax}
+let am=Math.hypot(ax,az);if(P.hide)am=0;if(am>1){ax/=am;az/=am;am=1}
+const tvx=am?(fx*az+rx*ax)/Math.max(am,1e-6)*Math.min(1,am)*sp2:0,tvz=am?(fz*az+rz*ax)/Math.max(am,1e-6)*Math.min(1,am)*sp2:0,acc=1-Math.exp(-(am?11:14)*dt);
+P.vx=(P.vx||0)+(tvx-(P.vx||0))*acc;P.vz=(P.vz||0)+(tvz-(P.vz||0))*acc;if(Math.abs(P.vx)<.01&&!am)P.vx=0;if(Math.abs(P.vz)<.01&&!am)P.vz=0;
+const mvx=P.vx*dt,mvz=P.vz*dt,okM=(x,z)=>!blocked(x,z,.35)&&!fb(x,z);
+if(mvx){if(okM(P.x+mvx,P.z))P.x+=mvx;else{if(okM(P.x+mvx*.5,P.z))P.x+=mvx*.5;P.vx*=.2}}
+if(mvz){if(okM(P.x,P.z+mvz))P.z+=mvz;else{if(okM(P.x,P.z+mvz*.5))P.z+=mvz*.5;P.vz*=.2}}
+const spd=Math.hypot(P.vx,P.vz);P.spd=spd;
+P.bob+=dt*spd*2.2;if(spd>.6){P.stT-=dt;if(P.stT<=0){P.stT=cr?.8:sprint?.32:.53;if(AC)step(null,cr?.12:sprint?.5:.3,false);noise(cr?4:sprint?20:9)}}
 P.imp=Math.max(0,P.imp-.15*dt);if(P.imp>=100)die();if(P.imp>40&&P.para<=0&&R()<dt*(P.imp-40)/700){P.para=1.5+R()*1.5;say('You cannot move.',2)}P.h+=((P.hide?1.55:cr||P.sit?1.0:1.7)-P.h)*dt*8;
 const tl=P.hide?0:((K.KeyX?1:0)-(K.KeyZ?1:0));P.lean+=(tl-P.lean)*dt*6;
 let lx=P.lean*.45;if(blocked(P.x+rx*lx,P.z+rz*lx,.2))lx=0;
-cam.position.set(P.x+rx*lx,P.h+Math.sin(P.bob)*.04*(sprint?2:1),P.z+rz*lx);
+P.ba=(P.ba||0)+(((P.spd||0)>.3?Math.min(1,(P.spd||0)/3)*(sprint?1.7:1):0)-(P.ba||0))*Math.min(1,dt*6);const sw=Math.sin(P.bob*.5)*.014*P.ba;
+cam.position.set(P.x+rx*(lx+sw),P.h+Math.sin(P.bob)*.04*P.ba,P.z+rz*(lx+sw));
+{const tf=75+(sprint&&(P.spd||0)>3.5?6:0);if(Math.abs(cam.fov-tf)>.05){cam.fov+=(tf-cam.fov)*Math.min(1,dt*5);cam.updateProjectionMatrix()}}
 // sanity wobble
 const insane=P.san<50?(50-P.san)/50:0;
 cam.rotation.set(P.pit,P.yaw+Math.sin(P.t*.9)*.01*insane,-P.lean*.14+Math.sin(P.t*.5)*.02*insane);
@@ -2318,11 +2328,11 @@ function tap(code){key(code,1);key(code,0)}
 // ---- joystick (left thumb) ----
 var joy=document.getElementById('tc-joy'),base=document.getElementById('tc-base'),knob=document.getElementById('tc-knob'),jid=null,cx=0,cy=0,MOVE=['KeyW','KeyA','KeyS','KeyD','ShiftLeft'],held={};
 function setMove(w,a,s,d,run){var v={KeyW:w,KeyA:a,KeyS:s,KeyD:d,ShiftLeft:run};MOVE.forEach(function(k){if(!!v[k]!=!!held[k]){held[k]=!!v[k];K[k]=v[k]?1:0}})}
-function home(){base.style.left='';base.style.top='';knob.style.transform='';base.classList.remove('on','run');setMove(0,0,0,0,0)}
+function home(){window.TOUCHMOVE=null;base.style.left='';base.style.top='';knob.style.transform='';base.classList.remove('on','run');setMove(0,0,0,0,0)}
 joy.addEventListener('pointerdown',function(e){if(jid!==null)return;jid=e.pointerId;try{joy.setPointerCapture(jid)}catch(x){}var r=joy.getBoundingClientRect();cx=e.clientX;cy=e.clientY;base.style.left=(cx-r.left)+'px';base.style.top=(cy-r.top)+'px';base.classList.add('on');e.preventDefault()});
 joy.addEventListener('pointermove',function(e){if(e.pointerId!==jid)return;var dx=e.clientX-cx,dy=e.clientY-cy,d=Math.hypot(dx,dy),R=56,m=Math.min(d,R),a=Math.atan2(dy,dx);knob.style.transform='translate('+(Math.cos(a)*m)+'px,'+(Math.sin(a)*m)+'px)';
- if(d<12){setMove(0,0,0,0,0);base.classList.remove('run');return}
- var nx=dx/d,ny=dy/d,run=d>R*1.15;base.classList.toggle('run',run);
+ if(d<12){setMove(0,0,0,0,0);base.classList.remove('run');window.TOUCHMOVE=null;return}
+ var nx=dx/d,ny=dy/d,run=d>R*1.15;base.classList.toggle('run',run);var mg=Math.min(1,(d-12)/(R-12)*1.1+.15);window.TOUCHMOVE={x:nx*mg,y:ny*mg};
  setMove(ny<-.38,nx<-.38,ny>.38,nx>.38,run);e.preventDefault()});
 function jend(e){if(e.pointerId!==jid)return;jid=null;home()}
 joy.addEventListener('pointerup',jend);joy.addEventListener('pointercancel',jend);
