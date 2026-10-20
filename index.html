@@ -3379,6 +3379,9 @@ function runCmd(raw){var line=String(raw||'').trim().slice(0,200);if(!line)retur
  if(c=='spectate'){var tg=(p[1]||'').toLowerCase();if(!inGame())return fail('start a level first');if(tg=='monster'){act('follow');out('Spectating the monster.');return}if(!who(tg))return fail('no player named "'+(p[1]||'')+'"');out('That player is you. Use the free camera (WORLD tab) to look around.');audit('console',line,true,'');return}
  if(c=='reset_level'){act('reset');out('Confirm the reset in the dialog.');return}
  fail('unknown command "'+c+'". Type help.')}
+// ---------------- phone app: only shows up for the account nathen ----------------
+var oPS=phScr;phScr=function(){var me=profileName().toLowerCase()===ADMIN_USER,i=APPS.findIndex(function(q){return q[1]=='adm'});if(me&&i<0)APPS.push(['🛡 ADMIN','adm']);if(!me&&i>=0)APPS.splice(i,1);return oPS.apply(this,arguments)};
+var oPA=phAct;phAct=function(a){if(a=='app:adm'){if(profileName().toLowerCase()!==ADMIN_USER)return;var ing=inGame()&&PHN.ing;try{closeP()}catch(e){}if(ing){ADM.wasStarted=true;try{started=false;document.exitPointerLock()}catch(e){}}show();setTimeout(function(){var u=$a('au');if(u)u.value=ADMIN_USER;var k=$a('ak');if(k)k.focus()},30);return}return oPA.apply(this,arguments)};
 // ---------------- hidden entrance: click the title 5 times, or press ` once logged in ----------------
 var tc=[];try{$a('tt').addEventListener('click',function(){var n=Date.now();tc=tc.filter(function(t){return n-t<2500});tc.push(n);if(tc.length>=5){tc=[];show()}})}catch(e){}
 $a('admbtn').onclick=show;if(authed()){$a('admbtn').style.display='block'}if(ADM.test)$a('admtest').style.display='block';
