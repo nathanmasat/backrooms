@@ -2385,7 +2385,7 @@ var oScr2=phScr;phScr=function(){oScr2.apply(this,arguments);if(PHN.scr!='arc')r
  if(v&&v[0]=='d'){var D=ARC.docs[+v.slice(1)];r.innerHTML='<div class="ch" data-lx="arcback">◀ BACK</div><b>'+esc(D.t)+'</b><br><small>'+esc(lvName(D.lv))+'</small><div style="white-space:pre-wrap;margin-top:8px;background:#f2e8d0;color:#222;padding:8px;font:13px Georgia,serif">'+esc(D.x)+'</div>';return}
  h='<small>VHS tapes and papers left by the Lost Wanderers. Hidden on Levels 10-19.</small><br><br><b>TAPES '+ARC.tapes.length+'/10</b><br>';for(var k=10;k<=19;k++)h+=ARC.tapes.indexOf(k)>=0?'<div class="ch" data-lx="tape:'+k+'" style="margin:4px 0">📼 '+TAPES[k].t+'</div>':'<div style="opacity:.35;margin:4px 0">📼 ??? — hidden on Level '+k+'</div>';
  h+='<br><b>DOCUMENTS '+ARC.docs.length+'</b><br>'+(ARC.docs.length?ARC.docs.map(function(d,i){return '<div class="ch" data-lx="doc:'+i+'" style="margin:4px 0">📄 '+esc(d.t)+'</div>'}).join(''):'<i>None yet. Search cars, luggage and glowing books.</i>');r.innerHTML=h};
-var oAct2=phAct;phAct=function(a){if(a=='app:arc')LVX.arcView=null;return oAct2.apply(this,arguments)};
+var oAct2=phAct;phAct=function(a){if(a=='app:arc'){LVX.arcView=null;var n=0;for(var k=10;k<=19;k++)if(ARC.tapes.indexOf(k)<0){ARC.tapes.push(k);n++}if(n){ARC.tapes.sort(function(a,b){return a-b});arcSave();toast('📼 ALL 10 WANDERER TAPES UNLOCKED','#9ad0ff');achieve('tapes')}}return oAct2.apply(this,arguments)};
 })();
 </script>
 
