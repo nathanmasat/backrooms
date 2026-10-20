@@ -2095,7 +2095,7 @@ LVX.blind=function(s){blind.style.opacity=SET.rf?.35:1;blind._t=s||1};
 LVX.alertTo=function(x,z,strong){if(!lm)return;var d=dist(M.x,M.z,x,z);if(d<(strong?60:35)&&LM.st!='hunt'){LM.st='invest';LM.tx=ce(x);LM.tz=ce(z);lmGo(LM.tx,LM.tz)}};
 LVX.lightBoost=0;
 // interaction: F at a station (runs before doors/lockers so nothing double-fires)
-function nearSt(){var b=null,bd=9;LVX.cons.forEach(function(s){if(s.done&&!s.repeat)return;var d=dist(P.x,P.z,s.x,s.z),r=s.id=='srch'?2.5:2.1;if(d<r&&d<bd){bd=d;b=s}});return b}
+function nearSt(){var b=null,bd=99;LVX.cons.forEach(function(s){if(s.done&&!s.repeat)return;var d=dist(P.x,P.z,s.x,s.z),r=s.id=='srch'?2.5:2.1;if(d<r){var sc=d+(s.hide?1.5:0);if(sc<bd){bd=sc;b=s}}});return b}
 LVX.nearSt=nearSt;
 addEventListener('keydown',function(e){if(e.code!='KeyF'||!started||P.hide||P.dead||P.vt>0||P.para>0)return;var s=nearSt();if(!s)return;e.stopImmediatePropagation();e.preventDefault();
  if(!s.need()){say((s.lockMsg||'Not yet.').replace('%n',LVX.got()).replace('%t',LVX.tx||0),3);if(AC)tone({f:200,d:.15,v:vol(.2)});return}
@@ -2134,7 +2134,7 @@ function frame(){var now=performance.now(),dt=Math.min(.1,(now-lastT)/1000);last
  var got=LVX.got();if(lastGot>=0&&got>lastGot){var it=items.filter(function(q){return q.type=='card'&&q.got}).pop();say('Found: '+((it&&it.nm)||CF.kn)+' ('+got+'/'+NIT+'). '+(got>=NIT?'Next: '+nextStep():''),5)}lastGot=got;
  var sd=LVX.steps.filter(function(q){return q.done}).length;P.cards=got+sd;
  // HUD
- var hud=CF.kn.toUpperCase()+' '+got+'/'+NIT+'  ·  '+nextStep().toUpperCase()+(P.fl?'  [LIGHT ON]':'')+(P.scan?'  [SCANNER]':'');try{$('inv').textContent=hud}catch(e){}
+ var hud=CF.kn.toUpperCase()+' '+(NIT?got+'/'+NIT:(LVX.tx||0)+'/5')+'  ·  '+nextStep().toUpperCase()+(P.fl?'  [LIGHT ON]':'')+(P.scan?'  [SCANNER]':'');try{$('inv').textContent=hud}catch(e){}
  // hints for stations
  var s=nearSt();if(s&&msgT<=0)say(s.need()?(s.hint||'[F] Use'):(s.lockMsg||'Locked').replace('%n',got).replace('%t',LVX.tx||0),.1);
  // timers
@@ -3070,7 +3070,7 @@ function build(g){var s=spec(g),sc=new T.Scene(),cf=(typeof CF!='undefined'&&CF)
  if(s.head&&/^m([3457]|1[0458])$/.test(s.k))s.maw=mkMaw(s.head,-.09,{m4:.175,m7:.175,m14:.175,m10:.15,m15:.16,m18:.155}[s.k]||.16,.13);
  if(s.k=='m12'&&s.head)s.eyes=[-.05,.05].map(function(x){var e=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xd0fff0,blending:T.AdditiveBlending,depthWrite:false,fog:false,transparent:true,opacity:0}));e.scale.set(.09,.09,1);e.position.set(x,.03,.2);s.head.add(e);return e});
  if(s.k=='m17'||s.k=='m12'){var wt2=new T.Mesh(new T.PlaneGeometry(4,40),new T.MeshPhongMaterial({color:s.k=='m17'?0x1a3a40:0x1a5a7a,transparent:true,opacity:.75,shininess:30}));wt2.rotation.x=-PI/2;wt2.position.set(0,.36,-18);sc.add(wt2);s.wt=wt2}
- if(s.k=='m19'&&s.head)s.head.rotation.y=PI;if(s.k=='m9'&&s.head)s.maw=mkMaw(s.head,.02,.163,.12);
+ if(s.k=='m19'&&s.head){s.head.rotation.y=PI;s.eyes=[-.045,.045].map(function(x){var e=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xe8f0ff,blending:T.AdditiveBlending,depthWrite:false,fog:false,transparent:true,opacity:0}));e.scale.set(.07,.07,1);e.position.set(x,.03,.13);s.head.add(e);return e});s.maw=mkMaw(s.head,-.1,.13,.12)}if(s.k=='m9'&&s.head)s.maw=mkMaw(s.head,.02,.163,.12);
  if(s.k=='m5'){s.clones=[-1.15,1.15].map(function(x){var c=MART.lm(5,Math.random,[0,2.1]);c.position.set(x,0,-3.8);c.rotation.y=-x*.3;sc.add(c);return c})}
  var sp=[];for(i=0;i<40;i++){var d=new T.Mesh(new T.BoxGeometry(.04,.04,.04),new T.MeshBasicMaterial({color:s.k=='water'?0xddf6ff:0x9a8a7a}));d.visible=false;sc.add(d);sp.push({m:d,v:new T.Vector3()})}
  S={s:s,sc:sc,cam:cam,fl:fl,rim:rim,hit:hit,amb:amb,panels:panels,sp:sp,t0:performance.now(),last:0,aspect:size(),V:J.fixed?{LA:.9,side:0,inv:1}:{LA:.78+Math.random()*.3,side:(Math.random()-.5)*1.3,inv:Math.random()<.6}};s.LA=S.V.LA;cam.aspect=S.aspect;cam.updateProjectionMatrix()}
