@@ -2123,7 +2123,7 @@ LVX.hostile=0;LVX.guestAngry=function(msg){LVX.hostile=Math.max(LVX.hostile,55);
 // ---- Level 19: the two exits ----
 LVX.endingChoice=function(st){started=false;ELP=true;document.exitPointerLock();pnl('<b>THE CONTROL ROOM</b><br><br>Banks of dead monitors. One shows every Wanderer you ever heard on a tape, sitting very still, eyes open.<br><br>Two doors.<br><br><div class="bt" data-lx="end:A">⬆ THE STAIRS UP — toward a light you have not seen in a very long time</div><div class="bt" data-lx="end:B">⬇ THE ELEVATOR DOWN — back to the beginning, with everything you know</div><br>')};
 LVX.ending=function(k){closeP();LVX.stepDone('control');levelReward();SV.ending=k;save();
- if(k=='A'){achieve('endA');award(1000,'esc');PS.e++;saveStats();P.won=true;started=false;document.exitPointerLock();$('ov').innerHTML='<h1>THE SURFACE</h1><p>You climb for hours. The stairs end at a door with daylight under it.<br>Outside: a parking lot, a gas station, a sky. Real wind.<br><br>Behind you, the door is just a wall.<br>In your pocket, a camcorder tape you do not remember finding.<br><br>Score '+ST.score+' · '+rank(ST.score)+'<br><br><i>ENDING A — THE WAY UP</i><br><br>[ CLICK TO RETURN ]</p>';$('ov').style.display='flex'}
+ if(k=='A'){achieve('endA');award(500,'esc');P.won=false;winGame();try{var ov=$('ov');ov.innerHTML=ov.innerHTML.replace('[ CLICK TO PLAY AGAIN ]','<i>ENDING A — THE WAY UP</i><br><br>[ CLICK TO PLAY AGAIN ]')}catch(e){}}
  else{achieve('endB');award(1000,'esc');SV.loop=(SV.loop||0)+1;save();say('The doors close. The floor numbers count down: 19... 9... 0.',5);setTimeout(function(){elevator(0,1)},1500)}};
 // ================= per-frame =================
 var lastNear=null;
