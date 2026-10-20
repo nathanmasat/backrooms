@@ -809,7 +809,7 @@ mp.onclick=e=>{if(e.target===mp&&!mp.dataset.lock){closeP();return}const a=e.tar
 if(k=='use'){useItem(+v);invP()}else if(k=='drop'){dropItem(+v);invP()}else if(k=='wear'){wearSuit(v)}else if(k=='nm'){NG=false;nameP()}else if(k=='vy'){closeP();micOn()}else if(k=='vn'){vpref('off');closeP()}else if(k=='back')closeP();else if(k=='q'||k=='fc'){sv(k,v);if(k=='q')setPnl()}else if(k=='inv'){sv('inv',SET.inv?0:1);setPnl()}
 else if(k=='fs'){try{document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()}catch(x){}}
 else if(k=='el'){ELP=false;closeP();if(v=='next')exitLevel();else elevator(+v,1)}else if(k=='lv'){SV.lv=+v;save();location.reload()}
-else if(k=='ok'||k=='gu'){if(k=='ok'){const n=$('un').value.trim().replace(/\s+/g,' '),er=vName(n);if(er){$('ue').textContent=er;return}UN=n;try{localStorage.setItem('bru',UN)}catch(x){}}else UN='Guest'+(1000+R()*9000|0);const go=NG;NG=false;closeP();if(go)startGame()}};
+else if(k=='ok'||k=='gu'){if(k=='ok'){const n=$('un').value.trim().replace(/\s+/g,' '),er=vName(n);if(er){$('ue').textContent=er;return}UN=n;try{localStorage.setItem('bru',UN);localStorage.setItem('bruLast',UN)}catch(x){}}else UN='Guest'+(1000+R()*9000|0);const go=NG;NG=false;closeP();if(go)startGame()}};
 mp.oninput=e=>{const d=e.target.dataset;if(d.k)sv(d.k,e.target.value/100)};
 $('b-play').onclick=()=>{SV.cont=0;if(!UN){NG=true;nameP()}else startGame()};
 $('b-mp').onclick=()=>pnl('<b>MULTIPLAYER</b><br>Not available in this build. Lobbies, join codes and synced players need a networking backend that has not been built yet. Solo play is fully playable.<br><br>');
@@ -1234,7 +1234,14 @@ else{px=CAR.x-5.4;pz=CAR.z+1.4;py=1.7;pt=0;one('hy',19.5,()=>{cy2=bestYaw(px,pz,
 if(t>=24)fadeEl.style.opacity=1;if(t>=26.5){finish();return}
 cam.position.set(px,py,pz);cam.rotation.set(pt,yw,t<6?Math.sin(t*9)*.004:0)}
 
-gate.onclick=()=>{try{sessionStorage.setItem('brseen','1')}catch(e){}try{localStorage.setItem('brseenT',''+Date.now())}catch(e){}gate.remove();if(!AC){initAudio();applyS()}AC.resume();skipB.style.display='block';driveCut(begin3D)};
+try{if(!UN){const ln=localStorage.getItem('bruLast');if(ln&&!vName(ln)){UN=ln;localStorage.setItem('bru',UN)}}}catch(e){}
+function askName(go){const d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:14;background:#000;color:#e4d56a;font:18px monospace;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;line-height:2';
+d.innerHTML="<div style='letter-spacing:.2em'>BEFORE YOU GO IN...</div><div style='font-size:15px;opacity:.8'>WHAT IS YOUR NAME?</div><input id='nm0' maxlength='16' placeholder='3-16 characters' style='font:18px monospace;background:#0a0a06;color:#e4d56a;border:1px solid #665a20;padding:6px 10px;margin:10px;text-align:center;width:260px'><div id='nm0e' style='color:#f44;font-size:14px;min-height:20px'></div><div id='nm0ok' style='cursor:pointer;border:1px solid #e4d56a;padding:4px 18px;margin:4px'>CONFIRM</div><div id='nm0g' style='cursor:pointer;font-size:13px;opacity:.6;margin-top:6px'>play as guest</div>";
+document.body.append(d);const inp=d.querySelector('#nm0');setTimeout(()=>inp.focus(),50);
+const done=n=>{UN=n;try{localStorage.setItem('bru',UN);localStorage.setItem('bruLast',UN)}catch(e){}d.remove();go()};
+const ok=()=>{const n=inp.value.trim().replace(/\s+/g,' '),er=vName(n);if(er){d.querySelector('#nm0e').textContent=er;return}done(n)};
+d.querySelector('#nm0ok').onclick=ok;inp.onkeydown=e=>{e.stopPropagation();if(e.key=='Enter')ok()};d.querySelector('#nm0g').onclick=()=>{UN='Guest'+(1000+Math.random()*9000|0);try{localStorage.setItem('bru',UN)}catch(e){}d.remove();go()}}
+gate.onclick=()=>{try{sessionStorage.setItem('brseen','1')}catch(e){}try{localStorage.setItem('brseenT',''+Date.now())}catch(e){}gate.remove();if(!AC){initAudio();applyS()}AC.resume();const go=()=>{skipB.style.display='block';driveCut(begin3D)};if(UN)go();else askName(go)};
 skipB.onclick=endCut;
 let seen=false;try{seen=sessionStorage.getItem('brseen')=='1'}catch(e){}try{if(Date.now()-(+localStorage.getItem('brseenT')||0)<20*60*1000)seen=true}catch(e){}
 if(seen){gate.remove();finish()}
