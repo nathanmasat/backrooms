@@ -3171,7 +3171,7 @@ jumpscare=function(g){try{J.play(g|0)}catch(e){try{stop()}catch(e2){}old2d(g)}};
 // ---------------- the admin role ----------------
 // The Admin role is only granted to the account "nathen" after the admin key is verified.
 // Only a salted PBKDF2 hash of the key is stored here: the key itself is never in the game files.
-var ADMIN_USER='nathen',KEY_SALT='QMTGQeZTT39gonfjskHlqg==',KEY_HASH='QJg1tJ644jC5wfzdVsWph2MZZuAkwD7XDkN0Ph/MafE=',ITER=150000;
+var ADMIN_USER='nathen',KEY_SALT='Rexve/h9xoHajv2UpX3UtQ==',KEY_HASH='4begzNdIIKDN2bN9HqvLkuJ148JgXS2Y4o3qh6DKCMY=',ITER=150000;
 var $a=function(i){return document.getElementById(i)},box=$a('admbox'),root=$a('adm');
 function ls(k,v){try{if(v===undefined){return JSON.parse(localStorage.getItem(k))}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
 var ROLE=ls('bradm')||{},SESS=false;try{SESS=sessionStorage.getItem('bradmS')==='1'}catch(e){}
