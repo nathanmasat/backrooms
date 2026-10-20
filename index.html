@@ -3009,7 +3009,7 @@ function tex(base){var c=document.createElement('canvas');c.width=c.height=128;v
  for(i=0;i<8;i++){var X=Math.random()*128,Y=Math.random()*128,r=10+Math.random()*25,g=x.createRadialGradient(X,Y,0,X,Y,r);g.addColorStop(0,'rgba(20,10,0,.35)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(X-r,Y-r,2*r,2*r)}
  var t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;return t}
 // ---------- which monster, and where its face is ----------
-function spec(g){var lv=(typeof SV!='undefined'&&SV.lv)|0,s={rim:0xffffff,face:1.6,fz:.2,D:5,k:'boiled'};
+function spec(g){var lv=J.lvOv!=null?J.lvOv:(typeof SV!='undefined'&&SV.lv)|0,s={rim:0xffffff,face:1.6,fz:.2,D:5,k:'boiled'};
  if(g==1){var gg=new T.Group();MART.grin(gg);gg.scale.setScalar(1.5);gg.position.y=1.55;s.o=new T.Group();s.o.add(gg);s.inner=gg;s.face=1.6;s.fz=.05;s.k='grin';s.rim=0xff3020}
  else if(g==2){s.o=new T.Group();MART.hunter(s.o);s.o.traverse(function(q){if(q.geometry&&q.geometry.type=='RingGeometry')q.visible=false});s.k='water';s.rim=0x66ccff}
  else if(g==3){s.o=MART.party(Math.random);s.face=1.78;s.fz=.48;s.k='party';s.rim=0xffd040}
@@ -3138,6 +3138,252 @@ J.step=function(t){if(S)frame(t)};J.stop=stop;
 jumpscare=function(g){try{J.play(g|0)}catch(e){try{stop()}catch(e2){}old2d(g)}};
 })();
 </script>
+<!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
+<style>
+#adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
+#adm .ab{position:absolute;inset:3% 3%;background:linear-gradient(#0c0405,#050203);border:1px solid #6a0a0a;box-shadow:0 0 30px #300 inset,0 0 20px #000;display:flex;flex-direction:column}
+#adm .ah{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #4a0808;background:#140506}
+#adm .ah b{color:#f33;letter-spacing:.2em}#adm .lbl{margin-left:auto;color:#ff5a5a;border:1px solid #6a0a0a;padding:2px 8px}
+#adm .tabs{display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;border-bottom:1px solid #3a0606}
+#adm .tab{cursor:pointer;padding:4px 10px;border:1px solid #3a0a0a;color:#6c6}#adm .tab.on{background:#3a0808;color:#9f9;border-color:#a01818}
+#adm .bd{flex:1;overflow:auto;padding:10px 14px}#adm .row{margin:6px 0}#adm h4{color:#f55;margin:12px 0 4px;letter-spacing:.15em;font-size:13px}
+#adm button,#adm .btn{font:12px 'Courier New',monospace;background:#1a0606;color:#9f9;border:1px solid #6a1010;padding:5px 9px;margin:3px 4px 3px 0;cursor:pointer}#adm button:hover{background:#3a0a0a;color:#fff}#adm button.dg{color:#ff8080;border-color:#a02020}#adm button:disabled{opacity:.35;cursor:not-allowed}
+#adm input,#adm select{font:13px 'Courier New',monospace;background:#050505;color:#3f3;border:1px solid #3a0a0a;padding:5px;margin:2px 4px 2px 0}
+#adm .msg{padding:6px 12px;border-top:1px solid #3a0606;min-height:20px}#adm .ok{color:#6f6}#adm .er{color:#f55}
+#adm .card{border:1px solid #3a0a0a;background:#0a0304;padding:8px;margin:6px 0}#adm .dim{color:#6a8a6a}
+#adm canvas.vhs{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.07;mix-blend-mode:screen}
+#adm .con{background:#000;border:1px solid #2a0a0a;height:260px;overflow:auto;padding:6px;white-space:pre-wrap}
+#adm .login{max-width:420px;margin:12vh auto;text-align:center;border:1px solid #6a0a0a;background:#0c0405;padding:24px}
+#admbtn{position:fixed;left:8px;top:120px;z-index:59;display:none;font:11px monospace;color:#f55;background:#120404;border:1px solid #6a0a0a;padding:3px 7px;cursor:pointer}
+#admban{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:58;color:#ffe680;font:bold clamp(18px,4vw,34px) monospace;text-align:center;text-shadow:0 0 12px #000;pointer-events:none;display:none;background:rgba(0,0,0,.55);padding:12px 22px;border:1px solid #6a0a0a}
+#admtest{position:fixed;right:10px;bottom:44px;z-index:58;color:#f55;font:bold 12px monospace;display:none;pointer-events:none}
+</style>
+<div id="adm"><canvas class="vhs" width="160" height="90"></canvas><div class="ab" id="admbox"></div></div><div id="admbtn">ADMIN</div><div id="admban"></div><div id="admtest">● ADMIN TEST MODE</div>
+<script>
+(function(){
+// ---------------- the admin role ----------------
+// The Admin role is only granted to the account "nathen" after the admin key is verified.
+// Only a salted PBKDF2 hash of the key is stored here: the key itself is never in the game files.
+var ADMIN_USER='nathen',KEY_SALT='QMTGQeZTT39gonfjskHlqg==',KEY_HASH='QJg1tJ644jC5wfzdVsWph2MZZuAkwD7XDkN0Ph/MafE=',ITER=150000;
+var $a=function(i){return document.getElementById(i)},box=$a('admbox'),root=$a('adm');
+function ls(k,v){try{if(v===undefined){return JSON.parse(localStorage.getItem(k))}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+var ROLE=ls('bradm')||{},SESS=false;try{SESS=sessionStorage.getItem('bradmS')==='1'}catch(e){}
+var PID=ls('brpid');if(!PID){PID='P-'+Math.random().toString(36).slice(2,8).toUpperCase();ls('brpid',PID)}
+function b64(u){var s='';u=new Uint8Array(u);for(var i=0;i<u.length;i++)s+=String.fromCharCode(u[i]);return btoa(s)}
+function unb64(s){var b=atob(s),u=new Uint8Array(b.length);for(var i=0;i<b.length;i++)u[i]=b.charCodeAt(i);return u}
+async function keyOK(k){try{var enc=new TextEncoder(),base=await crypto.subtle.importKey('raw',enc.encode(k.trim().toUpperCase()),'PBKDF2',false,['deriveBits']),bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unb64(KEY_SALT),iterations:ITER},base,256);var a=new Uint8Array(bits),h=unb64(KEY_HASH),d=0;for(var i=0;i<32;i++)d|=a[i]^h[i];return d===0}catch(e){return false}}
+function roleOK(){return ROLE&&ROLE.user===ADMIN_USER&&ROLE.v===1&&ROLE.pid===PID}
+function profileName(){try{return String(UN||'')}catch(e){return ''}}
+function authed(){return SESS&&roleOK()&&profileName().toLowerCase()===ADMIN_USER}
+// ---------------- audit log (append-only from this panel) ----------------
+var LOG=ls('bradlog')||[];
+function audit(act,target,ok,info){LOG.push({a:ADMIN_USER,act:act,tg:target||'',t:Date.now(),ok:!!ok,i:info||''});if(LOG.length>400)LOG=LOG.slice(-400);ls('bradlog',LOG)}
+var ERRS=[];window.addEventListener('error',function(e){ERRS.push({t:Date.now(),m:String(e.message||e)});if(ERRS.length>60)ERRS.shift()});var oce=console.error;console.error=function(){try{ERRS.push({t:Date.now(),m:[].map.call(arguments,String).join(' ').slice(0,300)});if(ERRS.length>60)ERRS.shift()}catch(e){}return oce.apply(console,arguments)};
+// ---------------- rate limits ----------------
+var FAIL=ls('bradmF')||{n:0,until:0},ACTS=[];
+function rate(){var n=Date.now();ACTS=ACTS.filter(function(t){return n-t<3000});if(ACTS.length>=15)return false;ACTS.push(n);return true}
+// ---------------- state of admin tools ----------------
+var ADM=window.ADM={god:false,free:false,ai:true,spd:1,test:false,light:1,fog:null,emerg:false,dum:[],fc:{x:0,y:1.7,z:0,yaw:0,pit:0},tab:'PLAYERS',q:''};
+try{ADM.test=sessionStorage.getItem('bradmT')==='1'}catch(e){}
+function msg(t,ok){ADM.lm={t:t,ok:ok};var m=box.querySelector('.msg');if(m){m.className='msg '+(ok===false?'er':'ok');m.textContent=(ok===false?'✖ ':'✔ ')+t}}
+function guard(name,target,fn,opts){if(!authed()){msg('ACCESS DENIED',false);audit(name,target,false,'not authorized');return}if(!rate()){msg('Slow down: too many admin actions at once.',false);audit(name,target,false,'rate limited');return}
+ var go=function(){try{var r=fn();var ok=r!==false&&!(r&&r.err);msg((r&&r.msg)||(r&&r.err)||name+' — done',!(r===false||(r&&r.err)));audit(name,target,ok,r&&(r.msg||r.err)||'')}catch(e){msg(name+' failed: '+e.message,false);audit(name,target,false,e.message)}if(ADM.tab)render()};
+ if(opts&&opts.confirm){confirmBox(opts.confirm,go)}else go()}
+function confirmBox(text,yes){var d=document.createElement('div');d.style.cssText='position:absolute;inset:0;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;z-index:5';d.innerHTML='<div class="card" style="max-width:440px;text-align:center;border-color:#a01818"><b style="color:#f55">CONFIRM</b><br><br>'+text+'<br><br><button class="dg" data-y>YES, DO IT</button><button data-n>CANCEL</button></div>';box.appendChild(d);d.querySelector('[data-y]').onclick=function(){d.remove();yes()};d.querySelector('[data-n]').onclick=function(){d.remove();msg('Cancelled.',true)}}
+// ---------------- helpers that use the real game ----------------
+var inGame=function(){return typeof MENU!='undefined'&&!MENU&&typeof P!='undefined'};
+function openCellNear(x,z,minD,maxD){var c=open.filter(function(o){var q=Math.hypot(cc(o[0])-x,cc(o[1])-z);return q>=minD&&q<=maxD&&!CL[o[0]*W+o[1]]&&o[0]>0});return c[Math.random()*c.length|0]}
+var MLIST=[['boiled','The Boiled One',[0,1,2],0],['grin','The Grinner',[0,1,2],1],['water','The Deep Hunter',[1],2],['party','Party Ghost',[2],3]];
+for(var k=3;k<=19;k++)MLIST.push(['m'+k,(MP[k]||{}).n||('Level '+k),[k],5]);
+function levelMon(){var lv=SV.lv;if(CF.tile)return 'water';if(CF.bal)return 'party';if(lm)return 'm'+lv;return 'boiled'}
+function monNow(){var id=levelMon(),o={id:id,x:M.x,z:M.z,st:'',tgt:''};
+ if(id=='water'){o.x=WM.x;o.z=WM.z;o.st=WM.on?'hunting (surfaced)':'under water / inactive'}else if(id=='party'){o.st=PG.filter(function(p){return p.st=='chase'}).length+' of '+PG.length+' chasing';if(PG[0]){o.x=PG[0].x;o.z=PG[0].z}}
+ else if(lm){o.st={idle:'patrol',susp:'suspicious',invest:'investigate',hunt:'chase',search:'search',cool:'return to patrol',warn:'warning'}[LM.st]||LM.st;o.tgt='cell '+LM.tx+','+LM.tz}else{o.st=M.state;o.tgt='cell '+M.tx+','+M.tz}
+ o.d=Math.hypot(o.x-P.x,o.z-P.z);return o}
+// stop / scale monster AI without touching normal play when admin tools are off
+function wrapAI(name){var o=window[name];if(typeof o!='function')return;window[name]=function(dt){if(!ADM.ai||ADM.gone)return;var sx=M.x,sz=M.z;var r=o.apply(this,arguments);if(ADM.spd!=1&&isFinite(sx)){var nx=sx+(M.x-sx)*ADM.spd,nz=sz+(M.z-sz)*ADM.spd;if(!solid(nx,nz)){M.x=nx;M.z=nz;if(lm)lm.position.set(M.x,lm.position.y,M.z)}}return r}}
+['updLM','updMon','updPool','updParty','updGrin'].forEach(wrapAI);
+// god mode / spectator: the admin cannot be caught
+var oDie=die;die=function(){if(ADM.god||ADM.free){return}return oDie.apply(this,arguments)};
+// world: lighting, fog, emergency light applied just before each frame
+var oPFX=window.PFX;window.PFX=function(s,c){try{pre()}catch(e){}if(oPFX)oPFX(s,c);else ren.render(s,c)};
+var emg=document.createElement('div');emg.style.cssText='position:fixed;inset:0;pointer-events:none;z-index:3;background:radial-gradient(ellipse at center,rgba(255,30,10,.08),rgba(120,0,0,.35));display:none';document.body.append(emg);
+function pre(){if(!authed())return;if(ADM.light!=1)amb.intensity*=ADM.light;if(ADM.fog!=null)scene.fog.density=ADM.fog;if(ADM.emerg){amb.intensity=Math.max(amb.intensity,.25)}emg.style.display=ADM.emerg?'block':'none';
+ if(ADM.free){var f=ADM.fc;cam.position.set(f.x,f.y,f.z);cam.rotation.set(f.pit,f.yaw,0)}}
+// free camera controls
+var FK={};addEventListener('keydown',function(e){FK[e.code]=1;if(e.code=='Backquote'&&authed()){e.preventDefault();toggle()}});addEventListener('keyup',function(e){FK[e.code]=0});
+addEventListener('mousemove',function(e){if(!ADM.free||!document.pointerLockElement)return;ADM.fc.yaw-=e.movementX*.0022;ADM.fc.pit=Math.max(-1.4,Math.min(1.4,ADM.fc.pit-e.movementY*.0022))});
+var last=performance.now();(function fly(){requestAnimationFrame(fly);var n=performance.now(),dt=Math.min(.1,(n-last)/1000);last=n;if(!ADM.free||typeof P=='undefined')return;P.para=1;var f=ADM.fc,s=(FK.ShiftLeft?14:6)*dt,fx=-Math.sin(f.yaw)*Math.cos(f.pit),fy=Math.sin(f.pit),fz=-Math.cos(f.yaw)*Math.cos(f.pit),rx=Math.cos(f.yaw),rz=-Math.sin(f.yaw);
+ if(FK.KeyW){f.x+=fx*s;f.y+=fy*s;f.z+=fz*s}if(FK.KeyS){f.x-=fx*s;f.y-=fy*s;f.z-=fz*s}if(FK.KeyD){f.x+=rx*s;f.z+=rz*s}if(FK.KeyA){f.x-=rx*s;f.z-=rz*s}if(FK.Space)f.y+=s;if(FK.KeyC)f.y-=s;f.y=Math.max(.3,Math.min(40,f.y));
+ if(ADM.follow){var o=monNow();f.x=o.x+3;f.z=o.z+3;f.y=4;f.yaw=Math.atan2(-(o.x-f.x),-(o.z-f.z));f.pit=-.5}
+ ADM.dum.forEach(function(dm){dumTick(dm,dt)})})();
+// ---------------- test monsters (admin test mode only) ----------------
+function mkModel(id){if(id=='boiled')return MART.boiled(STM,GFX.monCore);if(id=='grin'){var g2=new THREE.Group(),i2=new THREE.Group();MART.grin(i2);i2.scale.setScalar(1.5);i2.position.y=1.55;g2.add(i2);return g2}if(id=='water'){var w=new THREE.Group();MART.hunter(w);return w}if(id=='party')return MART.party(Math.random);var lv=+id.slice(1),h={3:2.3,4:2.5,5:2.1,6:3.6,7:2.2,8:2.4,9:2.4,10:3.0,11:3.2,12:2.4,13:2.8,14:2.9,15:2.6,16:2.4,17:2.6,18:2.1,19:3.4}[lv];return MART.lm(lv,Math.random,[0,h])}
+function dumTick(dm,dt){}
+function dumAI(dt){ADM.dum.forEach(function(dm){if(!ADM.ai)return;var d=Math.hypot(P.x-dm.x,P.z-dm.z),sp=({patrol:1.6,investigate:3,chase:5,return:2}[dm.st]||2)*ADM.spd;dm.pt-=dt;
+  if(dm.st=='chase'||dm.st=='investigate'){if(dm.pt<=0){dm.pt=.4;dm.path=bfs(ce(dm.x),ce(dm.z),ce(P.x),ce(P.z));if(dm.st=='investigate'&&d<3)dm.st='return'}}
+  else if(dm.st=='return'){if(dm.pt<=0||!dm.path.length){dm.pt=3;dm.path=bfs(ce(dm.x),ce(dm.z),dm.home[0],dm.home[1])}if(!dm.path.length)dm.st='patrol'}
+  else if(!dm.path.length||dm.pt<=0){dm.pt=5;var c=openCellNear(dm.x,dm.z,4,16);if(c)dm.path=bfs(ce(dm.x),ce(dm.z),c[0],c[1])}
+  if(dm.path.length){var a=dm.path[0],dx=cc(a[0])-dm.x,dz=cc(a[1])-dm.z,q=Math.hypot(dx,dz);if(q<.3)dm.path.shift();else{dm.x+=dx/q*sp*dt;dm.z+=dz/q*sp*dt;dm.g.rotation.y=Math.atan2(dx,dz)}}
+  dm.g.position.set(dm.x,dm.id=='water'?.0:0,dm.z);var U=dm.g.userData,tt=performance.now()/1000*(dm.st=='chase'?10:4);(U.arms||U.l||[]).forEach(function(q,i){q.rotation.x=Math.sin(tt+i*3.14)*.6});
+  if(dm.st=='chase'&&d<1.3&&!P.dead&&(!dm.cd||dm.cd<performance.now())){dm.cd=performance.now()+6000;testScare(dm.id);dm.st='return';dm.path=[]}})}
+setInterval(function(){if(ADM.dum.length&&typeof P!='undefined')dumAI(.05)},50);
+function testScare(id){var e=MLIST.find(function(m){return m[0]==id});if(!e)return;try{JS3.lvOv=id[0]=='m'?+id.slice(1):null;jumpscare(e[3])}finally{setTimeout(function(){JS3.lvOv=null},50)}}
+// ---------------- UI ----------------
+var TABS=['PLAYERS','WORLD','MONSTERS','ITEMS','LEVELS','SERVER','CONSOLE','AUDIT LOG'];
+function show(){root.style.display='block';try{if(typeof started!='undefined'&&started){ADM.wasStarted=true;started=false;document.exitPointerLock()}}catch(e){}render()}
+function hide(){root.style.display='none';if(ADM.wasStarted&&!P.dead){ADM.wasStarted=false;started=true;try{ren.domElement.requestPointerLock()}catch(e){}}}
+function toggle(){root.style.display=='block'?hide():show()}
+LVXADM={show:show};
+function esc2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function head(){return '<div class="ah"><b>▌ BACKROOMS ADMIN</b><span class="dim">'+esc2(CF.n)+'</span><input id="aq" placeholder="search players / monsters / items" value="'+esc2(ADM.q)+'" style="flex:0 1 260px"><span class="lbl">ADMIN: NATHEN</span><button id="aclose">CLOSE ✕</button><button class="dg" id="aout">LOG OUT</button></div>'}
+function loginView(){var lock=FAIL.until>Date.now();box.innerHTML='<div class="login"><div style="color:#f33;letter-spacing:.3em;font-weight:bold">RESTRICTED TERMINAL</div><br><div class="dim">Admin access only.</div><br><input id="au" placeholder="username" autocomplete="off" style="width:80%"><br><input id="ak" type="password" placeholder="admin key" autocomplete="off" style="width:80%"><br><br><button id="alog" '+(lock?'disabled':'')+'>LOGIN</button> <button id="acx">CANCEL</button><div id="ares" style="margin-top:14px;min-height:20px">'+(lock?'<span class="er">Too many attempts. Try again in '+Math.ceil((FAIL.until-Date.now())/1000)+' s.</span>':'')+'</div></div>';
+ $a('acx').onclick=hide;$a('alog').onclick=tryLogin;$a('ak').onkeydown=function(e){if(e.key=='Enter')tryLogin()}}
+async function tryLogin(){var u=$a('au').value.trim(),k=$a('ak').value,res=$a('ares');if(FAIL.until>Date.now())return;
+ var deny=function(why){FAIL.n++;if(FAIL.n>=5){FAIL.until=Date.now()+60000;FAIL.n=0}ls('bradmF',FAIL);res.innerHTML='<span class="er" style="font-size:20px">ACCESS DENIED</span>'+(why?'<br><span class="dim">'+why+'</span>':'');audit('login',u,false,why||'');};
+ if(u!==ADMIN_USER){deny('');return}
+ if(profileName().toLowerCase()!==ADMIN_USER){deny('This device is not signed in as the account nathen.');return}
+ res.innerHTML='<span class="dim">Verifying...</span>';var ok=await keyOK(k);if(!ok){deny('');return}
+ ROLE={user:ADMIN_USER,v:1,pid:PID,granted:ROLE.granted||Date.now()};ls('bradm',ROLE);SESS=true;try{sessionStorage.setItem('bradmS','1')}catch(e){}FAIL={n:0,until:0};ls('bradmF',FAIL);audit('login',u,true,'');
+ res.innerHTML='<span class="ok" style="font-size:22px">WELCOME, NATHEN.</span>';$a('admbtn').style.display='block';setTimeout(render,900)}
+function logout(){audit('logout',ADMIN_USER,true,'');SESS=false;try{sessionStorage.removeItem('bradmS')}catch(e){}ADM.god=ADM.free=ADM.follow=false;ADM.ai=true;ADM.spd=1;ADM.light=1;ADM.fog=null;ADM.emerg=false;$a('admbtn').style.display='none';hide()}
+function btn(id,label,cls,dis){return '<button data-ad="'+id+'" class="'+(cls||'')+'"'+(dis?' disabled title="'+esc2(dis)+'"':'')+'>'+label+'</button>'}
+function render(){if(root.style.display!='block')return;if(!authed()){loginView();return}var T=ADM.tab,h=head()+'<div class="tabs">'+TABS.map(function(t){return '<span class="tab'+(t==T?' on':'')+'" data-tab="'+t+'">'+t+'</span>'}).join('')+'</div><div class="bd">'+body(T)+'</div><div class="msg '+(ADM.lm?(ADM.lm.ok===false?'er':'ok'):'')+'">'+(ADM.lm?(ADM.lm.ok===false?'✖ ':'✔ ')+esc2(ADM.lm.t):'')+'</div>';
+ box.innerHTML=h;$a('aclose').onclick=hide;$a('aout').onclick=logout;var q=$a('aq');q.oninput=function(){ADM.q=q.value;var p=q.selectionStart;render();var q2=$a('aq');q2.focus();q2.setSelectionRange(p,p)};
+ box.querySelectorAll('[data-tab]').forEach(function(e){e.onclick=function(){ADM.tab=e.dataset.tab;ADM.lm=null;render()}});
+ box.querySelectorAll('[data-ad]').forEach(function(e){e.onclick=function(){act(e.dataset.ad)}});
+ var ci=$a('acmd');if(ci){ci.onkeydown=function(e){if(e.key=='Enter'){runCmd(ci.value);ci.value=''}};ci.focus()}
+ var cs=$a('aconout');if(cs)cs.scrollTop=1e9}
+var NOPLAY='Only one player exists in this build: multiplayer has no server yet.';
+function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
+ if(T=='PLAYERS'){var nm=profileName()||'Guest',hit=!q||nm.toLowerCase().indexOf(q)>=0;
+  return '<h4>CONNECTED PLAYERS (1)</h4>'+(hit?'<div class="card"><b style="color:#ff6">'+esc2(nm)+'</b> <span class="dim">(you)</span><br>Player ID: '+PID+'<br>Level: '+SV.lv+' — '+esc2(CF.n.split('— ')[1]||'')+'<br>Health (sanity): '+(ig?Math.round(P.san)+'%':'—')+' · Stamina '+(ig?Math.round(P.st)+'%':'—')+' · Battery '+(ig?Math.round(P.bat)+'%':'—')+'<br>Status: '+(ig?(P.dead?'<span class="er">DEAD</span>':P.won?'escaped':'alive, in game'):'in the main menu')+' · connection: local<br>Backrooms Cash: $'+CASH.bal+'</div>':'<div class="dim">No player matches "'+esc2(q)+'".</div>')+
+  '<h4>ACTIONS ON '+esc2(nm.toUpperCase())+'</h4>'+btn('revive','REVIVE PLAYER','',ig?'':'Start a level first')+btn('heal','RESTORE HEALTH','',ig?'':'Start a level first')+btn('resetpos','RESET PLAYER POSITION','dg',ig?'':'Start a level first')+btn('allsuits','GIVE ALL SUITS')+
+  '<div class="row">Cash amount <input id="acash" type="number" min="1" max="100000" value="500" style="width:110px">'+btn('cash+','GIVE BACKROOMS CASH')+btn('cash-','REMOVE BACKROOMS CASH','dg')+'</div>'+
+  '<div class="row">'+btn('tpto','TELEPORT TO PLAYER','',NOPLAY)+btn('bring','BRING PLAYER TO ME','',NOPLAY)+btn('kick','KICK FROM LOBBY','dg',NOPLAY)+'<br><span class="dim">'+NOPLAY+' These buttons switch on when lobbies exist.</span></div>'}
+ if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+
+  '<div class="row">Lighting intensity <input type="range" id="alight" min="20" max="300" value="'+Math.round(ADM.light*100)+'"> '+Math.round(ADM.light*100)+'%</div><div class="row">Fog density <input type="range" id="afog" min="0" max="250" value="'+Math.round((ADM.fog==null?scene.fog.density:ADM.fog)*1000)+'"> '+(ADM.fog==null?'level default':ADM.fog.toFixed(3))+' '+btn('fogreset','RESET FOG')+'</div>'+
+  '<h4>ENVIRONMENT</h4>'+btn('quake','TREMOR (shake)')+btn('static','STATIC STORM (sanity drain)')+btn('calm','CALM (restore sanity drain)')+
+  '<h4>MOVEMENT</h4>'+btn('tp:start','TELEPORT: START')+btn('tp:elev','TELEPORT: ELEVATOR')+btn('tp:rand','TELEPORT: RANDOM VALID SPOT')+btn('god',ADM.god?'GOD MODE: ON':'GOD MODE: OFF')+btn('free',ADM.free?'FREE CAMERA: ON':'FREE CAMERA: OFF')+'<br><span class="dim">Free camera: WASD fly, mouse look, Space up, C down, Shift fast. Monsters cannot catch you while it is on.</span>'+
+  '<h4>LEVEL</h4>'+btn('reset','RESET CURRENT LEVEL','dg')}
+ if(T=='MONSTERS'){var o=ig?monNow():null,list=MLIST.filter(function(m){return !q||m[1].toLowerCase().indexOf(q)>=0||m[0].indexOf(q)>=0});
+  return (ig?'<h4>THIS LEVEL\'S MONSTER</h4><div class="card"><b style="color:#f66">'+esc2((MLIST.find(function(m){return m[0]==o.id})||[0,'?'])[1])+'</b>'+(ADM.gone?' <span class="er">(removed)</span>':'')+'<br>State: '+esc2(o.st)+' · target: '+esc2(o.tgt||'—')+' · distance '+o.d.toFixed(1)+' m<br>AI: '+(ADM.ai?'on':'<span class="er">off</span>')+' · speed ×'+ADM.spd.toFixed(2)+'</div>'+
+  btn('ms:patrol','PATROL')+btn('ms:investigate','INVESTIGATE ME')+btn('ms:chase','CHASE ME')+btn('ms:return','RETURN TO PATROL')+btn('mtp','TELEPORT TO A VALID SPOT')+btn('mremove','REMOVE','dg')+btn('mback','RESTORE')+btn('ai',ADM.ai?'DISABLE AI':'ENABLE AI')+btn('follow',ADM.follow?'STOP SPECTATING':'SPECTATE MONSTER')+
+  '<div class="row">Speed <input type="range" id="aspd" min="25" max="200" value="'+Math.round(ADM.spd*100)+'"> ×'+ADM.spd.toFixed(2)+' <span class="dim">(safe range 0.25–2.0)</span></div>':'<div class="dim">Start a level to control its monster.</div>')+
+  '<h4>SPAWN / TEST</h4><div class="dim">Monsters only spawn in their own level. Turn on ADMIN TEST MODE (ITEMS or LEVELS tab) to spawn any monster as a test copy. Spawns are never inside walls, outside the map or on top of you.</div>'+
+  list.map(function(m){var here=m[2].indexOf(SV.lv)>=0;return '<div class="row">'+esc2(m[1])+' <span class="dim">(level '+m[2].join(', ')+')</span> '+btn('spawn:'+m[0],'SPAWN','',ig?'':'Start a level first')+btn('scare:'+m[0],'TEST ENCOUNTER')+'</div>'}).join('')+
+  '<div class="row">'+btn('clearall','REMOVE ALL MONSTERS','dg',ig?'':'Start a level first')+' test copies active: '+ADM.dum.length+'</div>'}
+ if(T=='ITEMS'){var tapes=(window.LVX&&LVX.TAPES)?Object.keys(LVX.TAPES):[];return '<h4>ADMIN TEST MODE</h4>'+btn('test',ADM.test?'TEST MODE: ON':'TEST MODE: OFF')+'<span class="dim"> While on, test copies of monsters can spawn, given tapes are only previewed (not saved), and the run is not sent to the leaderboard.</span>'+
+  '<h4>GIVE '+esc2((profileName()||'GUEST').toUpperCase())+'</h4>'+btn('g:flash','FLASHLIGHT (full battery)','',ig?'':'Start a level first')+btn('g:gun','STUN GUN')+btn('g:ammo','+6 STUN AMMO')+btn('g:bat','BATTERIES','',ig?'':'In game only')+btn('g:water','ALMOND WATER','',ig?'':'In game only')+btn('g:stam','FULL STAMINA','',ig?'':'In game only')+btn('g:quest','NEXT QUEST ITEM','',ig?'':'In game only')+
+  '<div class="row">VHS tape <select id="atape">'+tapes.map(function(t){return '<option value="'+t+'">'+esc2(LVX.TAPES[t].t)+'</option>'}).join('')+'</select>'+btn('g:tape','GIVE TAPE')+'</div>'+
+  '<h4>INVENTORY</h4><div class="card">'+(ig?'Carried ('+INV.length+'/5): '+(INV.length?INV.map(function(t){return IN[t]}).join(', '):'empty')+'<br>Quest items: '+items.filter(function(i){return i.type=='card'&&i.got}).length+'/'+(window.LVX&&LVX.on?LVX.nItems:CF.k)+'<br>':'')+'Stun gun: '+(GUN.o?'yes ('+GUN.l+' loaded, '+GUN.r+' spare)':'no')+'<br>Suits owned: '+OWN.length+'/'+SUITS.length+'<br>Cash: $'+CASH.bal+'<br>Tapes: '+((window.LVX&&ls('brarc'))?((ls('brarc')||{}).tapes||[]).length:0)+'/10</div>'+
+  btn('fix:quest','RESET BUGGED QUEST ITEM (move to me)','',ig?'':'In game only')+btn('fix:gun','RESET STUN GUN STATE')+btn('fix:inv','CLEAR CARRIED ITEMS','dg',ig?'':'In game only')}
+ if(T=='LEVELS'){var done=SV.done||[];return '<h4>LEVEL SELECT (0–19)</h4><select id="alv">'+LV.map(function(l,i){return '<option value="'+i+'"'+(i==SV.lv?' selected':'')+'>'+i+' — '+esc2(l.n.split('— ')[1])+(i>SV.max?' (locked)':'')+(done.indexOf(i)>=0?' ✔':'')+'</option>'}).join('')+'</select>'+btn('lv:go','TELEPORT TO LEVEL')+btn('lv:unlock','UNLOCK FOR TESTING')+btn('lv:bring','BRING PLAYERS','',NOPLAY)+
+  '<h4>THIS LEVEL</h4><div class="card">'+esc2(CF.n)+'<br>'+(window.LVX&&LVX.on?('Items '+LVX.got()+'/'+LVX.nItems+'<br>'+LVX.steps.map(function(s){return (s.done?'☑ ':'☐ ')+esc2(s.text)}).join('<br>')):('Find '+CF.k+' '+esc2(CF.kn)+(inGame()?' — '+P.cards+'/'+CF.k+' found':'')))+'<br>Escaped before: '+(done.indexOf(SV.lv)>=0?'yes':'no')+' · discovered up to level '+SV.max+'</div>'+
+  btn('lv:next','TRIGGER LEVEL TRANSITION (next level)','dg',inGame()?'':'Start a level first')+btn('reset','RESET CURRENT LEVEL','dg')+btn('test',ADM.test?'END TEST RUN':'START TEST RUN')+btn('menu','RETURN TO MAIN MENU','dg')+'<br><span class="dim">Teleporting keeps your saved progress; only the reset buttons start a level over.</span>'}
+ if(T=='SERVER'){return '<h4>LOBBIES</h4><div class="card">Active lobbies: 0 · players online: 1 (you, local) · host: '+esc2(profileName()||'Guest')+' (this device)<br><span class="dim">'+NOPLAY+'</span></div><h4>MESSAGES</h4><input id="amsg" placeholder="message" maxlength="120" style="width:60%">'+btn('ann','SEND ANNOUNCEMENT (lobby)')+btn('sys','SEND SYSTEM MESSAGE (all players)')+
+  '<h4>SESSION</h4>'+btn('kick2','KICK DISRUPTIVE PLAYER','dg',NOPLAY)+btn('restart','RESTART TEST SESSION','dg')+'<h4>RECENT GAMEPLAY ERRORS ('+ERRS.length+')</h4><div class="con" style="height:120px">'+(ERRS.length?ERRS.slice(-30).reverse().map(function(e){return new Date(e.t).toLocaleTimeString()+'  '+esc2(e.m)}).join('\n'):'No errors recorded this session.')+'</div>'}
+ if(T=='CONSOLE')return '<div class="con" id="aconout">'+esc2(CON.join('\n'))+'</div><input id="acmd" placeholder="type a command, e.g. help" style="width:100%" autocomplete="off">';
+ if(T=='AUDIT LOG')return '<div class="dim">Every admin action is recorded here. The panel can add entries but cannot edit or delete them (the oldest are rotated out after 400).</div><div class="con" style="height:400px">'+LOG.slice().reverse().map(function(l){return new Date(l.t).toLocaleString()+'  '+l.a+'  '+(l.ok?'OK  ':'FAIL')+'  '+esc2(l.act)+(l.tg?' → '+esc2(l.tg):'')+(l.i?'  ('+esc2(l.i)+')':'')}).join('\n')+'</div>';
+ return ''}
+// sliders
+root.addEventListener('input',function(e){if(!authed())return;var id=e.target.id;if(id=='alight'){ADM.light=+e.target.value/100}else if(id=='afog'){ADM.fog=+e.target.value/1000}else if(id=='aspd'){ADM.spd=Math.max(.25,Math.min(2,+e.target.value/100))}else return;clearTimeout(ADM.sl);ADM.sl=setTimeout(function(){audit(id=='alight'?'lighting':id=='afog'?'fog':'monster speed',''+e.target.value,true,'');render()},400)});
+function ban(t,ms){var b=$a('admban');b.textContent=t;b.style.display='block';clearTimeout(ban.t);ban.t=setTimeout(function(){b.style.display='none'},ms||5000)}
+function tpTo(x,z){if(!isFinite(x)||solid(x,z))return {err:'That spot is inside a wall.'};P.x=x;P.z=z;P.vx=P.vz=0;if(ADM.free){ADM.fc.x=x;ADM.fc.z=z}return {msg:'Teleported to '+x.toFixed(1)+', '+z.toFixed(1)}}
+function cashAmt(){var v=Math.floor(+($a('acash')||{}).value);return v}
+function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a.slice(i+1),nm=profileName()||'Guest';
+ if(k=='revive')return guard('revive',nm,function(){if(!P.dead)return {msg:nm+' is not dead. Health restored instead.'}&&(P.san=100,P.st=100,{msg:nm+' is alive — health restored.'});P.dead=false;P.san=100;P.st=100;P.imp=0;P.sz=0;GR.k=0;try{$a('ov').style.display='none';$a('red').style.opacity=0;$a('red').style.transition='';$a('msg').textContent=''}catch(e){}var c=openCellNear(P.x,P.z,0,8);if(c){P.x=cc(c[0]);P.z=cc(c[1])}if(lm)LM.st='cool';M.state='patrol';ADM.wasStarted=true;ADM.revT=Date.now()+20000;try{cam.position.y=P.h;mon.scale.setScalar(1)}catch(e){}return {msg:nm+' revived. Close the panel to keep playing.'}});
+ if(k=='heal')return guard('restore health',nm,function(){P.san=100;P.st=100;P.imp=0;P.sz=0;P.tired=false;return {msg:'Health, stamina and imprint restored.'}});
+ if(k=='resetpos')return guard('reset position',nm,function(){P.x=cc(1);P.z=cc(1);P.vx=P.vz=0;return {msg:'Moved back to the level start.'}},{confirm:'Move '+esc2(nm)+' back to the start of the level?'});
+ if(k=='allsuits')return guard('give all suits',nm,function(){var n=0;SUITS.forEach(function(s){if(OWN.indexOf(s.id)<0){OWN.push(s.id);n++}});saveSuit();return {msg:n?'Gave '+n+' suits. '+nm+' now owns all '+SUITS.length+'.':'Already owns every suit.'}});
+ if(k=='cash+'||k=='cash-'){var amt=cashAmt();if(!(amt>=1&&amt<=100000)){msg('Amount must be a whole number from 1 to 100000.',false);audit(k=='cash+'?'give cash':'remove cash',nm,false,'bad amount');return}
+  if(k=='cash+')return guard('give cash',nm+' $'+amt,function(){addCash(amt,'Admin gift');return {msg:'+$'+amt+' → '+nm+' (now $'+CASH.bal+')'}});
+  return guard('remove cash',nm+' $'+amt,function(){var t=Math.min(amt,CASH.bal);addCash(-t,'Admin removal');return {msg:'-$'+t+' from '+nm+' (now $'+CASH.bal+')'}},{confirm:'Remove $'+amt+' from '+esc2(nm)+'?'})}
+ if(k=='tpto'||k=='bring'||k=='kick'||k=='kick2'){msg(NOPLAY,false);audit(k,'',false,'no multiplayer');return}
+ if(!ig&&['lightsoff','lightson','outage','emerg','quake','static','calm','tp','god','free','ms','mtp','mremove','mback','ai','follow','spawn','clearall','fix'].indexOf(k)>=0&&!(k=='fix'&&v=='gun')){msg('Start a level first.',false);return}
+ if(k=='lightsoff')return guard('lights off','level '+SV.lv,function(){L.black=1e6;return {msg:'All lights off.'}});
+ if(k=='lightson')return guard('lights on','level '+SV.lv,function(){L.black=0;L.lvl=1;L.fk=0;L.nb=30;return {msg:'Lights restored.'}});
+ if(k=='outage')return guard('power outage','level '+SV.lv,function(){L.black=15;say('The power dies...',3);return {msg:'Power outage for 15 seconds.'}});
+ if(k=='emerg')return guard('emergency lighting','level '+SV.lv,function(){ADM.emerg=!ADM.emerg;return {msg:'Emergency lighting '+(ADM.emerg?'on':'off')+'.'}});
+ if(k=='fogreset')return guard('fog reset','',function(){ADM.fog=null;scene.fog.density=CF.fd;return {msg:'Fog back to the level default.'}});
+ if(k=='quake')return guard('tremor','level '+SV.lv,function(){LM.shake=3;if(AC)burst({f:120,t:'lowpass',d:2,v:.8});return {msg:'The ground shakes.'}});
+ if(k=='static')return guard('static storm','level '+SV.lv,function(){P.san=Math.max(5,P.san-40);P.imp=Math.min(80,P.imp+30);return {msg:'Static storm: sanity −40, imprint +30.'}});
+ if(k=='calm')return guard('calm','level '+SV.lv,function(){P.san=100;P.imp=0;return {msg:'The air clears.'}});
+ if(k=='tp')return guard('teleport',v,function(){if(v=='start')return tpTo(cc(1),cc(1));if(v=='elev'){var c=openCellNear(EL.x,EL.z,0,4.5);return c?tpTo(cc(c[0]),cc(c[1])):{err:'No free spot near the elevator.'}}var c2=openCellNear(P.x,P.z,10,60);return c2?tpTo(cc(c2[0]),cc(c2[1])):{err:'No valid spot found.'}});
+ if(k=='god')return guard('god mode',nm,function(){ADM.god=!ADM.god;return {msg:'God mode '+(ADM.god?'on: monsters cannot catch you.':'off.')}});
+ if(k=='free')return guard('free camera',nm,function(){ADM.free=!ADM.free;ADM.follow=false;if(ADM.free){ADM.fc={x:P.x,y:P.h||1.7,z:P.z,yaw:P.yaw,pit:P.pit}}else{P.para=0}return {msg:'Free camera '+(ADM.free?'on. Close the panel and fly around.':'off.')}});
+ if(k=='reset'){return guard('reset level','level '+SV.lv,function(){SV.cont=0;save();setTimeout(function(){location.reload()},400);return {msg:'Resetting the level...'}},{confirm:'Reset level '+SV.lv+'? Your position and this level\'s items reset. Saved progress (cash, suits, unlocked levels) is kept.'})}
+ if(k=='ms')return guard('monster state',v,function(){var tx=ce(P.x),tz=ce(P.z);if(lm){LM.stun=0;LM.st={patrol:'idle',investigate:'invest',chase:'hunt',return:'cool'}[v];LM.tx=tx;LM.tz=tz;LM.pt=0;LM.lost=0;if(v!='patrol'&&v!='return')lmGo(tx,tz);if(v=='return'){LM.cool=4}}else if(CF.bal){PG.forEach(function(p){p.st=v=='chase'?'chase':'patrol';p.tx=tx;p.tz=tz;p.pt=0})}else if(CF.tile){if(v=='chase'||v=='investigate'){WM.hot=1;WM.cool=0}else{WM.on=false;wmon.visible=false}}else{M.state={patrol:'patrol',investigate:'investigate',chase:'chase',return:'search'}[v];M.tx=tx;M.tz=tz;M.path=bfs(ce(M.x),ce(M.z),tx,tz);M.search=6}return {msg:'Monster set to '+v.toUpperCase()+'.'}});
+ if(k=='mtp')return guard('teleport monster','',function(){var c=openCellNear(P.x,P.z,10,24);if(!c)return {err:'No valid spot.'};if(lm||!CF.tile&&!CF.bal){M.x=cc(c[0]);M.z=cc(c[1]);if(lm){LM.path=[];lm.position.set(M.x,0,M.z)}else M.path=[]}else if(CF.bal&&PG[0]){PG[0].x=cc(c[0]);PG[0].z=cc(c[1]);PG[0].path=[]}else{WM.x=cc(c[0]);WM.z=cc(c[1])}return {msg:'Monster moved to cell '+c[0]+','+c[1]+' ('+Math.hypot(cc(c[0])-P.x,cc(c[1])-P.z).toFixed(0)+' m away).'}});
+ if(k=='mremove')return guard('remove monster',levelMon(),function(){removeLevelMon();return {msg:'This level\'s monster was removed.'}},{confirm:'Remove this level\'s monster until you restore it or reload?'});
+ if(k=='mback')return guard('restore monster',levelMon(),function(){if(!ADM.gone)return {msg:'The monster is already here.'};ADM.gone=false;restoreLevelMon();return {msg:'Monster restored at a valid spot.'}});
+ if(k=='ai')return guard('monster AI',ADM.ai?'off':'on',function(){ADM.ai=!ADM.ai;return {msg:'Monster AI '+(ADM.ai?'enabled.':'disabled: monsters freeze in place.')}});
+ if(k=='follow')return guard('spectate monster','',function(){ADM.follow=!ADM.follow;ADM.free=ADM.follow;if(ADM.free)ADM.fc={x:P.x,y:4,z:P.z,yaw:P.yaw,pit:-.5};else P.para=0;return {msg:ADM.follow?'Spectating the monster. Close the panel to watch.':'Stopped spectating.'}});
+ if(k=='spawn')return guard('spawn monster',v,function(){return spawn(v)});
+ if(k=='scare')return guard('test encounter',v,function(){hide();setTimeout(function(){testScare(v)},150);return {msg:'Playing the '+v+' jumpscare.'}});
+ if(k=='clearall')return guard('remove all monsters','level '+SV.lv,function(){removeLevelMon();ADM.dum.forEach(function(d){scene.remove(d.g)});var n=ADM.dum.length;ADM.dum=[];GR.on=false;grin.visible=false;return {msg:'Removed the level monster and '+n+' test copies.'}},{confirm:'Remove ALL monsters from this level?'});
+ if(k=='test')return guard('test mode',ADM.test?'off':'on',function(){ADM.test=!ADM.test;try{sessionStorage.setItem('bradmT',ADM.test?'1':'0')}catch(e){}$a('admtest').style.display=ADM.test?'block':'none';if(!ADM.test){ADM.dum.forEach(function(d){scene.remove(d.g)});ADM.dum=[]}return {msg:'Admin test mode '+(ADM.test?'ON.':'OFF. Test copies removed.')}});
+ if(k=='g')return give(v);
+ if(k=='fix')return guard('reset item',v,function(){if(v=='quest'){var it=items.find(function(q){return q.type=='card'&&!q.got});if(!it)return {msg:'No missing quest items: nothing to fix.'};it.x=P.x+.8;it.z=P.z;it.m.position.x=it.x;it.m.position.z=it.z;if(it.p){it.p.position.x=it.x;it.p.position.z=it.z}return {msg:'Moved the next quest item ('+(it.nm||CF.kn)+') next to you.'}}if(v=='gun'){GUN.rl=0;GUN.cd=0;GUN.l=Math.max(0,Math.min(GUN.mg,GUN.l|0));GUN.r=Math.max(0,GUN.r|0);gsave();return {msg:'Stun gun state repaired.'}}if(v=='inv'){INV.length=0;return {msg:'Carried items cleared.'}}},v=='inv'?{confirm:'Clear all carried items?'}:null);
+ if(k=='lv'){var n=+(($a('alv')||{}).value);if(!(n>=0&&n<LV.length)){msg('Pick a level 0–19.',false);return}
+  if(v=='go')return guard('teleport to level','level '+n,function(){SV.lv=n;SV.cont=0;save();setTimeout(function(){location.reload()},300);return {msg:'Going to level '+n+'... (progress kept)'}},n>SV.max?{confirm:'Level '+n+' is still locked. Go there for testing anyway? It stays locked in normal play.'}:null);
+  if(v=='unlock')return guard('unlock level','level '+n,function(){if(n<=SV.max)return {msg:'Level '+n+' is already unlocked.'};SV.max=n;save();return {msg:'Levels up to '+n+' unlocked.'}});
+  if(v=='next')return guard('level transition','level '+(SV.lv+1),function(){if(SV.lv>=LV.length-1)return {err:'Level 19 is the last level.'};hide();P.cards=CF.k;nextLv(SV.lv+1);return {msg:'Taking the elevator down...'}},{confirm:'Leave level '+SV.lv+' and ride the elevator to level '+(SV.lv+1)+'?'});
+  if(v=='bring'){msg(NOPLAY,false);return}}
+ if(k=='menu')return guard('return to menu','',function(){try{saveStats()}catch(e){}setTimeout(function(){location.reload()},300);return {msg:'Returning to the main menu...'}},{confirm:'Return to the main menu? Unsaved progress on this level is lost.'});
+ if(k=='ann'||k=='sys'){var t=(($a('amsg')||{}).value||'').trim().slice(0,120);if(!t){msg('Type a message first.',false);return}return guard(k=='ann'?'announcement':'system message',t,function(){announce(t,k=='sys');return {msg:'Sent to 1 player (you). '+(k=='sys'?'System messages reach every player once lobbies exist.':'')}})}
+ if(k=='restart')return guard('restart session','',function(){setTimeout(function(){location.reload()},300);return {msg:'Restarting...'}},{confirm:'Restart the test session? The page reloads.'})}
+function announce(t,sys){ban((sys?'⚠ SYSTEM: ':'📢 ')+t,6000);if(AC)tone({f:660,d:.3,v:.2})}
+function removeLevelMon(){ADM.gone=true;if(lm){lm.visible=false;M.x=M.z=-999}else if(CF.bal){PG.forEach(function(p){p.g.visible=false;p.x=p.z=-999})}else if(CF.tile){WM.on=false;wmon.visible=false;WM.x=WM.z=-999}else{mon.visible=false;ghost.visible=false;shd.visible=false;M.x=M.z=-999}}
+function restoreLevelMon(){var c=openCellNear(P.x,P.z,14,30)||open[open.length-1];var x=cc(c[0]),z=cc(c[1]);if(lm){M.x=x;M.z=z;lm.visible=true;LM.st='idle';LM.path=[];lm.position.set(x,0,z)}else if(CF.bal){PG.forEach(function(p){var c2=openCellNear(P.x,P.z,14,40);p.x=cc(c2[0]);p.z=cc(c2[1]);p.g.visible=true;p.path=[]})}else if(CF.tile){WM.x=x;WM.z=z}else{M.x=x;M.z=z;mon.visible=true;shd.visible=true;M.path=[];M.state='patrol'}}
+function spawn(id){var e=MLIST.find(function(m){return m[0]==id});if(!e)return {err:'Unknown monster.'};var here=e[2].indexOf(SV.lv)>=0;
+ if(here&&id==levelMon()){if(ADM.gone){ADM.gone=false;restoreLevelMon();return {msg:e[1]+' spawned at a valid spot.'}}if(!ADM.test)return {err:e[1]+' is already in this level. Turn on TEST MODE to spawn an extra copy.'}}
+ if(id=='grin'&&here&&!ADM.test){L.black=Math.max(L.black,8);return {msg:'Blackout started: the Grinner comes out in the dark.'}}
+ if(!ADM.test)return {err:e[1]+' does not belong to level '+SV.lv+'. Turn on ADMIN TEST MODE to spawn it as a test copy.'};
+ if(ADM.dum.length>=6)return {err:'Limit reached: 6 test copies at once.'};
+ var c=openCellNear(P.x,P.z,8,20);if(!c)return {err:'No valid spawn spot (needs open floor 8–20 m away).'};var g2=mkModel(id);scene.add(g2);var dm={id:id,g:g2,x:cc(c[0]),z:cc(c[1]),home:[c[0],c[1]],st:'patrol',path:[],pt:0};g2.position.set(dm.x,0,dm.z);ADM.dum.push(dm);return {msg:'Spawned a test copy of '+e[1]+' '+Math.hypot(dm.x-P.x,dm.z-P.z).toFixed(0)+' m away (TEST MODE). Its touch plays a test jumpscare instead of killing you.'}}
+function give(v){var nm=profileName()||'Guest';return guard('give '+v,nm,function(){
+ if(v=='flash'){P.bat=100;P.fl=true;return {msg:'Flashlight on with a full battery.'}}
+ if(v=='gun'){if(GUN.o)return {msg:'Already has the stun gun.'};GUN.o=1;GUN.l=Math.max(GUN.l,2);gsave();return {msg:'Stun gun given (2 loaded). Press E to equip.'}}
+ if(v=='ammo'){if(!GUN.o)return {err:'Give the stun gun first.'};GUN.r+=6;gsave();return {msg:'+6 stun cartridges.'}}
+ if(v=='bat'||v=='water'){if(INV.length>=5)return {err:'Inventory is full (5/5).'};INV.push(v);return {msg:'Gave '+IN[v]+'.'}}
+ if(v=='stam'){P.st=100;P.tired=false;return {msg:'Stamina full.'}}
+ if(v=='quest'){var it=items.find(function(q){return q.type=='card'&&!q.got});if(!it)return {msg:'All quest items are already collected — nothing to give (no duplicates).'};it.x=P.x;it.z=P.z;it.m.position.x=it.x;it.m.position.z=it.z;return {msg:'Placed the next quest item ('+(it.nm||CF.kn)+') at your feet. It counts once, like normal.'}}
+ if(v=='tape'){var t=+($a('atape')||{}).value;if(!window.LVX||!LVX.TAPES[t])return {err:'Unknown tape.'};if(ADM.test){PHN.scr='arc';LVX.arcView='t'+t;return {msg:'TEST MODE: tape '+t+' opened for preview only (not saved). Open the phone to watch it.'}}var ok=LVX.addTape(t);return {msg:ok?'Tape added to FOUND TAPES.':'Already has that tape.'}}
+ return {err:'Unknown item.'}})}
+// after a revive, keep the old death screens from popping up
+setInterval(function(){if(!ADM.revT||Date.now()>ADM.revT||typeof P=='undefined'||P.dead)return;try{var o=$a('ov');if(o.style.display=='flex'&&!P.won){o.style.display='none'}var rc=$a('runc');if(rc&&rc.style.display!='none'&&rc.style.display){rc.style.display='none'}var r=$a('red');r.style.transition='';r.style.opacity=0;if(/caught you|still awake|keeps you|slipped|took you|birthday|too dark/i.test($a('msg').textContent))$a('msg').textContent=''}catch(e){}},100);
+// ---------------- command console ----------------
+var CON=['BACKROOMS ADMIN CONSOLE — type "help". Commands are checked before they run; nothing you type is ever executed as code.'];
+var CMDS={help:'show commands',players:'list connected players','goto <level>':'teleport to level 0-19','spawn <monster>':'spawn a monster (ids: boiled grin water party m3..m19)',clear_monsters:'remove all monsters','revive <player>':'revive a player','give_cash <player> <amount>':'grant Backrooms Cash (1-100000)','announce <message>':'lobby announcement','spectate <player>':'observe a player (or "monster")',reset_level:'reset the current level (asks to confirm)'};
+function out(t){CON.push(t);if(CON.length>200)CON.shift();var o=$a('aconout');if(o){o.textContent=CON.join('\n');o.scrollTop=1e9}}
+function runCmd(raw){var line=String(raw||'').trim().slice(0,200);if(!line)return;out('> '+line);if(!authed()){out('ACCESS DENIED');audit('console',line,false,'not authorized');return}
+ if(!/^[A-Za-z0-9_ .,!?'"\-#:]+$/.test(line)){out('Rejected: unsupported characters.');audit('console',line,false,'bad characters');return}
+ var p=line.split(/\s+/),c=p[0].toLowerCase(),me=(profileName()||'guest').toLowerCase(),who=function(n){return n&&n.toLowerCase()==me};
+ var fail=function(m){out('Error: '+m);audit('console',line,false,m)};
+ if(c=='help'){Object.keys(CMDS).forEach(function(k){out('  '+k.padEnd(28)+CMDS[k])});audit('console',line,true,'');return}
+ if(c=='players'){out('  1 player: '+(profileName()||'Guest')+'  id '+PID+'  level '+SV.lv+'  '+(inGame()?(P.dead?'dead':'alive'):'menu'));audit('console',line,true,'');return}
+ if(c=='goto'){var n=p[1];if(!/^\d{1,2}$/.test(n||'')||+n>=LV.length)return fail('usage: goto <level 0-19>');ADM.tab='CONSOLE';audit('console',line,true,'');out('Going to level '+n+'...');SV.lv=+n;SV.cont=0;save();setTimeout(function(){location.reload()},500);return}
+ if(c=='spawn'){var id=(p[1]||'').toLowerCase();if(!MLIST.some(function(m){return m[0]==id}))return fail('unknown monster "'+(p[1]||'')+'". Try: boiled grin water party m3 ... m19');if(!inGame())return fail('start a level first');var r=spawn(id);if(r.err)return fail(r.err);out(r.msg);audit('console',line,true,r.msg);return}
+ if(c=='clear_monsters'){if(!inGame())return fail('start a level first');removeLevelMon();ADM.dum.forEach(function(d){scene.remove(d.g)});ADM.dum=[];out('All monsters removed.');audit('console',line,true,'');return}
+ if(c=='revive'){if(!who(p[1]))return fail('no player named "'+(p[1]||'')+'"');if(!inGame())return fail('start a level first');act('revive');out('Revive sent.');return}
+ if(c=='give_cash'){if(!who(p[1]))return fail('no player named "'+(p[1]||'')+'"');var a=p[2];if(!/^\d{1,6}$/.test(a||'')||+a<1||+a>100000)return fail('amount must be a whole number 1-100000');addCash(+a,'Admin gift');out('+$'+a+' to '+p[1]+' (now $'+CASH.bal+')');audit('console',line,true,'');return}
+ if(c=='announce'){var t=p.slice(1).join(' ');if(!t)return fail('usage: announce <message>');announce(t,false);out('Announced.');audit('console',line,true,'');return}
+ if(c=='spectate'){var tg=(p[1]||'').toLowerCase();if(!inGame())return fail('start a level first');if(tg=='monster'){act('follow');out('Spectating the monster.');return}if(!who(tg))return fail('no player named "'+(p[1]||'')+'"');out('That player is you. Use the free camera (WORLD tab) to look around.');audit('console',line,true,'');return}
+ if(c=='reset_level'){act('reset');out('Confirm the reset in the dialog.');return}
+ fail('unknown command "'+c+'". Type help.')}
+// ---------------- hidden entrance: click the title 5 times, or press ` once logged in ----------------
+var tc=[];try{$a('tt').addEventListener('click',function(){var n=Date.now();tc=tc.filter(function(t){return n-t<2500});tc.push(n);if(tc.length>=5){tc=[];show()}})}catch(e){}
+$a('admbtn').onclick=show;if(authed()){$a('admbtn').style.display='block'}if(ADM.test)$a('admtest').style.display='block';
+// test runs never reach the shared leaderboard
+var oLB=submitLB;submitLB=function(){if(ADM.test)return;return oLB.apply(this,arguments)};
+// VHS static on the panel
+(function vh(){var c=root.querySelector('canvas.vhs'),x=c.getContext('2d');setInterval(function(){if(root.style.display!='block')return;var d=x.createImageData(160,90);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}x.putImageData(d,0,0)},90)})();
+setInterval(function(){if(root.style.display=='block'&&authed()&&(ADM.tab=='MONSTERS'||ADM.tab=='PLAYERS')&&!box.querySelector('[data-y]')&&document.activeElement&&document.activeElement.id!='aq'&&document.activeElement.tagName!='INPUT'&&document.activeElement.tagName!='SELECT')render()},1000);
+addEventListener('keydown',function(e){if(root.style.display=='block'&&e.code=='Escape'){hide();e.stopImmediatePropagation()}},true);
+})();
+</script>
+
 <!-- ===== SAVE FILE PICKER ===== -->
 <style>
 #slots{position:fixed;inset:0;z-index:9;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at center,#1a1500ee,#000f);color:#e4d56a;font-family:monospace;padding:16px;overflow:auto}
