@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
-var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc'];
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc','brrp'];
 var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
 try{LS=window.localStorage}catch(e){return}
 function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
@@ -3385,7 +3385,10 @@ var DPOOL=[
  ['mut2','medium','Escape a level with 2 or more mutations active',120],
  ['nochase','hard','Escape a level without ever being chased',160],
  ['fast','hard','Escape a level in under 4 minutes',150],
- ['nm','hard','Escape a level on NIGHTMARE or DON\'T LOOK BACK',180]];
+ ['nm','hard','Escape a level on NIGHTMARE or DON\'T LOOK BACK',180],
+ ['tape','easy','Find a VHS tape',60],
+ ['rescue','medium','Rescue a lost wanderer (or recover their recorder)',120],
+ ['dlbc','hard','Survive the Don\'t Look Back challenge',200]];
 var DC=ld('brdc',{key:'',ids:[],done:[],claimed:[],lastT:0,hist:{}});DC.hist=DC.hist||{};var CLOCK=false;
 function dayKey(t){var d=new Date(t);return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0')}
 function dcToday(){var now=Date.now(),k=dayKey(now);CLOCK=false;if(DC.lastT&&now<DC.lastT-10*60*1000){CLOCK=true;return DC}if(DC.key&&k<DC.key){CLOCK=true;return DC}
@@ -3459,12 +3462,14 @@ function metaPick(){var c=[],done=(SV.done||[]),dl=done.indexOf(19)>=0;
  if(SV.max>=10&&UN)c.push(['name','IT KNOWS YOUR NAME,\n'+UN.toUpperCase()+'.']);
  if(meta.flags.dlbEsc||SV.ending||meta.flags.won)c.push(['dlb',"DON'T LOOK BACK."]);
  if(meta.flags.hardEsc)c.push(['light','']);
+ if(dl&&!(HD.vhs&&HD.vhs.vx))c.push(['tape','A NEW TAPE HAS APPEARED.']);
  if(dl||SV.max>=19)c.push(['term','']);
  if((PS.e|0)>=3)c.push(['char','']);
  if(meta.flags.won||SV.ending||meta.flags.saw20)c.push(['music','']);
  if(!c.length)return null;var first=c.filter(function(q){return !meta.seen[q[0]]});if(first.length)return first[0];if(!fresh||RND()>.14)return null;return c[RND()*c.length|0]}
 function metaShow(){if(typeof MENU=='undefined'||!MENU)return;var ev=metaPick();if(!ev)return;MEV=ev[0];meta.seen[MEV]=(meta.seen[MEV]||0)+1;hsave();
  if(ev[1]){setTimeout(function(){MET.textContent=ev[1];MET.style.opacity=1;var t=document.getElementById('tt');if(t){t.style.textShadow='4px 0 #f00,-4px 0 #0ff';setTimeout(function(){t.style.textShadow=''},250)}snd(function(){tone({f:46,f2:38,d:4,v:.3,a:1})});setTimeout(function(){MET.style.opacity=0},4200)},2500)}
+ if(MEV=='tape'){HD.vhs=HD.vhs||{};HD.vhs.vx={d:1,c:1,p:0,lv:19};hsave();setTimeout(function(){toast('📼 An unlabeled tape is in your collection. Play it at a TV.','#9ad0ff')},6500)}
  if(MEV=='term'){var r=HD.last,lines=['> BACKROOMS RESEARCH TERMINAL','> SUBJECT: '+(UN||'UNKNOWN WANDERER'),'> LEVELS DOCUMENTED: '+(SV.max+1)+' / 20','> RECORDED DEATHS: '+(PS.d|0),'> STATUS: RETURNED ('+(PS.e|0)+' TIMES)','> NOTE: SUBJECT KEEPS COMING BACK.','> NOTE: SOMETHING CAME BACK WITH THEM.'];if(r)lines.splice(5,0,'> LAST RUN: '+MODES[r.mode].n+', '+r.esc+' LEVELS, '+(r.res||'?').toUpperCase());TERM.style.display='block';TERM.textContent='';var all=lines.join('\n'),i=0,iv=setInterval(function(){if(!MENU){clearInterval(iv);TERM.style.display='none';return}i+=2;TERM.textContent=all.slice(0,i)+(i%4<2?'█':'');if(i>=all.length+60){clearInterval(iv);setTimeout(function(){TERM.style.display='none'},9000)}},40)}
  if(MEV=='dlb'||MEV=='char'||MEV=='steps'){setTimeout(function(){if(!MENU)return;var col=0x030303;if(MEV=='char'){try{var s=SUITS.find(function(q){return q.id==SUIT});if(s)col=new T.Color(s.c).multiplyScalar(.45).getHex();else col=0x2a2f3a}catch(e){}}menuSil=menuSil||silMesh(col,MEV!='char');menuSil.children.forEach(function(m){if(m.material&&m.geometry.parameters.width>.05)m.material.color.setHex(col)});
   var a=(typeof SV!='undefined'&&SV.lv==0?-Math.PI/2:0),d=Math.min(18,clearDist()),fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),k=Math.max(4,d-1.5);menuSil.position.set(P.x+fx*k,0,P.z+fz*k);menuSil.rotation.y=Math.atan2(P.x-menuSil.position.x,P.z-menuSil.position.z);menuSil.visible=true;menuSilT=MEV=='char'?2.2:5},4000)}}
@@ -3890,7 +3895,7 @@ function encTick(dt){if(!playing())return;var ch=M.state=='chase'||(lm&&LM.st=='
  if(ch&&!ENC.chase){if(now-ENC.last>20){var e=enc(lvMon);e.n++;if(!e.first)e.first=LVL;ENC.last=now;hsave()}ENC.seenLvl=true}
  if(!ch&&ENC.chase&&!P.dead){var e2_=enc(lvMon);e2_.e++;hsave()}ENC.chase=ch;
  if(GR.on&&!ENC.grin){ENC.grin=1;var g2=enc('grin');g2.n++;if(g2.first==null)g2.first=LVL;hsave()}if(!GR.on&&ENC.grin&&!P.dead){ENC.grin=0;enc('grin').e++;hsave()}}
-var oDisc=disc;disc=function(id){var e=enc(id);if(!e.n){e.n=1;e.first=LVL;hsave()}return oDisc.apply(this,arguments)};
+var oDisc=disc;disc=function(id){if(typeof MONS!='undefined'&&!MONS.find(function(m){return m.id==id}))return;var e=enc(id);if(!e.n){e.n=1;e.first=LVL;hsave()}return oDisc.apply(this,arguments)};
 var oNx=nextLv;nextLv=function(){try{if(ENC.seenLvl){enc(lvMon).e++;hsave()}}catch(e){}return oNx.apply(this,arguments)};
 // =====================================================================
 // 1. THE COPYCAT — ten-state AI on Level 5, learns from how you play
@@ -3972,6 +3977,7 @@ var VT={
  v6:{lv:6,t:'TAPE 06 — "TREELINE"',l:['[Wind through branches. Something cracks.]','A forest. Underground. With a road through it.','If you stand still too long, the trees close in. Keep moving.','June saw a light between the trees. We did not follow it. June did.'],n:'Level 6. June follows a light.',c:'Standing still in the forest is how the Treestalker finds you.'},
  v7:{lv:7,t:'TAPE 07 — "LAST TRAIN"',l:['[Train brakes. A conductor\'s whistle, underwater.]','The train is flooded but it still runs. Something punches the tickets.','Warning lights flash before it charges. Every time. Count to two and move.','Marcus thinks the Institute is the one leaving these tapes. Not us.'],n:'Level 7. The Drowned Conductor.',c:'"The Institute" is mentioned for the first time.'},
  v8:{lv:8,t:'TAPE 08 — "NIGHT SHIFT"',l:['[A heart monitor. Flat line, then a beep.]','A hospital. The beds are made. The charts have our blood types.','The nurse sees your flashlight from the other end of the ward. Keep it off when you can.','We found an Aster Institute badge on a chair. Dr. Halloran. Control Zero.'],n:'Level 8. A name: Dr. Halloran.',c:'Dr. Halloran worked at "Control Zero" — Level 0.'},
+ vx:{lv:19,t:'TAPE ?? — "HOME"',l:['[No label. It was not there before.]','[A bedroom. Morning light. Someone asleep in the bed.]','[The camera turns slowly toward the window.]','[Across the street, under a streetlight, something made of static is standing very still.]','[It waves.]'],n:'Appeared on the main menu after you escaped Level 19.',c:'Whoever recorded this was standing inside your home.',danger:1},
  v9:{lv:9,t:'TAPE 09 — "THE NULL"',l:['[Silence. Total silence.]','There is nothing here. Nothing at all. Do not trust the exits.','Two of the doors were paintings. The third one was real.','I can hear Sam. I can hear Sam calling from Level 2. That is not possible.','[Dana, very quietly:] I think the Backrooms remember everyone who has walked through them.'],n:'Level 9. "The Backrooms remember."',c:'The Backrooms remember everyone. A level that remembers?',danger:1}};
 HD.vhs=HD.vhs||{};HD.fut=HD.fut||{};var VS=HD.vhs;
 function vs(id){return VS[id]=VS[id]||{d:0,c:0,p:0}}
@@ -4086,6 +4092,473 @@ var oP=window.PFX;window.PFX=function(s,c){try{if(TAPE&&TAPE.g.visible&&typeof s
  if(TV&&MAPON&&typeof started!='undefined'&&started&&MX[ce(TV.x)*W+ce(TV.z)]){mc.fillStyle='#ccc';mc.fillRect(ce(TV.x)*4+1,ce(TV.z)*4+1,3,3)}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
 HU.vhsGive=function(){Object.keys(VT).forEach(function(k){var s=vs(k);s.c=1;s.d=1});hsave();if(TAPE){TAPE.g.visible=false;TAPE.gl.visible=false}return 'All ten Level 0-9 tapes added. Play them at a TV.'};
 HU.tvHere=function(){if(!TV)return 'There is no TV on this level.';P.x=TV.x+1;P.z=TV.z;if(solid(P.x,P.z)){P.x=TV.x;P.z=TV.z+1}return 'Moved next to the TV.'};
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 3A: lost wanderer NPCs, rescue missions, STALKER mode (AI substitute) ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+function cap(t,s){HU.cap&&HU.cap(t,s)}
+function cvTex(w,h,f){var c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return new T.CanvasTexture(c)}
+HD.res=HD.res||{};HD.stk=HD.stk||{rounds:0,wins:0,best:0,pts:0};
+var STK=HD.stk.pending?HD.stk.pending:null;// a Stalker round is loading on this page
+// =====================================================================
+// NPC WANDERERS (shared by rescue missions and Stalker mode)
+// =====================================================================
+var NPCS=HU.NPCS=[];
+function mons(){var a=[];try{if(CF.bal)PG.forEach(function(p){a.push({x:p.x,z:p.z,ch:p.st=='chase'})});else if(CF.tile){if(WM.on)a.push({x:WM.x,z:WM.z,ch:true})}else if(lm||mon.visible)a.push({x:M.x,z:M.z,ch:M.state=='chase'});if(GR.on)a.push({x:GR.x,z:GR.z,ch:true})}catch(e){}return a}
+function mkNPC(o){var G=new T.Group(),m=function(c){return new T.MeshLambertMaterial({color:c})},b=function(w,h,d,x,y,mt,par){var q=new T.Mesh(new T.BoxGeometry(w,h,d),mt);q.position.set(x,y,0);(par||G).add(q);return q};
+ var body=new T.Group();G.add(body);var legs=[b(.16,.85,.18,-.1,.43,m(0x23262c),body),b(.16,.85,.18,.1,.43,m(0x23262c),body)];b(.46,.62,.27,0,1.17,m(o.col),body);var head=b(.24,.27,.25,0,1.62,m(o.skin||0xc8a080),body);b(.26,.08,.27,0,1.77,m(o.hair||0x2a1a10),body);var arms=[b(.11,.62,.13,-.3,1.13,m(o.col),body),b(.11,.62,.13,.3,1.13,m(o.col),body)];
+ if(o.lamp){var l=new T.Mesh(new T.BoxGeometry(.06,.06,.16),new T.MeshBasicMaterial({color:0xfff2c0}));l.position.set(.3,1.0,.12);body.add(l)}
+ if(o.fakeEyes){var em=new T.MeshBasicMaterial({color:0xfff8e0});o.eyes=[-.05,.05].map(function(x){var q=new T.Mesh(new T.BoxGeometry(.03,.02,.01),em);q.position.set(x,1.65,.13);body.add(q);q.visible=false;return q})}
+ var tag=new T.Sprite(new T.SpriteMaterial({map:cvTex(256,48,function(x,w,h){x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,0,w,h);x.fillStyle='#e8f0ff';x.font='bold 26px sans-serif';x.textAlign='center';x.fillText(o.name,w/2,34)}),depthTest:false,transparent:true}));tag.scale.set(1.2,.22,1);tag.position.y=2.15;G.add(tag);
+ G.position.set(o.x,0,o.z);scene.add(G);var n={name:o.name,g:G,body:body,legs:legs,arms:arms,head:head,tag:tag,x:o.x,z:o.z,st:o.st||'idle',path:[],pt:0,fear:0,sayT:0,t:RND()*9,o:o,fake:!!o.fake,stepT:0,down:0};NPCS.push(n);return n}
+HU.mkNPC=mkNPC;
+function npcGo(n,i,j){n.path=bfs(ce(n.x),ce(n.z),i,j)||[]}
+function npcWalk(n,dt,v){if(!n.path.length)return true;var c=n.path[0],tx=cc(c[0]),tz=cc(c[1]),dx=tx-n.x,dz=tz-n.z,d=Math.hypot(dx,dz);if(d<.3){n.path.shift();return !n.path.length}n.x+=dx/d*v*dt;n.z+=dz/d*v*dt;n.g.rotation.y=Math.atan2(dx,dz);n.moving=1;return false}
+function npcSay(n,t,s){if(n.sayT>0&&!s)return;n.sayT=s||5;cap('['+n.name+'] '+t,3.5);tn({t:'triangle',f:170+RND()*60,f2:140,d:.25,v:.06,lp:1100})}
+function npcTick(n,dt){if(n.st=='gone'||n.st=='saved')return;n.t+=dt;n.sayT-=dt;n.moving=0;var dP=Math.hypot(P.x-n.x,P.z-n.z),ms=mons(),near=null,dm=99;ms.forEach(function(m){var d=Math.hypot(m.x-n.x,m.z-n.z);if(d<dm){dm=d;near=m}});
+ if(n.st=='down'){n.down-=dt;n.body.rotation.x=-1.4;n.body.position.y=.25;if(n.down<=0&&n.onExpire)n.onExpire(n);return}else{n.body.rotation.x=0;n.body.position.y=0}
+ if(n.ai)n.ai(n,dt,dP,dm,near);
+ else{
+  // fear: cower or run when a monster is close
+  var scared=near&&dm<14&&los(n.x,n.z,near.x,near.z);if(scared){n.fear=Math.min(1,n.fear+dt*2);if(n.st!='follow')npcSay(n,['It\'s here... it\'s HERE.','Don\'t move. Please don\'t move.','Oh no. Oh no no no.'][RND()*3|0])}else n.fear=Math.max(0,n.fear-dt*.5);
+  if(n.st=='follow'){n.pt-=dt;if(dP>2.6&&(n.pt<=0||!n.path.length)){n.pt=.6;npcGo(n,ce(P.x),ce(P.z))}if(dP>2.2)npcWalk(n,dt,Math.min(4.6,2.6+dP*.15));else{n.path=[];n.g.rotation.y=Math.atan2(P.x-n.x,P.z-n.z)}
+   if(scared&&n.sayT<=0)npcSay(n,['Run! RUN!','Behind us!','Where do we go?!'][RND()*3|0]);if(dP>30&&n.sayT<=0)npcSay(n,'Wait for me! Don\'t leave me here!');}
+  else if(scared&&dm<8){n.body.scale.y=.7}else n.body.scale.y=1;
+  // caught by a monster
+  if(near&&near.ch&&dm<1.1&&n.st!='hide'){n.st='gone';n.g.visible=false;cap('['+n.name+'] screams — and is gone.',4);bs({f:900,q:.6,d:.8,v:.4});if(n.onLost)n.onLost(n)}}
+ n.g.position.set(n.x,0,n.z);var sw=n.moving?Math.sin(n.t*8):0;n.legs.forEach(function(l,i){l.rotation.x=sw*.6*(i?-1:1)});n.arms.forEach(function(a,i){a.rotation.x=n.fear>.5&&!n.moving?-2.2:sw*.5*(i?1:-1)});n.head.rotation.y=Math.sin(n.t*.7)*.3;
+ if(n.moving&&!n.fake){n.stepT-=dt;if(n.stepT<=0){n.stepT=.45;snd(function(){var o=P3(n.x,n.z,.2,false);step(o,.2,false)})}}
+ if(n.fake&&n.o.eyes)n.o.eyes.forEach(function(q){q.visible=(P.fl&&P.bat>0&&dP<14&&RND()<.5)})}
+// =====================================================================
+// 13. LOST WANDERER RESCUE MISSIONS
+// =====================================================================
+// level: [name, mission type, jacket colour, intro, help text]
+var MIS={2:['Sam Ilves','escort',0x6a3a8a,'You... you came back for me? They left me here. The party never ends.','Get me to the exit. If they see us standing, crouch.'],
+ 3:['Priya Natarajan','search',0x2a6a5a,'Shh! I have been hiding in here for days. Is the Bellhop gone?','Take me to the elevator. Do not open doors near it.'],
+ 4:['Wes Corrigan','deliver',0x8a6a2a,'My flashlight died hours ago. I can\'t see anything. Do you have batteries?','Two batteries and I can find my own way. I owe you.'],
+ 5:['Theo Brandt','imposter',0x2a3a6a,'Hey! Over here! It\'s me, Theo!','One of us is not Theo. Look closely before you choose.'],
+ 6:['June Okafor','injured',0x7a2a2a,'I followed the light... I fell. My leg. Do you have Almond Water or a first-aid kit?','Help me up and get me out of this forest.'],
+ 8:['Marcus Hale','recorder',0x3a4a3a,'','']};
+var RM=null;
+function misDone(n,how){var mi=RM;if(!mi||mi.done)return;mi.done=1;var name=mi.name;HD.res[name]=how;hsave();
+ if(how=='saved'){var cash=Math.round(150*(HU.mode?HU.mode().cash:1));HU.raw=1;try{addCash(cash,'Rescued '+name)}finally{HU.raw=0}HU.toast('🆘 RESCUED: '+name+' — +$'+cash,'#9f9');HU.ev&&HU.ev('rescue');var nS=Object.keys(HD.res).filter(function(k){return HD.res[k]=='saved'}).length;if(nS>=3)HU.unlock&&HU.unlock('c_rescuer');try{var docs=HD.resDocs=HD.resDocs||{};docs[name]=1;hsave()}catch(e){}}
+ else if(how=='lost'){HU.toast('✖ RESCUE FAILED: '+name,'#f77')}}
+function missionText(){if(!RM)return '';var n=RM.npc,st=RM.done?(HD.res[RM.name]=='saved'?'✔ rescued':'✖ failed'):RM.type=='escort'||RM.type=='search'||RM.type=='imposter'||RM.type=='injured'&&RM.healed?(n&&n.st=='follow'?'following you — reach the exit together':'talk to them'):RM.type=='deliver'?'needs 2 batteries':RM.type=='injured'?'needs Almond Water or a first-aid kit':RM.type=='recorder'?'find his recorder':'';return '🆘 '+RM.name+': '+st}
+HU.missionText=missionText;
+function setupMission(){if(STK)return;var m=MIS[LVL];if(!m||CF.tile)return;var r=HU.run(),rr=m32((((r&&r.id)||SEED)*29+LVL*331)|0),name=m[0],prev=HD.res[name];if(prev=='saved')return;
+ var cs=open.filter(function(o){var q=Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1));return q>22&&!CL[o[0]*W+o[1]]&&!(o[0]==EL.i&&o[1]==EL.j)});if(!cs.length)return;
+ RM={name:name,type:m[1],lv:LVL,prevLost:prev=='lost'};
+ if(m[1]=='search'){// hiding behind a closed door
+  var ds=DOORS.filter(function(d){return !d.open&&Math.hypot(d.x-cc(1),d.z-cc(1))>18});var d0=ds[rr()*ds.length|0];if(d0){var ins=[[1,0],[-1,0],[0,1],[0,-1]].map(function(q){return [d0.ci+q[0],d0.cj+q[1]]}).filter(function(q){return q[0]>0&&q[1]>0&&q[0]<W&&q[1]<W&&!g[q[0]][q[1]]});var c0=ins[rr()*ins.length|0]||[d0.ci,d0.cj];RM.npc=mkNPC({name:name,col:m[2],x:cc(c0[0]),z:cc(c0[1]),st:'hide'})}}
+ if(!RM.npc){var c=cs[rr()*cs.length|0];
+  if(m[1]=='recorder'){var G=new T.Group(),bx=new T.Mesh(new T.BoxGeometry(.22,.1,.14),new T.MeshLambertMaterial({color:0x222222}));G.add(bx);var led=new T.Mesh(new T.BoxGeometry(.03,.03,.01),new T.MeshBasicMaterial({color:0xff2200}));led.position.set(.07,.05,.07);G.add(led);G.position.set(cc(c[0]),.06,cc(c[1]));scene.add(G);RM.rec={g:G,x:cc(c[0]),z:cc(c[1])};return}
+  RM.npc=mkNPC({name:name,col:m[2],x:cc(c[0]),z:cc(c[1]),st:m[1]=='injured'?'injured':'idle'});
+  if(m[1]=='imposter'){var c2=cs.filter(function(o){return Math.hypot(cc(o[0])-cc(c[0]),cc(o[1])-cc(c[1]))>10&&Math.hypot(cc(o[0])-cc(c[0]),cc(o[1])-cc(c[1]))<26})[0]||cs[(rr()*cs.length)|0];RM.fake=mkNPC({name:name,col:m[2],x:cc(c2[0]),z:cc(c2[1]),fake:1,fakeEyes:1});if(rr()<.5){var t2=RM.npc;RM.npc=RM.fake;RM.fake=t2;RM.npc.fake=false;RM.fake.fake=true;RM.fake.o.fakeEyes=1;if(!RM.fake.o.eyes){var em=new T.MeshBasicMaterial({color:0xfff8e0});RM.fake.o.eyes=[-.05,.05].map(function(x){var q=new T.Mesh(new T.BoxGeometry(.03,.02,.01),em);q.position.set(x,1.65,.13);RM.fake.body.add(q);q.visible=false;return q})}if(RM.npc.o.eyes)RM.npc.o.eyes.forEach(function(q){RM.npc.body.remove(q)});RM.npc.o.eyes=null}}}
+ var n=RM.npc;if(!n)return;n.onLost=function(){misDone(n,'lost')};if(n.st=='injured'){n.body.rotation.z=.25}}
+try{setupMission()}catch(e){console.error('rescue',e)}
+function talkP(n){started=false;ELP=true;try{document.exitPointerLock()}catch(e){}var m=MIS[LVL]||[],mi=RM,lines=[],opts=[];
+ if(n.fake){lines.push('"'+m[3]+'"');lines.push('<i>He says it again. The exact same words. The exact same smile.</i>');opts.push(['take:fake','Take him with you'],['leave:','Leave'])}
+ else if(mi.type=='imposter'){lines.push('"Thank God. There was another one of me back there. It talks like me. It does not blink."');opts.push(['take:real','Take him with you'],['leave:','Leave'])}
+ else if(mi.type=='deliver'&&!mi.given){var nb=INV.filter(function(q){return q=='bat'}).length+((window.GX&&GX.st&&GX.st.gx_batt)|0);lines.push('"'+m[3]+'"');opts.push(['bat:','Give 2 batteries (you have '+nb+')'],['leave:','Not now'])}
+ else if(mi.type=='injured'&&!mi.healed){var nw=INV.filter(function(q){return q=='water'}).length,nk=(window.GX&&GX.st&&GX.st.gx_med)|0;lines.push('"'+m[3]+'"');if(HD.res['Sam Ilves']=='lost')lines.push('"...Dana said you left Sam behind on Level 2. Please don\'t leave me."');opts.push(['heal:','Give Almond Water ('+nw+') or a first-aid kit ('+nk+')'],['leave:','Not now'])}
+ else if(n.st!='follow'){lines.push('"'+(mi.type=='injured'?'I can walk now. Just about.':m[3])+'"');lines.push('"'+m[4]+'"');if(mi.prevLost)lines.push('<i>"Last time you got close. Then it took me. Not again. Please."</i>');opts.push(['follow:','"Follow me."'],['tip:','Ask what they know'],['leave:','Leave'])}
+ else{lines.push('"I\'m right behind you."');opts.push(['wait:','"Wait here."'],['tip:','Ask what they know'],['leave:','Close'])}
+ pnl('<b>'+e2(n.name)+'</b><br><small>Lost Wanderer · Level '+LVL+'</small><div style="text-align:left;margin:8px 0;line-height:1.6">'+lines.join('<br>')+'</div>'+opts.map(function(o){return '<div class="bt" data-hu4="'+o[0]+'">'+o[1]+'</div>'}).join(''));HU.talkN=n}
+var TIPS={2:'"The yellow ones only notice standing people. And Sam? That is me. Do not answer if one of them says your name."',3:'"There is a guestbook at the front desk. My name was already in it. Yours might be too."',4:'"The PA calls out names before the lockdown. When it says yours, run."',5:'"The real one blinks. The copy never does, and its eyes shine in your light."',6:'"Under the fallen tree near the road, somebody painted a symbol. I think it means something on Level 20."'};
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu4]');if(!el)return;e.stopPropagation();var a=el.dataset.hu4.split(':'),k=a[0],v=a[1],n=HU.talkN,mi=RM;if(!n||!mi){closeP();return}
+ if(k=='leave'){closeP();return}
+ if(k=='follow'){n.st='follow';closeP();npcSay(n,'Okay. Okay. Lead the way.',3);return}
+ if(k=='wait'){n.st='idle';n.path=[];closeP();return}
+ if(k=='tip'){pnl('<b>'+e2(n.name)+'</b><div style="text-align:left;margin:8px 0">'+(TIPS[LVL]||'"Keep moving. Do not stay in the dark."')+'</div>');if(!mi.tip){mi.tip=1;if(LVL==4){P.bat=Math.min(100,P.bat+25);say('Wes gives you a spare battery. (+25%)',3)}if(LVL==3&&INV.length<5){INV.push('water');say('Priya gives you an Almond Water.',3)}}return}
+ if(k=='bat'){var have=INV.filter(function(q){return q=='bat'}).length,gx=(window.GX&&GX.st&&GX.st.gx_batt)|0;if(have+gx<2){pnl('<b>'+e2(n.name)+'</b><br>"That\'s not enough. I need two."');return}for(var i=0;i<2;i++){var ix=INV.indexOf('bat');if(ix>=0)INV.splice(ix,1);else{GX.st.gx_batt--;try{localStorage.setItem('brgx',JSON.stringify(GX.st))}catch(x){}}}mi.given=1;closeP();npcSay(n,'Light! Thank you. I know the way from here. Watch out for the PA.',4);n.st='leave';npcGo(n,EL.i,EL.j);misDone(n,'saved');return}
+ if(k=='heal'){var w=INV.indexOf('water');if(w>=0)INV.splice(w,1);else if(window.GX&&GX.st&&(GX.st.gx_med|0)>0){GX.st.gx_med--;try{localStorage.setItem('brgx',JSON.stringify(GX.st))}catch(x){}}else{pnl('<b>'+e2(n.name)+'</b><br>"You don\'t have anything... please, find some Almond Water."');return}mi.healed=1;n.st='idle';n.body.rotation.z=0;closeP();npcSay(n,'Oh... that is better. Get me out of here?',3);return}
+ if(k=='take'){closeP();if(v=='fake'){n.st='gone';n.g.visible=false;var f=n;cap('[the second Theo\'s face splits open — the Copycat!]',3);try{M.x=f.x;M.z=f.z;LM.st='hunt';LM.lost=0;LM.pt=0;LM.tx=ce(P.x);LM.tz=ce(P.z);if(HU.CC){HU.CC.st='attack';HU.CC.t=0;HU.CC.wind=2.2;HU.CC.ax=P.x;HU.CC.az=P.z}}catch(x){}say('RUN! It was the Copycat!',3);tn({t:'sawtooth',f:300,f2:2000,d:1,v:SET.ra?.12:.3});var real=RM.npc;if(real&&real.st!='gone'){real.st='leave';npcGo(real,EL.i,EL.j);npcSay(real,'That thing! I\'m going for the exit!',4)}mi.wrong=1;HD.res[mi.name+'#fake']=1;hsave()}else{n.st='follow';if(RM.fake&&RM.fake.st!='gone'){RM.fake.st='gone';RM.fake.g.visible=false;cap('[the other "Theo" is gone. Its footsteps never made a sound.]',3)}npcSay(n,'You picked right. Let\'s go.',3)}return}},true);
+// talking, the recorder, and completing an escort at the exit
+addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat||STK)return;var tg=e.target;if(tg&&(tg.tagName=='INPUT'||tg.tagName=='TEXTAREA'))return;var hit=false;
+ var n=NPCS.filter(function(q){return q.st!='gone'&&q.st!='saved'&&q.st!='down'}).map(function(q){return [Math.hypot(q.x-P.x,q.z-P.z),q]}).filter(function(q){return q[0]<2.2}).sort(function(a,b){return a[0]-b[0]})[0];
+ if(n&&RM&&!RM.done){hit=true;if(n[1].st=='hide'){n[1].st='idle'}talkP(n[1])}
+ else if(RM&&RM.rec&&!RM.done&&Math.hypot(RM.rec.x-P.x,RM.rec.z-P.z)<1.8){hit=true;RM.rec.g.visible=false;RM.done=1;HD.res['Marcus Hale']='recorder';hsave();started=false;ELP=true;try{document.exitPointerLock()}catch(x){}
+  var L=['[A voice recorder. The batteries are almost dead.]','This is Marcus Hale. Night shift... day eleven, I think.','The nurse sees your light from the other end of the ward. I left mine on. Stupid.','Dana, if you hear this: the badge on the chair. Dr. Halloran. Control Zero. Level 0. They have been watching us since day one.','Tell my sister I tried to get home.'];pnl('<b>MARCUS HALE — FINAL MESSAGE</b><div style="text-align:left;line-height:1.7;margin:8px 0">'+L.map(e2).join('<br>')+'</div><small style="opacity:.7">Fictional in-game recording. Archived to your notes.</small>');try{if(window.speechSynthesis&&!muted){var u=new SpeechSynthesisUtterance(L.slice(1).join(' '));u.pitch=.8;u.rate=.95;u.volume=SET.ra?.4:.8;speechSynthesis.speak(u)}}catch(x){}
+  HU.raw=1;try{addCash(80,'Recovered Marcus Hale\'s recorder')}finally{HU.raw=0}HU.toast('📼 Recovered: Marcus Hale\'s final message','#9ad0ff');HU.ev&&HU.ev('rescue')}
+ if(hit){e.stopImmediatePropagation();e.preventDefault()}},true);
+var oNx=nextLv;nextLv=function(){try{if(RM&&!RM.done&&RM.npc&&RM.npc.st=='follow'&&Math.hypot(RM.npc.x-P.x,RM.npc.z-P.z)<12)misDone(RM.npc,'saved');else if(RM&&!RM.done&&RM.npc&&RM.npc.st=='leave'&&!RM.wrong)misDone(RM.npc,'saved')}catch(e){}return oNx.apply(this,arguments)};
+// =====================================================================
+// 10. STALKER MODE — single-player with AI teammates and an AI entity
+// =====================================================================
+// Real online Stalker needs a multiplayer server, which this game does not have.
+// The fair AI substitute: you and three AI wanderers must escape. One of the wanderers is secretly the entity.
+var SN=['Dana','Theo','June','Priya','Wes','Sam','Ila','Rook'];
+function stkStart(){started=false;var prev=SV.lv;HD.stk.pending={prev:prev,cont:SV.cont||0,t:Date.now()};hsave();SV.lv=0;SV.cont=0;save();location.reload()}
+function stkMenuP(){var s=HD.stk;pnl('<b>👁 STALKER (secret mode)</b><br><small style="color:#fc6">True online Stalker needs a multiplayer server, which this game does not have. This is the fair AI version: you and THREE AI wanderers must escape Level 0 — and one of them is secretly the entity.</small><div style="text-align:left;margin:8px 0;font-size:13px;line-height:1.6">• Collect the 3 keycards, restart 2 generators, enter the exit code (each generator shows 2 digits) and reach the elevator before time runs out (6:00).<br>• The entity looks like a teammate. When nobody is watching it can: flicker the lights, lock a door for a few seconds, fake sounds, jam your scanner and set traps — all on cooldowns.<br>• It cannot kill instantly: it can only DOWN you when you are alone. A teammate can revive you. Revive downed teammates with F.<br>• Its identity is revealed on the results screen.</div><small>Rounds '+s.rounds+' · wins '+s.wins+' · best '+s.best+' pts · total '+s.pts+' pts</small><div class="bt pl" data-hu5="go">START ROUND</div>')}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu5]');if(!el)return;e.stopPropagation();var k=el.dataset.hu5;if(k=='go')stkStart();if(k=='back'){var pr=HD.stk.pending?HD.stk.pending.prev:(HD.stk.last&&HD.stk.last.prev);delete HD.stk.pending;hsave();SV.lv=pr==null?SV.lv:pr;save();location.reload()}},true);
+try{if((SV.max|0)>=5||HD.dlbc||HD.meta.flags.won){var bc=document.getElementById('b-dc'),bs2=document.createElement('div');bs2.className='bt';bs2.id='b-stk';bs2.textContent='👁 STALKER (SECRET)';bc.after(bs2);bs2.onclick=stkMenuP}}catch(e){}
+HU.stalkerMenu=stkMenuP;
+if(STK){setTimeout(function(){try{if(typeof MENU!='undefined'&&MENU)pnl('<b>👁 STALKER ROUND READY</b><br><small>AI substitute for online Stalker (no multiplayer server in this game).</small><br><br>Press PLAY to begin the round on Level 0.<br><br><span class="ch" data-hu5="back">✖ CANCEL THE ROUND (back to Level '+STK.prev+')</span>')}catch(e){}},900)}
+var SK=null;
+if(STK&&LVL==0){(function(){var rr=m32(STK.t|0);SK=HU.SK={t:360,team:[],ent:null,gens:[],code:'',typed:'',pts:0,downed:0,rev:0,sab:0,traps:[],cd:{light:12,door:18,snd:6,scan:14,trap:20,atk:30},over:false,obj:{cards:0,gens:0,code:0}};
+ // no normal monster, no blackout events: the entity is the only threat
+ M.x=M.z=-9999;try{mon.visible=false;shd.visible=false}catch(e){}var oUM=updMon;updMon=function(){};var oG=updGrin;updGrin=function(){};if(HU.LO)HU.LO.cd=1e9;
+ // 3 AI wanderers; one of them is the entity
+ var names=SN.slice().sort(function(){return rr()-.5}).slice(0,3),cols=[0x6a3a8a,0x2a6a5a,0x8a6a2a],ei=rr()*3|0;
+ names.forEach(function(nm,i){var c=[[2,1],[1,2],[3,3]][i];var n=mkNPC({name:nm,col:cols[i],x:cc(c[0]),z:cc(c[1]),st:'team',lamp:1});n.team=1;n.ent=i==ei;n.ai=teamAI;n.goal=null;SK.team.push(n);if(n.ent)SK.ent=n});
+ // generators (each shows two digits of the exit code)
+ var code=String(1000+(rr()*9000|0));SK.code=code;var gc=open.filter(function(o){return Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1))>30&&!CL[o[0]*W+o[1]]});for(var gI=0;gI<2;gI++){var c=gc[(rr()*gc.length)|0];var G=new T.Group(),b=new T.Mesh(new T.BoxGeometry(1,.8,.6),new T.MeshLambertMaterial({color:0x6a6a30}));b.position.y=.4;G.add(b);var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xff5a20,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));gl.position.y=1;G.add(gl);G.position.set(cc(c[0]),0,cc(c[1]));scene.add(G);SK.gens.push({x:cc(c[0]),z:cc(c[1]),g:G,gl:gl,pulls:0,on:false,dig:code.slice(gI*2,gI*2+2)})}
+ // trap spots (the entity can arm them)
+ for(var tI=0;tI<4;tI++){var c3=open[(rr()*open.length)|0];var m=new T.Mesh(new T.RingGeometry(.3,.42,16),new T.MeshBasicMaterial({color:0x553333,transparent:true,opacity:.5,side:T.DoubleSide}));m.rotation.x=-PI/2;m.position.set(cc(c3[0]),.02,cc(c3[1]));scene.add(m);SK.traps.push({x:cc(c3[0]),z:cc(c3[1]),m:m,armed:0})}
+ SK.hud=document.createElement('div');SK.hud.style.cssText='position:fixed;left:50%;top:64px;transform:translateX(-50%);z-index:6;font:bold 13px monospace;color:#ffd27a;text-shadow:0 0 6px #000;pointer-events:none;text-align:center;white-space:pre';document.body.appendChild(SK.hud);
+ setTimeout(function(){say('STALKER: one of your three teammates is not what it seems. Escape before 6:00.',6)},1500)})()}
+function stkAlone(){return !SK.team.some(function(n){return !n.ent&&n.st!='down'&&n.st!='out'&&Math.hypot(n.x-P.x,n.z-P.z)<14})}
+function teamAI(n,dt,dP){if(n.st=='out')return;var sk=SK;n.pt-=dt;
+ // honest wanderers: follow you, head to objectives, revive you when you are down
+ if(!n.ent||n.cover){if(sk.downed>0&&!n.ent){if(dP>1.6){if(n.pt<=0||!n.path.length){n.pt=.5;npcGo(n,ce(P.x),ce(P.z))}npcWalk(n,dt,4.2)}else{n.revT=(n.revT||0)+dt;if(n.revT>2.5){sk.downed=0;n.revT=0;say(n.name+' pulls you back to your feet!',3);sk.pts+=0;P.para=0}}return}
+  var tgt=null;var gen=sk.gens.find(function(q){return !q.on});var dTo=function(x,z){return Math.hypot(x-n.x,z-n.z)};
+  if(dP>9)tgt=[ce(P.x),ce(P.z)];else if(gen&&!n.ent&&RND()<.002)tgt=[ce(gen.x),ce(gen.z)];
+  if(tgt&&(n.pt<=0||!n.path.length)){n.pt=.8;npcGo(n,tgt[0],tgt[1])}if(dP>3.2)npcWalk(n,dt,Math.min(4.4,2.4+dP*.12));else{n.path=[];n.g.rotation.y=Math.atan2(P.x-n.x,P.z-n.z)}
+  // honest teammates help restart generators they are standing at
+  if(!n.ent&&gen&&dTo(gen.x,gen.z)<2&&RND()<dt*.15){gen.pulls++;if(gen.pulls>=3)genOn(gen,n.name)}}
+ if(n.ent)entAI(n,dt,dP)}
+function seenBy(n){var f=[-Math.sin(P.yaw),-Math.cos(P.yaw)],dx=n.x-P.x,dz=n.z-P.z,d=Math.hypot(dx,dz)||1;return (f[0]*dx+f[1]*dz)/d>.7&&d<30&&los(P.x,P.z,n.x,n.z)}
+function entAI(n,dt,dP){var sk=SK,cd=sk.cd;for(var k in cd)cd[k]-=dt;var seen=seenBy(n);n.unseen=seen?0:(n.unseen||0)+dt;n.cover=true;
+ if(n.atk){n.atk-=dt;n.cover=false;n.o.eyes&&n.o.eyes.forEach(function(q){q.visible=true});if(n.atk<=0){if(Math.hypot(n.x-P.x,n.z-P.z)<1.6&&!P.hide){down();}n.atk=0;cd.atk=45;n.o.eyes&&n.o.eyes.forEach(function(q){q.visible=false})}else{var dx=P.x-n.x,dz=P.z-n.z,d=Math.hypot(dx,dz)||1;if(n.atk<.8){n.x+=dx/d*6*dt;n.z+=dz/d*6*dt}}return}
+ if(seen)return;
+ // sabotage, only while nobody is looking, every action on a cooldown
+ if(n.unseen>2){if(cd.light<=0&&RND()<dt*.3){cd.light=35;L.black=Math.max(L.black,4);sk.sab++;cap('[the lights cut out]',2)}
+  else if(cd.door<=0&&RND()<dt*.3){var ds=DOORS.filter(function(d){return d.open&&Math.hypot(d.x-P.x,d.z-P.z)<16&&Math.hypot(d.x-P.x,d.z-P.z)>3});if(ds.length&&ds[0]!==sk.lastDoor){var d0=ds[0];d0.open=false;CL[d0.ci*W+d0.cj]=1;d0.locked=Date.now()+8000;sk.lastDoor=d0;cd.door=30;sk.sab++;bs({f:200,t:'lowpass',d:.5,v:.6});cap('[a door slams and locks nearby]',2)}else cd.door=10}
+  else if(cd.snd<=0&&RND()<dt*.4){cd.snd=15;var a=RND()*6.28;amb3(RND()*3|0,P.x+Math.cos(a)*9,P.z+Math.sin(a)*9);sk.sab++}
+  else if(cd.scan<=0&&RND()<dt*.3){cd.scan=25;RB.sd=Math.max(RB.sd,2);sk.sab++}
+  else if(cd.trap<=0&&RND()<dt*.25){var tr=sk.traps.filter(function(q){return !q.armed});if(tr.length){tr[0].armed=1;cd.trap=40;sk.sab++}}}
+ // stalk: attack only when you are alone and it has not been seen for a while
+ if(cd.atk<=0&&stkAlone()&&n.unseen>6&&dP<22&&!P.hide&&sk.downed<=0){if(dP>2.5){if(n.pt<=0||!n.path.length){n.pt=.5;npcGo(n,ce(P.x),ce(P.z))}npcWalk(n,dt,3.6)}else{n.atk=1.3;tn({t:'sawtooth',f:400,f2:1600,d:1,v:SET.ra?.12:.3,lp:4000});cap('['+n.name+'\'s eyes start to shine...]',2)}}}
+function down(){var sk=SK;sk.downed=12;P.para=12;say('You are DOWN! A teammate must reach you within 12 s.',4);tn({f:120,f2:60,d:1,v:.4})}
+function genOn(gen,who){if(gen.on)return;gen.on=true;gen.gl.visible=false;SK.obj.gens++;SK.pts+=150;say('⚡ '+(who?who+' restarted':'Generator restarted')+'! The panel shows two digits of the exit code: '+gen.dig,6);bs({f:300,t:'lowpass',d:1.2,v:.7})}
+function stkEnd(win,why){var sk=SK;if(sk.over)return;sk.over=true;started=false;try{document.exitPointerLock()}catch(e){}var t=Math.round(360-sk.t);if(win)sk.pts+=500+Math.round(sk.t)*2;sk.pts+=sk.obj.cards*100+sk.rev*120;
+ var s=HD.stk;s.rounds++;if(win)s.wins++;s.best=Math.max(s.best,sk.pts);s.pts+=sk.pts;s.last={win:win,pts:sk.pts,ent:sk.ent.name,prev:STK.prev,t:Date.now()};hsave();
+ var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;color:#e4d56a;font:15px monospace;text-align:center';ov.innerHTML='<div class="pn" style="max-width:520px"><h2 style="color:'+(win?'#9f9':'#f66')+'">'+(win?'YOU ESCAPED':'ROUND LOST')+'</h2>'+e2(why)+'<br><br>The entity was: <b style="color:#f66">'+e2(sk.ent.name)+'</b> (it sabotaged '+sk.sab+' times)<br><br>Keycards '+sk.obj.cards+'/3 · generators '+sk.obj.gens+'/2 · code '+(sk.obj.code?'✔':'✖')+'<br>Teammates revived: '+sk.rev+' · time '+Math.floor(t/60)+':'+String(t%60).padStart(2,'0')+'<br><br><b>POINTS: '+sk.pts+'</b><br><small>Best '+s.best+' · rounds '+s.rounds+' · wins '+s.wins+'</small><br><br><div class="bt pl" id="stk-back">BACK TO THE GAME</div></div>';document.body.appendChild(ov);
+ document.getElementById('stk-back').onclick=function(){delete HD.stk.pending;hsave();SV.lv=STK.prev;SV.cont=0;save();location.reload()};
+ if(win){HU.raw=1;try{addCash(Math.round(sk.pts/10),'Stalker round')}finally{HU.raw=0}}}
+if(SK){var oDie=die;die=function(){if(SK&&!SK.over){down();return}return oDie.apply(this,arguments)};
+ var oEx=exitLevel;exitLevel=function(){if(SK){if(P.cards<CF.k){say('The elevator needs all 3 keycards ('+P.cards+'/3).',3);return}if(SK.obj.gens<2){say('Restart both generators first ('+SK.obj.gens+'/2).',3);return}if(!SK.obj.code){codeP();return}stkEnd(true,'You and your team reached the elevator.');return}return oEx.apply(this,arguments)};
+ var oNx2=nextLv;nextLv=function(){if(SK){stkEnd(true,'You reached the elevator.');return}return oNx2.apply(this,arguments)}}
+function codeP(){started=false;ELP=true;try{document.exitPointerLock()}catch(e){}var dg=SK.gens.filter(function(g){return g.on}).map(function(g){return g.dig}).join(' + ');pnl('<b>EXIT KEYPAD</b><br><small>Code digits found on the generators: '+e2(dg)+'</small><br><input id="stk-c" maxlength="4" inputmode="numeric" style="width:120px;font-size:20px;text-align:center"><div class="bt" data-hu6="ok">ENTER</div>');setTimeout(function(){var i=document.getElementById('stk-c');if(i){i.focus();i.onkeydown=function(e){e.stopPropagation();if(e.key=='Enter')tryCode()}}},40)}
+function tryCode(){var i=document.getElementById('stk-c');if(!i)return;if(i.value==SK.code){SK.obj.code=1;SK.pts+=150;closeP();say('Code accepted. The elevator wakes up — go!',4)}else{i.value='';i.placeholder='WRONG';tn({t:'square',f:200,d:.2,v:.1})}}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu6]');if(!el)return;e.stopPropagation();tryCode()},true);
+addEventListener('keydown',function(e){if(!SK||SK.over||e.code!='KeyF'||!playing()||e.repeat)return;var hit=false;
+ var gen=SK.gens.find(function(q){return !q.on&&Math.hypot(q.x-P.x,q.z-P.z)<2.2});if(gen){hit=true;gen.pulls++;bs({f:300,t:'lowpass',d:.5,v:.7});noise(8);if(gen.pulls>=3)genOn(gen);else say('You pull the cord ('+gen.pulls+'/3)',2)}
+ var dn=SK.team.find(function(n){return n.st=='down'&&Math.hypot(n.x-P.x,n.z-P.z)<2});if(dn){hit=true;dn.st='team';dn.down=0;SK.rev++;SK.pts+=120;say('You helped '+dn.name+' up.',3)}
+ if(hit){e.stopImmediatePropagation();e.preventDefault()}},true);
+// per frame
+var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{
+ if(playing()){NPCS.forEach(function(q){npcTick(q,dt)});
+  if(RM&&!RM.done&&msgT<=0){var nn=NPCS.find(function(q){return q.st!='gone'&&q.st!='saved'&&Math.hypot(q.x-P.x,q.z-P.z)<2.2});if(nn)say('[F] Talk to '+nn.name,.1);else if(RM.rec&&Math.hypot(RM.rec.x-P.x,RM.rec.z-P.z)<1.8)say('[F] Pick up the voice recorder',.1)}
+  if(RM&&RM.npc&&RM.npc.st=='leave'){if(npcWalk(RM.npc,dt,3)||Math.hypot(RM.npc.x-cc(EL.i),RM.npc.z-cc(EL.j))<3){RM.npc.st='saved';RM.npc.g.visible=false}}}
+ if(SK&&!SK.over&&playing()){var sk=SK;sk.t-=dt;if(sk.t<=0){stkEnd(false,'Time ran out.');return}
+  if(sk.downed>0){sk.downed-=dt;P.para=Math.max(P.para,.2);if(sk.downed<=0){stkEnd(false,'Nobody reached you in time.');return}}
+  sk.obj.cards=P.cards;
+  // the entity downs a lonely teammate sometimes
+  var ent=sk.ent;sk.team.forEach(function(q){if(q.ent||q.st=='down'||q.st=='out')return;if(Math.hypot(q.x-ent.x,q.z-ent.z)<1.5&&!seenBy(ent)&&RND()<dt*.05&&sk.cd.atk<=0){q.st='down';q.down=40;q.onExpire=function(o){o.st='out';o.g.visible=false;cap('['+o.name+' is gone]',3)};sk.cd.atk=40;cap('['+q.name+' is down! Find them and press F]',3)}});
+  sk.traps.forEach(function(tr){tr.m.material.color.setHex(tr.armed?(Math.sin(n/150)>0?0xaa2222:0x552222):0x553333);if(tr.armed&&Math.hypot(tr.x-P.x,tr.z-P.z)<.8){tr.armed=0;P.para=2.2;say('A snare! You are stuck for a moment.',2);bs({f:1200,q:3,d:.3,v:.5})}});
+  var mm=Math.floor(sk.t/60),ss=Math.floor(sk.t%60);sk.hud.textContent='👁 STALKER  '+mm+':'+String(ss).padStart(2,'0')+'   keycards '+P.cards+'/3 · generators '+sk.obj.gens+'/2 · code '+(sk.obj.code?'✔':'?')+(sk.downed>0?'\nDOWN — '+Math.ceil(sk.downed)+'s':'');
+  if(msgT<=0){var gn=sk.gens.find(function(q){return !q.on&&Math.hypot(q.x-P.x,q.z-P.z)<2.2});if(gn)say('[F] Pull the generator cord ('+gn.pulls+'/3)',.1)}}
+ }catch(e){if(!tick.e){tick.e=1;console.error('HU3a tick',e)}}})();
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 3B: hidden symbols, containment breakout, secret Level 20, endings A-H and the final cinematic ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||!window.HU.pocket||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+function cvTex(w,h,f){var c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return new T.CanvasTexture(c)}
+function txt(t,fg,bg,font,w,h){return cvTex(w||256,h||64,function(x,W2,H2){if(bg!==null){x.fillStyle=bg||'#111';x.fillRect(0,0,W2,H2)}font=font||'bold 28px monospace';var fs=+((font.match(/(\d+)px/)||[0,28])[1]),ls=String(t).split('\n');while(fs>8&&ls.some(function(l){x.font=font.replace(/\d+px/,fs+'px');return x.measureText(l).width>W2*.94}))fs-=2;x.font=font.replace(/\d+px/,fs+'px');x.fillStyle=fg||'#e4d56a';x.textAlign='center';x.textBaseline='middle';ls.forEach(function(l,i,a){x.fillText(l,W2/2,H2/2+(i-(a.length-1)/2)*(fs+6))})})}
+HD.sym=HD.sym||{};HD.end=HD.end||{};HD.cb=HD.cb||{};
+// =====================================================================
+// HIDDEN SYMBOLS on Levels 0-18 (part of the Level 20 unlock)
+// =====================================================================
+var GLY=['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ'];
+var SYM=null;
+function placeSymbol(){if(LVL>18||HD.sym[LVL]||(HU.SK))return;var r=HU.run(),rr=m32((((r&&r.id)||SEED)*41+LVL*613)|0);var cs=[];for(var i=1;i<W-1;i++)for(var j=1;j<W-1;j++){if(g[i][j])continue;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(g[a]&&g[a][b]==1)cs.push([i,j,d])})}
+ cs=cs.filter(function(c){var q=Math.hypot(cc(c[0])-cc(1),cc(c[1])-cc(1));return q>14&&!CL[c[0]*W+c[1]]&&!(c[0]==EL.i&&c[1]==EL.j)});if(!cs.length)return;var c=cs[rr()*cs.length|0],d=c[2];
+ var m=new T.Mesh(new T.PlaneGeometry(.7,.7),new T.MeshBasicMaterial({map:txt(GLY[LVL],'rgba(150,20,20,.85)',null,'bold 200px serif',256,256),transparent:true,depthWrite:false}));m.position.set(cc(c[0])+d[0]*1.98,.9+rr()*1.2,cc(c[1])+d[1]*1.98);m.rotation.y=Math.atan2(-d[0],-d[1]);scene.add(m);SYM={m:m,x:m.position.x,z:m.position.z,t:0}}
+try{placeSymbol()}catch(e){}
+function symCount(){var n=0;for(var i=0;i<=18;i++)if(HD.sym[i])n++;return n}
+function l20Req(){var vs=HD.vhs||{},cr=HD.cr||{};return {sym:symCount(),tapes:['v0','v5','v9'].filter(function(k){return vs[k]&&vs[k].p}).length,cr:!!(cr.pw&&cr.sigil)}}
+function l20Open(){var r=l20Req();return r.sym>=19&&r.tapes>=3&&r.cr}
+HU.l20Req=l20Req;HU.l20Open=l20Open;
+// =====================================================================
+// ROOM-GRID POCKETS (facility and Level 20): rooms of 3x3 cells, BFS for creatures
+// =====================================================================
+function roomGrid(C,RW,RH,links,theme){var GW=RW*4+1,GH=RH*4+1,gr=[];for(var i=0;i<GW;i++){gr.push([]);for(var j=0;j<GH;j++)gr[i].push(1)}
+ for(var rx=0;rx<RW;rx++)for(var ry=0;ry<RH;ry++)for(var a=1;a<=3;a++)for(var b=1;b<=3;b++)gr[rx*4+a][ry*4+b]=0;
+ var doors={};links.forEach(function(l){var A=l[0],B=l[1],di,dj;if(A[0]!=B[0]){di=Math.max(A[0],B[0])*4;dj=A[1]*4+2}else{di=A[0]*4+2;dj=Math.max(A[1],B[1])*4}gr[di][dj]=0;doors[A+'-'+B]=doors[B+'-'+A]={i:di,j:dj,lock:l[2]||null}});
+ var S2=4,cx=function(i){return i*S2+2};
+ for(var i2=0;i2<GW;i2++)for(var j2=0;j2<GH;j2++){var th=theme(i2,j2);if(gr[i2][j2]){var nb=false;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i2+d[0],b=j2+d[1];if(a>=0&&b>=0&&a<GW&&b<GH&&!gr[a][b])nb=true});if(nb)C.box(i2*S2,j2*S2,i2*S2+S2,j2*S2+S2,0,th.h||3,th.w)}else{C.plane(i2*S2,j2*S2,i2*S2+S2,j2*S2+S2,0,th.f);C.plane(i2*S2,j2*S2,i2*S2+S2,j2*S2+S2,th.h||3,th.c,true)}}
+ return {gr:gr,GW:GW,GH:GH,doors:doors,cx:cx,room:function(rx,ry){return [cx(rx*4+2),cx(ry*4+2)]}}}
+function gbfs(G,si,sj,ti,tj){var q=[[si,sj]],pv={},k=function(a,b){return a*1000+b};pv[k(si,sj)]=-1;for(var h=0;h<q.length;h++){var c=q[h];if(c[0]==ti&&c[1]==tj)break;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=c[0]+d[0],b=c[1]+d[1];if(a<0||b<0||a>=G.GW||b>=G.GH||G.gr[a][b]||G.block&&G.block[k(a,b)]||pv[k(a,b)]!==undefined)return;pv[k(a,b)]=c;q.push([a,b])})}if(pv[k(ti,tj)]===undefined)return [];var path=[],c2=[ti,tj];while(c2&&!(c2[0]==si&&c2[1]==sj)){path.unshift(c2);c2=pv[k(c2[0],c2[1])]}return path}
+function creature(C,G,lv,x,z,spd,name){var m;try{m=MART.lm(lv,Math.random,[0,2.6])}catch(e){m=new T.Group();m.add(new T.Mesh(new T.BoxGeometry(.6,2.4,.4),new T.MeshLambertMaterial({color:0x111111})))}m.position.set(x,0,z);C.sc.add(m);return {m:m,x:x,z:z,path:[],pt:0,spd:spd,name:name,lv:lv,stun:0,stp:0}}
+function crTick(C,G,c,dt){if(c.stun>0){c.stun-=dt;return}c.pt-=dt;if(c.pt<=0||!c.path.length){c.pt=.6;c.path=gbfs(G,Math.floor(c.x/4),Math.floor(c.z/4),Math.floor(C.x/4),Math.floor(C.z/4))}var d=Math.hypot(C.x-c.x,C.z-c.z);
+ if(d<4.5||!c.path.length){var dx=C.x-c.x,dz=C.z-c.z;c.x+=dx/(d||1)*c.spd*dt;c.z+=dz/(d||1)*c.spd*dt}else{var n=c.path[0],tx=n[0]*4+2,tz=n[1]*4+2,ex=tx-c.x,ez=tz-c.z,L=Math.hypot(ex,ez);if(L<.4)c.path.shift();else{c.x+=ex/L*c.spd*dt;c.z+=ez/L*c.spd*dt}}
+ c.m.position.set(c.x,0,c.z);c.m.rotation.y=Math.atan2(C.x-c.x,C.z-c.z);var U=c.m.userData,t=performance.now()/1000;(U.arms||[]).forEach(function(a,i){a.rotation.x=Math.sin(t*8+i*3)*.6});(U.legs||[]).forEach(function(a,i){a.rotation.x=Math.sin(t*8+i*3)*.6});
+ c.stp-=dt;if(c.stp<=0){c.stp=.4;bs({f:200,t:'lowpass',d:.25,v:Math.min(.7,5/Math.max(2,d))})}return d}
+// =====================================================================
+// 7. MONSTER CONTAINMENT BREAKOUT (through the containment lift in the control room)
+// =====================================================================
+function facility(){var st={cardA:0,cardB:0,power:0,locks:0,logs:{},cells:{},alarm:0,rel:[],wand:null,evac:0,evacT:0,won:0,start:0},CR2=[];
+ return HU.pocket({title:'SUB-LEVEL C — CONTAINMENT',bg:0x030405,fd:.05,amb:.14,ambc:0x9fb8d0,x:6,z:6,yaw:-PI/2,
+ build:function(C){var TH={0:[0x3a3e44,0x24262a,0x1a1c1e],1:[0x2e3438,0x1e2226,0x16181a],2:[0x3a2a2a,0x221818,0x140e0e],3:[0x2a3a34,0x1a2420,0x121a16]};
+  var G=roomGrid(C,4,2,[[[0,0],[1,0]],[[1,0],[2,0],'A'],[[2,0],[3,0]],[[3,0],[3,1]],[[3,1],[2,1]],[[2,1],[1,1]],[[1,1],[0,1],'B']],function(i,j){var rx=Math.floor(i/4),ry=Math.floor(j/4),t=TH[(rx+ry*2)%4];return {w:t[0],f:t[1],c:t[2],h:3}});C.G=G;st.G=G;G.block={};
+  var rc=function(rx,ry){return G.room(rx,ry)};var lab=function(t,rx,ry,dx,dz,ry2,col){var p=rc(rx,ry);C.sign(t,p[0]+dx,2.55,p[1]+dz,ry2||0,2.6,.36,col||'#9cf',null,'bold 22px monospace')};
+  // locked doors
+  ['A','B'].forEach(function(k){var d=null;for(var key in G.doors)if(G.doors[key].lock==k)d=G.doors[key];var x=d.i*4,z=d.j*4,vert=d.i%4==0;var m=vert?C.box(x+1.8,z,x+2.2,z+4,0,3,k=='A'?0x8a6a20:0x6a2020):C.box(x,z+1.8,x+4,z+2.2,0,3,k=='A'?0x8a6a20:0x6a2020);G.block[d.i*1000+d.j]=1;st['door'+k]={m:m,d:d};C.sign(k=='A'?'CARD A':'CARD B + POWER',vert?x+1.75:x+2,2.3,vert?z+2:z+1.75,vert?-PI/2:0,1.6,.3,'#fff',null,'bold 22px monospace')});
+  lab('LIFT',0,0,0,-5.9);lab('SECURITY',1,0,0,-5.9);lab('CELL BLOCK A',2,0,0,-5.9);lab('LABORATORY',3,0,0,-5.9);lab('POWER',3,1,0,5.9,PI);lab('LOCK CONTROL',2,1,0,5.9,PI);lab('STORAGE',1,1,0,5.9,PI);lab('CONTROL ROOM',0,1,0,5.9,PI,'#f99');
+  for(var rx=0;rx<4;rx++)for(var ry=0;ry<2;ry++){var p=rc(rx,ry);C.bulb(p[0],2.97,p[1],0xd8e8ff)}
+  // cameras that sweep (security + cell block)
+  [[1,0,0,-4.6],[2,0,4.4,0],[1,0,-4.4,3]].forEach(function(q){var p=rc(q[0],q[1]),x=p[0]+q[2],z=p[1]+q[3];var body=C.box(x-.15,z-.15,x+.15,z+.15,2.6,2.85,0x222222,false);var cone=new T.Mesh(new T.ConeGeometry(1.6,9,16,1,true),new T.MeshBasicMaterial({color:0xff3030,transparent:true,opacity:.09,depthWrite:false,side:T.DoubleSide}));cone.geometry.translate(0,-4.5,0);cone.geometry.rotateX(-PI/2);var pv=new T.Group();pv.position.set(x,2.6,z);pv.add(cone);cone.rotation.x=.18;C.sc.add(pv);CR2.push({x:x,z:z,pv:pv,base:Math.atan2(p[0]-x,p[1]-z),ph:RND()*6,warn:0,cd:0})});
+  // access card A on the security desk, card B in the lab
+  var pA=rc(1,0),dA=C.box(pA[0]+2,pA[1]+3.4,pA[0]+3.6,pA[1]+4.4,0,.8,0x3a3026);var cardM=function(x,z,col){var m=C.box(x-.16,z-.1,x+.16,z+.1,.81,.83,col,false,new T.MeshBasicMaterial({color:col}));return m};
+  st.mA=cardM(pA[0]+2.8,pA[1]+3.9,0xd8b030);C.act({x:pA[0]+2.8,z:pA[1]+3.1,r:1.8,label:'Take ACCESS CARD A',fn:function(C,a){a.on=false;st.cardA=1;st.mA.visible=false;C.say('ACCESS CARD A. The cell block door can open now.',3);tn({f:700,f2:1100,d:.2,v:.15})}});
+  var pL=rc(3,0);C.box(pL[0]-3.6,pL[1]+3.4,pL[0]+3.6,pL[1]+4.4,0,.85,0x3a3a40);st.mB=cardM(pL[0]+3,pL[1]+3.9,0xd03030);C.act({x:pL[0]+3,z:pL[1]+3.1,r:1.8,label:'Take ACCESS CARD B',fn:function(C,a){a.on=false;st.cardB=1;st.mB.visible=false;C.say('ACCESS CARD B (control room). It still needs power.',3);tn({f:700,f2:1100,d:.2,v:.15})}});
+  var LOGS=[['EXPERIMENT LOG 7','Specimens are kept in cells 1-4 of Block A. Cells 2 and 4 hold ACTIVE specimens. Cell 3 holds a wanderer we "borrowed" for observation. Lock 2 and 4 before you open anything.'],['EXPERIMENT LOG 9','The cameras are tied to the cell locks. If a camera sees an intruder while the emergency locks are off, it opens a cell. This was a design choice. Nobody remembers who made it.'],['EXPERIMENT LOG 12','Containment of the copy failed. It learned the access phrase from listening to us. The lift came up empty. We are evacuating through the control room. Restore emergency power first.']];
+  LOGS.forEach(function(l,i){var x=pL[0]-2.5+i*2.5;C.box(x-.35,pL[1]+3.5,x+.35,pL[1]+3.9,.85,1.35,0x113322,false,new T.MeshBasicMaterial({color:0x22aa66}));C.act({x:x,z:pL[1]+3.0,r:1.6,label:'Read '+l[0],fn:function(C){st.logs[i]=1;HD.cb.logs=Object.keys(st.logs).length;hsave();C.say(l[0]+': '+l[1],9)}})});
+  // cells in block A: 1..4 along the far wall, cell 3 has a wanderer
+  var pC=rc(2,0);for(var k=1;k<=4;k++){(function(k){var x=pC[0]-4.5+(k-1)*3,z=pC[1]+4.6;var bars=C.box(x-1,z-.15,x+1,z+.15,0,2.6,0x666a70,true,new T.MeshLambertMaterial({color:0x666a70,transparent:true,opacity:.55}));C.sign('CELL '+k,x,2.75,z-.2,PI,1,.25,'#ddd',null,'bold 20px monospace');st.cells[k]={bars:bars,x:x,z:z,open:0,active:k==2||k==4,wand:k==3};
+   if(k==3){var w=C.human(0x5a4a2a,0xc8a080,x,z+.9,PI,1.75);st.wanderer={g:w,x:x,z:z+.9,st:'cell'}}
+   C.act({x:x,z:z-1,r:1.8,label:k==3?'Open cell 3 (a wanderer is inside)':'Open cell '+k,fn:function(C,a){openCell(C,k)}})})(k)}
+  // lock control: four switches, one per cell
+  var pK=rc(2,1);for(var k2=1;k2<=4;k2++){(function(k2){var x=pK[0]-4.5+(k2-1)*3,z=pK[1]-4.6;var sw=C.box(x-.3,z-.2,x+.3,z+.2,1,1.5,0x4a4a4a,false);C.sign('LOCK '+k2,x,1.75,z+.25,0,.8,.22,'#fc6',null,'bold 18px monospace');C.act({x:x,z:z+1,r:1.6,label:'Engage emergency lock '+k2,fn:function(C,a){if(!st.power){C.say('No power. Restore power in the POWER room first.',3);return}a.on=false;sw.material=new T.MeshBasicMaterial({color:0x33cc55});var c=st.cells[k2];if(c.active){c.locked=1;st.locks++;C.say('Lock '+k2+' engaged. Cell '+k2+' is sealed.',3);tn({f:500,d:.2,v:.15})}else if(c.wand){C.say('Lock '+k2+' engaged... that is the wanderer\'s cell. Nothing happens.',3)}else{C.say('WRONG SWITCH — lock '+k2+' was already sealed. The panel sparks and the alarm screams!',4);release(C,'switch')}}})})(k2)}
+  // power room: three breakers in order
+  var pP=rc(3,1),brk=0;[-3,0,3].forEach(function(dx,i){var x=pP[0]+dx,z=pP[1]+4.6;C.box(x-.35,z-.15,x+.35,z+.15,.9,1.7,0x5a5020,false);C.sign(['I','II','III'][i],x,1.95,z-.2,PI,.5,.25,'#fc6',null,'bold 22px serif');C.act({x:x,z:z-1,r:1.6,label:'Throw breaker '+['I','II','III'][i],fn:function(C,a){if(i!=brk){brk=0;C.acts.forEach(function(q){if(q.brk)q.on=true});C.say('The breakers trip. Order: I, II, III. (A creature stirs somewhere.)',3);if(RND()<.5)release(C,'breaker');return}a.on=false;brk++;tn({f:200+brk*120,d:.3,v:.2});if(brk==3){st.power=1;C.say('POWER RESTORED. Lock control and the control room door are live.',4);C.am.intensity=.3;bs({f:150,t:'lowpass',d:2,v:.8})}else C.say('Breaker '+['I','II','III'][i]+' on.',2)},brk:1})});
+  // storage: a lore box and spare battery
+  var pS=rc(1,1);C.box(pS[0]-1,pS[1]-1,pS[0]+1,pS[1]+1,0,1,0x4a3a2a);C.act({x:pS[0],z:pS[1]+1.6,r:1.8,label:'Search the supply crate',fn:function(C,a){a.on=false;P.bat=Math.min(100,P.bat+50);HD.cb.crate=1;hsave();C.say('Inside: batteries (+50%) and a photo of Dr. Halloran shaking hands with someone whose face has been scratched out.',6)}});
+  // control room: emergency power + evacuation elevator
+  var pR=rc(0,1);C.box(pR[0]-1.4,pR[1]+3.6,pR[0]+1.4,pR[1]+4.4,0,1,0x223322);var ev=C.box(pR[0]-5.8,pR[1]-1.2,pR[0]-5.6,pR[1]+1.2,0,2.8,0x777a80);C.sign('EVACUATION ELEVATOR',pR[0]-5.5,2.75,pR[1],PI/2,1.8,.3,'#9f9',null,'bold 20px monospace');st.evM=ev;
+  C.act({x:pR[0],z:pR[1]+3,r:1.8,label:'Restore EMERGENCY POWER',fn:function(C,a){if(!st.power){C.say('The main breakers are off. Restore power first.',3);return}a.on=false;st.ep=1;C.say('Emergency power: ON. Now call the evacuation elevator.',3);tn({f:330,f2:660,d:.4,v:.2})}});
+  C.act({x:pR[0]-4.6,z:pR[1],r:2,label:'Call the evacuation elevator',fn:function(C,a){if(!st.ep){C.say('The elevator panel is dead. Restore emergency power at the console.',3);return}if(st.evac)return;st.evac=1;st.evacT=10;a.on=false;C.say('Elevator called. 10 seconds. Hold on.',3);release(C,'evac');tn({t:'square',f:600,d:.3,v:.12})}});
+  C.tip('Find ACCESS CARDS A and B, restore POWER (breakers I→II→III), engage the right EMERGENCY LOCKS (read the lab logs), decide whether to free the wanderer in cell 3, then evacuate from the CONTROL ROOM.<br>Avoid the red camera cones. R / right-click: flash your flashlight to stun a creature.');
+  C.say('The lift doors open on Sub-Level C. The air smells like disinfectant and old fear.',5);st.start=1},
+ key:function(C,c){if(c!='KeyR'&&c!='Mouse2')return;if(P.bat<5)return;P.bat-=5;C.flash=.18;st.rel.forEach(function(r){var dx=r.x-C.x,dz=r.z-C.z,d=Math.hypot(dx,dz),f=[-Math.sin(C.yaw),-Math.cos(C.yaw)];if(d<10&&(f[0]*dx+f[1]*dz)/(d||1)>.85){r.stun=2.5;C.say('The flash stuns it!',1.5)}})},
+ tick:function(C,dt){var G=st.G;
+  // doors with cards / power
+  ['A','B'].forEach(function(k){var D=st['door'+k];if(!D||D.open)return;var ok=k=='A'?st.cardA:(st.cardB&&st.power),dd=Math.hypot(D.d.i*4+2-C.x,D.d.j*4+2-C.z);if(ok&&dd<3.2){D.open=1;var b=C.solid(D.m);if(b)b.on=false;D.m.position.y=3.5;delete G.block[D.d.i*1000+D.d.j];C.say('Door '+k+' unlocks.',2);bs({f:200,t:'lowpass',d:.8,v:.6})}else if(!ok&&dd<2.6&&C.msgT<=0)C.say(k=='A'?'Locked: needs ACCESS CARD A.':'Locked: needs ACCESS CARD B and POWER.',2)});
+  // cameras
+  CR2.forEach(function(cm){cm.ph+=dt;var a=cm.base+Math.sin(cm.ph*.8)*.9;cm.pv.rotation.y=a;cm.cd-=dt;var dx=C.x-cm.x,dz=C.z-cm.z,d=Math.hypot(dx,dz),ang=Math.atan2(dx,dz),df=Math.abs(Math.atan2(Math.sin(ang-a),Math.cos(ang-a)));var inC=d<9.5&&df<.2&&C.h>1.2;
+   cm.pv.children[0].material.opacity=inC?.25:.09;if(inC&&cm.cd<=0){cm.warn+=dt;if(cm.warn>.6){cm.warn=0;cm.cd=6;if(st.locks>=2&&st.power){C.say('A camera saw you — but the emergency locks hold.',2.5);tn({t:'square',f:900,d:.3,v:.1})}else{C.say('A CAMERA SAW YOU! A cell door opens...',3);release(C,'camera')}}else if(cm.warn<dt*1.5)tn({t:'square',f:1400,d:.1,v:.08})}else cm.warn=Math.max(0,cm.warn-dt)});
+  // released creatures
+  for(var i=0;i<st.rel.length;i++){var r=st.rel[i],d=crTick(C,G,r,dt);if(d<1.1){C.kill(r.name,r.lv);return}}
+  // the wanderer follows once freed
+  var w=st.wanderer;if(w&&w.st=='follow'){var dx=C.x-w.x,dz=C.z-w.z,d2=Math.hypot(dx,dz);if(d2>2.2){var nx=w.x+dx/d2*3.2*dt,nz=w.z+dz/d2*3.2*dt;w.x=nx;w.z=nz}w.g.position.set(w.x,0,w.z);w.g.rotation.y=Math.atan2(dx,dz);w.g.userData.legs.forEach(function(l,i){l.rotation.x=d2>2.2?Math.sin(C.t*8+i*3)*.5:0});st.rel.forEach(function(r){if(Math.hypot(r.x-w.x,r.z-w.z)<1){w.st='lost';w.g.visible=false;C.say('The wanderer is taken!',3)}})}
+  // evacuation
+  if(st.evac&&st.evacT>0){st.evacT-=dt;if(st.evacT<=0){st.evM.position.y=4;var b=C.solid(st.evM);if(b)b.on=false;C.say('The evacuation elevator is here! GET IN!',4);tn({f:880,d:.6,v:.2})}}
+  var pR=G.room(0,1);if(st.evac&&st.evacT<=0&&C.x<pR[0]-5.3){st.won=1;C.exit('won')}},
+ onExit:function(res){if(res!='won')return;var saved=st.wanderer&&st.wanderer.st=='follow';HD.cb.done=(HD.cb.done||0)+1;if(saved)HD.cb.saved=1;hsave();var cash=300+(saved?150:0)+Object.keys(st.logs).length*20;HU.raw=1;try{addCash(cash,'Escaped the containment facility')}finally{HU.raw=0}HU.unlock&&HU.unlock('c_containment');HU.toast('🧪 CONTAINMENT BREAKOUT SURVIVED — +$'+cash+(saved?' (wanderer rescued!)':''),'#9f9');if(saved){HD.res['Ila (Sub-Level C)']='saved';hsave();HU.ev&&HU.ev('rescue')}say('The evacuation elevator brings you back up to the control room.',4)}});
+ function openCell(C,k){var c=st.cells[k];if(c.open)return;if(c.active&&c.locked){C.say('Cell '+k+' is sealed by the emergency lock. Good.',2.5);return}c.open=1;c.bars.position.y=3.2;var b=C.solid(c.bars);if(b)b.on=false;bs({f:180,t:'lowpass',d:.8,v:.6});
+  if(c.wand){var w=st.wanderer;w.st='follow';C.say('ILA: "You came! Get me out of here!" (She follows you.)',4);// opening this cell with the locks off also opens its neighbours
+   if(st.locks<2){C.say('ILA: "No — the locks are off! The other cells are opening!"',4);release(C,'cells')}}else if(c.active){C.say('Cell '+k+' was holding something. It is out!',3);release(C,'cell'+k)}else C.say('Cell '+k+' is empty.',2)}
+ function release(C,why){if(st.rel.length>=3)return;var free=[2,4].filter(function(k){return !st.cells[k].locked&&!st.cells[k].rel});var k=free[0];var p,lv=[12,16,13][st.rel.length];if(k){st.cells[k].rel=1;st.cells[k].bars.position.y=3.2;var b=C.solid(st.cells[k].bars);if(b)b.on=false;p=[st.cells[k].x,st.cells[k].z+1]}else{if(why!='evac'&&why!='switch'&&why!='breaker')return;var pr=st.G.room(3,1);p=[pr[0],pr[1]]}
+  st.rel.push(creature(C,st.G,lv,p[0],p[1],2.4+st.rel.length*.3,['The Glass Diver (specimen)','The Gate Agent (specimen)','The Librarian (specimen)'][st.rel.length]));st.alarm=1;for(var i=0;i<4;i++)setTimeout(function(){tn({t:'sawtooth',f:620,f2:980,d:.5,v:SET.ra?.06:.14,lp:2600})},i*600);HU.cap&&HU.cap('[containment alarm]',2)}}
+HU.facility=function(){if(HU.PK.cur)return 'Already inside an encounter.';if(!playing())return 'Start a level first.';facility();return 'Entered the containment facility.'};
+// the containment lift appears in the Level 0 control room once the terminal is unlocked
+var LIFT=null;
+if(LVL==0&&HU.room){var R0=HU.room,P2=function(u,v){return [R0.cx+R0.ux*u+(-R0.uz)*v,R0.cz+R0.uz*u+R0.ux*v]};var lp=P2(4.9,-5.85);var lm2=new T.Mesh(new T.BoxGeometry(1.8,2.4,.14),new T.MeshLambertMaterial({map:txt('CONTAINMENT\nLIFT\n▼ C','#f99','#2a2c30','bold 30px monospace',160,200)}));lm2.position.set(lp[0],1.2,lp[1]);lm2.rotation.y=Math.atan2(-R0.uz,R0.ux);R0.g.add(lm2);LIFT={x:lp[0]+(-R0.uz)*.8,z:lp[1]+R0.ux*.8}}
+// =====================================================================
+// 14. SECRET LEVEL 20 — THE PLACE THAT REMEMBERS
+// =====================================================================
+function level20(){var st={lit:{},solved:0,rem:null,wrong:0,mem:0};var done=SV.done||[],enc=HD.enc||{},res=HD.res||{},un=(UN||'WANDERER').toUpperCase();
+ var Z=[['Y',[0xc8b45a,0x6a5a2a,0xd8cc90],'THE LOBBY'],['P',[0xe8eef0,0x9ad0e0,0xf0f4f4],'THE POOLROOMS'],['M',[0xb8a8c8,0x4a4a52,0xe0e0e8],'THE MALL'],['H',[0x2a4a4a,0x5a1020,0xd4c49a],'THE HOTEL'],['S',[0x6a7a5a,0x5a5040,0xd0d0c0],'THE SCHOOL'],['O',[0xc8d8d0,0x8a9a90,0xe8f0ec],'THE HOSPITAL'],['F',[0x2a3a3a,0x0a1a1e,0x1a2626],'THE FLOODED TUNNEL'],['V',[0x050505,0x020202,0x000000],'THE VOID']];
+ var order=[[0,0],[1,0],[2,0],[3,0],[3,1],[2,1],[1,1],[0,1]],zoneAt={};order.forEach(function(o,i){zoneAt[o[0]+','+o[1]]=i});
+ // the layout remembers your choices: the hotel and school swap places if you ever left someone behind
+ if(Object.keys(res).some(function(k){return res[k]=='lost'})){var t=Z[3];Z[3]=Z[4];Z[4]=t}
+ return HU.pocket({title:'LEVEL 20\nTHE PLACE THAT REMEMBERS',bg:0x0a0806,fd:.045,amb:.32,ambc:0xfff0d0,x:6,z:6,yaw:-PI/2,
+ build:function(C){var links=[];for(var i=0;i<order.length-1;i++)links.push([order[i],order[i+1]]);
+  var G=roomGrid(C,4,2,links,function(i,j){var rx=Math.floor(Math.min(i,15)/4),ry=Math.floor(Math.min(j,7)/4),z=Z[zoneAt[rx+','+ry]]||Z[0];return {w:z[1][0],f:z[1][1],c:z[1][2],h:3}});st.G=G;
+  order.forEach(function(o,i){var p=G.room(o[0],o[1]),z=Z[i];C.sign(z[2],p[0],2.6,p[1]-5.9,0,2.8,.36,'#e4d56a',null,'bold 24px Georgia');if(i<7)C.bulb(p[0],2.97,p[1],z[0]=='F'?0x6ad0e0:0xfff2c8)});
+  var R=function(i){var o=order[i];return G.room(o[0],o[1])};
+  // Y: yellow corridors + the way back
+  var p0=R(0);C.sign('Dear '+un+',\nwe remember every step you took.\n'+(PS.d|0)+' times you died. '+(PS.e|0)+' times you escaped.',p0[0]+5.9,1.6,p0[1],-PI/2,2.6,1.3,'#3a2a10','#e8dcb0','bold 22px serif',false);
+  C.act({x:p0[0]-4.8,z:p0[1]+4,r:1.6,label:'Leave Level 20 (go back up)',fn:function(C){C.exit('leave')}});C.sign('◀ BACK',p0[0]-5.9,1.6,p0[1]+4,PI/2,1,.3,'#fff',null,'bold 24px monospace');
+  // P: pool water + memories of Level 1/2 and Sam
+  var p1=R(1);C.plane(p1[0]-5,p1[1]-5,p1[0]+5,p1[1]+5,.08,0,false,new T.MeshBasicMaterial({color:0x6ac8e0,transparent:true,opacity:.45,depthWrite:false}));if(res['Sam Ilves']=='lost'){C.human(0x6a3a8a,0xc8a080,p1[0]+2,p1[1]+2,PI,1.75);C.act({x:p1[0]+2,z:p1[1]+1,r:1.8,label:'Talk to Sam',fn:function(C){C.say('SAM: "The party never ends. You left. The party never ends."',4)}})}else if(res['Sam Ilves']=='saved')C.sign('thank you for coming back for me — S.',p1[0]+5.9,1.5,p1[1]+2,-PI/2,2,.4,'#2a4a6a',null,'italic 22px serif',false);
+  // M: the mall — a fake exit door if you ever found one
+  var p2=R(2);if((HD.fr|0)>0||HD.meta.flags.fakeexit){C.box(p2[0]-1,p2[1]+5.8,p2[0]+1,p2[1]+5.95,0,2.4,0xcc1111);C.sign('EXIT',p2[0],2.6,p2[1]+5.75,PI,.8,.3,'#3f6','#020','bold 30px monospace');C.act({x:p2[0],z:p2[1]+5,r:1.6,label:'Open the EXIT',fn:function(C){C.say('It is painted on. You knew that. You have seen through doors like this before.',4)}})}
+  // H/S/O: plaques for every escaped level, statues for every monster you met
+  var plaques=done.slice().sort(function(a,b){return a-b});plaques.slice(0,12).forEach(function(lv,k){var p=R(3+(k%3)),side=k<6?1:-1;C.sign('LEVEL '+lv+'\nESCAPED',p[0]-4+(k%3)*4,1.6,p[1]+side*5.9,side>0?PI:0,1.2,.6,'#e4d56a','#1a1608','bold 22px monospace')});
+  var met=Object.keys(enc).filter(function(k){return enc[k].n>0});met.slice(0,9).forEach(function(id,k){var p=R(3+(k%3)),x=p[0]-3+((k/3|0))*3,z=p[1];var m=(typeof MONS!='undefined'?MONS:[]).find(function(q){return q.id==id});var s2=C.human(0x111111,0x111111,x,z,RND()*6,1.9);C.sign(m?m.n:id,x,2.35,z,0,1.4,.22,'#ccc',null,'bold 18px monospace');C.boxes.push({x0:x-.35,x1:x+.35,z0:z-.35,z1:z+.35,on:true})});
+  if(HD.dlbc){var p5=R(4);for(var k=0;k<3;k++){try{var w=MART.lm(19,Math.random,[0,2.4]);w.position.set(p5[0]-3+k*3,0,p5[1]+4.6);w.rotation.y=PI;C.sc.add(w)}catch(e){}}}
+  // F: flooded tunnel (shallow, but dark)
+  var p6=R(6);C.plane(p6[0]-5.9,p6[1]-5.9,p6[0]+5.9,p6[1]+5.9,.35,0,false,new T.MeshBasicMaterial({color:0x0a2a30,transparent:true,opacity:.7,depthWrite:false}));
+  // V: the Void, the tapes, the final puzzle and the Void Elevator
+  var p7=R(7),tapes=Object.keys(HD.vhs||{}).filter(function(k){return HD.vhs[k].c}).length+((typeof ARC!='undefined'&&ARC.tapes)?ARC.tapes.length:0);
+  C.sign('TAPES REMEMBERED: '+tapes+' / 20',p7[0],2.4,p7[1]+5.9,PI,2.4,.35,'#9cf',null,'bold 22px monospace');
+  C.sign('LIGHT THE FLOORS THE TAPES REMEMBER:\nwhere they arrived · where the first was left behind\nwhere it learned their voices · where they learned we remember',p7[0],1.9,p7[1]-5.9,0,4.6,.9,'#e4d56a','#0a0a0a','bold 20px Georgia');
+  st.peds=[];[0,2,3,5,6,9,13,17].forEach(function(lv,k){var x=p7[0]-4.2+(k%4)*2.8,z=p7[1]-1.6+(k/4|0)*3.2;var m=C.box(x-.35,z-.35,x+.35,z+.35,0,.9,0x222222);var top=C.box(x-.3,z-.3,x+.3,z+.3,.9,.95,0x333333,false,new T.MeshBasicMaterial({color:0x333333}));C.sign(String(lv),x,1.2,z+.36,0,.4,.3,'#fff',null,'bold 40px monospace');st.peds.push({lv:lv,top:top,x:x,z:z});
+   C.act({x:x,z:z+.9,r:1.5,label:'Light the floor: Level '+lv,fn:function(C){if(st.solved)return;st.lit[lv]=!st.lit[lv];top.material.color.setHex(st.lit[lv]?0xffe080:0x333333);tn({f:300+lv*40,d:.3,v:.15});var on=Object.keys(st.lit).filter(function(k){return st.lit[k]}).map(Number).sort(function(a,b){return a-b});
+    if(on.length==4){if(on.join()=='0,2,5,9'){st.solved=1;st.vel.position.y=3.6;var b=C.solid(st.vel);if(b)b.on=false;C.say('The floors remember. The Void Elevator opens.',5);bs({f:120,t:'lowpass',d:3,v:.8,a:.5});tn({f:220,f2:440,d:2,v:.2})}else{st.wrong++;C.say('Wrong. Something in the Void hears you.',3);if(st.rem)st.rem.spd+=.4;st.lit={};st.peds.forEach(function(q){q.top.material.color.setHex(0x333333)})}}}})});
+  st.vel=C.box(p7[0]-1.2,p7[1]+4.6,p7[0]+1.2,p7[1]+4.8,0,2.8,0x9a9ca2);C.sign('VOID ELEVATOR',p7[0],3.1,p7[1]+4.55,PI,1.8,.3,'#fff',null,'bold 22px monospace');
+  for(var k2=0;k2<14;k2++){var s=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xfff0d0,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.6}));s.scale.set(.5,.5,1);s.position.set(p7[0]+(RND()-.5)*11,.5+RND()*2.3,p7[1]+(RND()-.5)*11);C.sc.add(s)}C.light(p7[0],2.2,p7[1],0xfff0d0,.6,12);
+  // the final encounter: the Rememberer hunts in the Void
+  var rm=new T.Group();try{rm=MART.boiled(STM,GFX.monCore)}catch(e){rm.add(new T.Mesh(new T.BoxGeometry(.7,2.6,.5),new T.MeshBasicMaterial({color:0x111111})))}rm.position.set(p7[0]+4,0,p7[1]-4);C.sc.add(rm);st.rem={m:rm,x:p7[0]+4,z:p7[1]-4,path:[],pt:0,spd:1.9,name:'The Rememberer',lv:0,stun:0,stp:0};
+  C.tip('Walk through the memories. Every room is made of somewhere you have been.<br>In THE VOID: solve the floors puzzle and take the Void Elevator. Something there remembers you too.');
+  C.say('This place smells like every level at once.',4)},
+ key:function(C,c){if(c!='KeyR'&&c!='Mouse2')return;if(P.bat<5)return;P.bat-=5;C.flash=.18;var r=st.rem;if(r){var dx=r.x-C.x,dz=r.z-C.z,d=Math.hypot(dx,dz),f=[-Math.sin(C.yaw),-Math.cos(C.yaw)];if(d<12&&(f[0]*dx+f[1]*dz)/(d||1)>.85){r.stun=2.2;C.say('It flinches from the light.',1.5)}}},
+ tick:function(C,dt){var G=st.G,p7=G.room(order[7][0],order[7][1]);var inVoid=Math.abs(C.x-p7[0])<7&&Math.abs(C.z-p7[1])<7;
+  // familiar monster sounds drift through the memory rooms
+  st.ms=(st.ms||6)-dt;if(st.ms<=0){st.ms=7+RND()*6;var k=RND()*3|0;if(k==0)tn({t:'sawtooth',f:42,f2:38,d:2,v:.15,lp:200});else if(k==1)bs({f:2400,q:5,d:1,v:.12});else tn({t:'triangle',f:420,f2:300,d:1.5,v:.08,lp:900})}
+  var r=st.rem;if(r&&inVoid){var d=crTick(C,G,r,dt);if(d<1.1&&!st.solvedOut){st.caught=1;C.stay=true;C.exit('caught');return}}
+  if(st.solved&&Math.abs(C.x-p7[0])<1.2&&C.z>p7[1]+4.2){C.stay=true;C.exit('elevator')}},
+ onExit:function(res){if(res=='elevator'){HD.l20=(HD.l20||0)+1;hsave();HU.unlock&&HU.unlock('c_remember');var all=['v0','v1','v2','v3','v4','v5','v6','v7','v8','v9'].every(function(k){return HD.vhs&&HD.vhs[k]&&HD.vhs[k].p});finalCinematic(all?'G':'F')}else if(res=='caught'){ending('H',{why:'l20'})}else if(res=='leave'){say('You climb back up. Level 20 lets you go — this time.',4)}}})}
+HU.level20=function(force){if(HU.PK.cur)return 'Already inside an encounter.';if(!force&&!l20Open())return 'Level 20 is still locked.';started=true;level20();return 'Entered Level 20.'};
+// the elevator panel offers Level 20 once everything is found
+var oEP=elevP;elevP=function(){var r=oEP.apply(this,arguments);try{if(l20Open()){var pn=MB.querySelector('.pn');if(pn)pn.insertAdjacentHTML('beforeend','<div style="margin-top:8px"><span class="ch" data-hu7="l20" style="color:#f99">▼ 20 — ??? (a button that was never there before)</span></div>')}}catch(e){}return r};
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu7]');if(!el)return;e.stopPropagation();var k=el.dataset.hu7;if(k=='l20'){ELP=false;closeP();started=true;setTimeout(function(){level20()},200)}if(k=='endok'){var o=document.getElementById('hu-end');if(o)o.remove();if(HU.afterEnd){var f=HU.afterEnd;HU.afterEnd=null;f()}}if(k=='cine'){closeP();finalCinematic(null)}},true);
+// =====================================================================
+// 21. ENDINGS A-H
+// =====================================================================
+var ENDS={A:['THE ESCAPE','You took the way up. The light at the top of the stairs is real.'],B:['THE TRUTH','You found the control room, read every log, and learned who has been watching the Backrooms. The Aster Institute knows your name now. So do you know theirs.'],C:['THE LOST WANDERER','You did not leave alone. The wanderers you saved climb out behind you, one by one, blinking in the light.'],D:['THE FALSE EXIT','You learned to see through the doors that lie. The real way out was the one that looked wrong.'],E:['THE WATCHER','You kept it in sight until the very end. The Watcher was never hunting you. It was making sure you did not look back at what followed you.'],F:['THE PLACE THAT REMEMBERS','Level 20 remembered your whole journey, and let you go. The Void Elevator carried you somewhere that does not have a number.'],G:['THE BOILED ONE','The tapes were never Dana\'s alone. Every tape, every camera, every step: the Boiled One watched it all. It was there in the Lobby on your first day. It is there now.'],H:['THE BAD ENDING','You made a mistake you could have avoided. The Backrooms closed around you. You are still here. You will always be here.']};
+function variation(){var res=HD.res||{},sv=Object.keys(res).filter(function(k){return res[k]=='saved'}),tp=Object.keys(HD.vhs||{}).filter(function(k){return HD.vhs[k].c}).length+((typeof ARC!='undefined'&&ARC.tapes)?ARC.tapes.length:0),cr=HD.cr||{};var l=[];l.push('Wanderers rescued: '+(sv.length?sv.map(e2).join(', '):'nobody'));l.push('Tapes found: '+tp+' / 20');l.push('Secrets: '+[cr.found?'the control room':'',cr.sigil?'the sigil':'',HD.dlbc?'the W-7 corridor':'',HD.cb&&HD.cb.done?'Sub-Level C':'',HD.l20?'Level 20':''].filter(Boolean).join(', ')||'none');return l.join('<br>')}
+function ending(k,o){HD.end[k]=HD.end[k]||Date.now();hsave();if(k!='A'&&k!='H')HU.unlock&&HU.unlock('c_ending');if(['B','C','D','E','F','G'].indexOf(k)>=0)try{if(typeof achieve=='function')achieve('end'+k)}catch(e){}
+ var e=ENDS[k],ov=document.createElement('div');ov.id='hu-end';ov.style.cssText='position:fixed;inset:0;z-index:46;background:rgba(0,0,0,.94);display:flex;align-items:center;justify-content:center;text-align:center;color:#e4d56a;font:15px monospace;padding:20px';ov.innerHTML='<div style="max-width:620px"><div style="letter-spacing:.4em;color:#888">ENDING '+k+'</div><h1 style="font-family:Georgia;color:'+(k=='H'?'#f55':'#e4d56a')+'">'+e[0]+'</h1><p style="line-height:1.7;color:#ddd">'+e2(e[1])+'</p><p style="font-size:13px;color:#aaa;line-height:1.7">'+variation()+'</p><p style="font-size:12px;color:#777">Endings found: '+Object.keys(HD.end).sort().join(' ')+' (of A-H)</p><div class="bt pl" data-hu7="endok" style="display:inline-block;padding:8px 18px;border:1px solid #e4d56a;cursor:pointer">CONTINUE</div></div>';document.body.appendChild(ov);ov.addEventListener('click',function(ev){if(ev.target.dataset.hu7=='endok'){ov.remove();if(HU.afterEnd){var f=HU.afterEnd;HU.afterEnd=null;f()}}});
+ if(k=='H'&&o&&o.why=='l20'){HU.afterEnd=function(){say('You wake up in the Lobby. Level 20 is still down there, waiting.',5);started=true;try{ren.domElement.requestPointerLock()}catch(e){}}}}
+HU.ending=ending;
+// Level 19's final exit offers the endings you have earned
+function earned(){var cr=HD.cr||{},seen=cr.seen||{},res=HD.res||{},sv=Object.keys(res).filter(function(k){return res[k]=='saved'}).length,l=['A'];
+ if(cr.pw&&cr.found&&['pc','rec','photo','map','audio'].every(function(k){return seen[k]})&&(SV.max|0)>=19)l.push('B');if(sv>=4)l.push('C');if((HD.fr|0)>=3)l.push('D');return l}
+try{if(window.LVX&&LVX.ending){var oEnd=LVX.ending;LVX.ending=function(k){if(k=='B'){ending('H',{why:'loop'});HU.afterEnd=function(){oEnd.call(LVX,'B')};return}
+ if(k=='A'){var l=earned();if(l.length>1&&!HU.endPick){started=false;try{document.exitPointerLock()}catch(e){}pnl('<b>THE WAY OUT</b><br><small>The things you discovered open other ways out.</small>'+l.map(function(q){return '<div class="bt" data-hu8="'+q+'">ENDING '+q+' — '+ENDS[q][0]+'</div>'}).join(''));HU.endPick=function(q){HU.endPick=null;closeP();if(q=='A'){oEnd.call(LVX,'A');ending('A')}else{P.won=false;winGame();ending(q)}};return}var r=oEnd.call(LVX,'A');ending('A');return r}return oEnd.apply(this,arguments)}}}catch(e){}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu8]');if(!el)return;e.stopPropagation();if(HU.endPick)HU.endPick(el.dataset.hu8)},true);
+// Ending E: survive the Watcher corridor on Level 19 after learning the truth about it
+var oDC=HU.dlbChallenge;
+var WTRUTH=function(){var cr=HD.cr||{};return (cr.pw&&(SV.max|0)>=19)||(HD.enc&&HD.enc.m19&&HD.enc.m19.e>=2)};
+var oTe=HU.encEsc;HU.encEsc=function(id){if(oTe)oTe(id);if(id=='m19'&&LVL==19&&WTRUTH()&&!HD.end.E){setTimeout(function(){ending('E');HU.afterEnd=function(){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}},600)}};
+// =====================================================================
+// FINAL CINEMATIC (fictional): the Void Elevator → "YOU ARE DONE PLAYING." → home → it came home with you
+// =====================================================================
+function finalCinematic(k){started=false;try{document.exitPointerLock()}catch(e){}var o=mkCS(),sc=o.sc,cm=o.cm;o.fade.style.opacity=1;var lab=document.createElement('div');lab.style.cssText='position:fixed;right:12px;top:10px;z-index:9;color:#888;font:11px monospace;pointer-events:none';lab.textContent='FICTIONAL IN-GAME CINEMATIC';document.body.appendChild(lab);var skip=document.createElement('div');skip.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9;color:#aaa;font:12px monospace;cursor:pointer;border:1px solid #555;padding:4px 10px';skip.textContent='SKIP ▶▶';document.body.appendChild(skip);
+ // scene 1: the Void Elevator
+ var g1=new T.Group();sc.add(g1);var E=buildElev(sc);g1.add(E.g);sc.background=new T.Color(0);sc.fog=new T.FogExp2(0,.05);var am=new T.AmbientLight(0xffffff,.3);sc.add(am);E.floor('20','#9cf');var vs=[];for(var i=0;i<40;i++){var s=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xfff0d0,blending:T.AdditiveBlending,transparent:true,depthWrite:false,opacity:.5}));s.scale.set(.3,.3,1);s.position.set((RND()-.5)*16,RND()*4,-2-RND()*14);sc.add(s);vs.push(s)}
+ // scene 2: a bedroom with a TV (fictional news), scene 3: the street outside
+ var g2=new T.Group();g2.visible=false;sc.add(g2);var L=function(c){return new T.MeshLambertMaterial({color:c})},bx=function(G,w,h,d,x,y,z,m){var q=new T.Mesh(new T.BoxGeometry(w,h,d),m);q.position.set(x,y,z);G.add(q);return q};
+ bx(g2,8,.1,8,0,0,-2,L(0x6a5040));bx(g2,8,3,.1,0,1.5,-6,L(0xb8c0a8));bx(g2,.1,3,8,-4,1.5,-2,L(0xb8c0a8));bx(g2,.1,3,8,4,1.5,-2,L(0xb8c0a8));bx(g2,8,.1,8,0,3,-2,L(0xe0e0d8));bx(g2,2.2,.5,3,-2.4,.3,-.6,L(0xdddddd));bx(g2,2.2,.2,.8,-2.4,.6,.6,L(0x4a6a9a));bx(g2,1.6,.8,.6,2.6,.4,-5.4,L(0x5a3a20));
+ var nT=cvTex(512,288,function(){}),nx=nT.image.getContext('2d');var tv=bx(g2,1.3,.8,.5,2.6,1.2,-5.4,L(0x111111));var scr=new T.Mesh(new T.PlaneGeometry(1.15,.65),new T.MeshBasicMaterial({map:nT}));scr.position.set(2.6,1.2,-5.14);g2.add(scr);var win=new T.Mesh(new T.PlaneGeometry(1.8,1.3),new T.MeshBasicMaterial({color:0xcfe0ff}));win.position.set(-3.94,1.7,-3);win.rotation.y=PI/2;g2.add(win);var dl=new T.PointLight(0xfff4e0,1.1,14);dl.position.set(0,2.6,-2);g2.add(dl);var door=bx(g2,1.2,2.2,.1,0,1.1,-5.95,L(0x7a5a3a));
+ var g3=new T.Group();g3.visible=false;sc.add(g3);bx(g3,30,.1,40,0,0,-20,L(0x2a2a2e));bx(g3,8,.12,40,-9,.05,-20,L(0x5a5a58));bx(g3,8,.12,40,9,.05,-20,L(0x5a5a58));for(var h=0;h<4;h++){bx(g3,6,5,6,-14,2.5,-6-h*10,L([0x6a4a3a,0x4a5a6a,0x5a5a3a,0x7a6a5a][h]));bx(g3,6,5,6,14,2.5,-6-h*10,L([0x4a5a3a,0x6a4a4a,0x3a4a5a,0x6a6a5a][h]))}var stl=new T.PointLight(0xffd8a0,1.5,16);stl.position.set(8,4.5,-18);g3.add(stl);bx(g3,.15,4.6,.15,8,2.3,-18,L(0x333333));var bo;try{bo=MART.boiled(STM,GFX.monCore)}catch(e){bo=new T.Group();bx(bo,.7,2.6,.5,0,1.3,0,new T.MeshBasicMaterial({color:0x111111}))}bo.position.set(8,0,-19.5);bo.rotation.y=PI*.15;g3.add(bo);var am3=new T.AmbientLight(0x8090c0,.35);g3.add(am3);
+ var news=['FICTIONAL IN-GAME BROADCAST','"...and in other news tonight: Nathan, the 19-year-old who went missing three weeks ago, has returned home."','"He was found asleep in his own bed this morning. Family members say he does not remember where he has been."','"Police say there are no signs of a break-in. Doctors say he is healthy, but he keeps asking his family to leave the lights on."'];
+ var t0=0,stage=0,end=false,done2=function(){if(end)return;end=true;o.end();lab.remove();skip.remove();if(k)ending(k);HD.cine=(HD.cine||0)+1;hsave();if(!k){started=false;HU.afterEnd=null}else HU.afterEnd=function(){P.won=false;try{winGame()}catch(e){}}};skip.onclick=done2;
+ o.run(function(dt,t){if(end)return;var sub=function(s){o.sub(s)};
+  if(t<7){// the elevator: doors close, the display changes
+   E.doors(Math.max(0,1-Math.max(0,t-1)/1.6));if(t>3.2)E.floor(Math.sin(t*10)>0?'∅':'??','#f33');if(t>5)E.floor('HOME','#3f6');o.fade.style.opacity=t<.8?1-t/.8:t>6.2?Math.min(1,(t-6.2)/.8):0;cm.position.set(0,1.62,1.95);cm.rotation.set(.03,Math.sin(t*.3)*.05,0);E.light.intensity=1.2+RND()*.1;o.once('e1',.5,function(){sub('The Void Elevator.');tn({f:48,d:6,v:.5,a:1,lp:200})});o.once('e2',3.2,function(){sub('The display changes to a floor that does not exist.')});o.once('e3',6,function(){sub('')})}
+  else if(t<11){o.fade.style.opacity=1;o.title.textContent='YOU ARE DONE PLAYING.';o.title.style.opacity=t<7.6?(t-7)/.6:t>10.4?Math.max(0,(11-t)/.6):1;o.once('e4',7,function(){tn({f:60,f2:40,d:3,v:.3})})}
+  else if(t<26){if(!g2.visible){g1.visible=false;E.g.visible=false;vs.forEach(function(s){s.visible=false});g2.visible=true;sc.background.set(0x0a0a0a);sc.fog.density=.01;am.intensity=.45;o.title.style.opacity=0}
+   var u=t-11;o.fade.style.opacity=u<1.5?1-u/1.5:0;
+   // waking up: lying, then sitting up, standing, walking to the door
+   if(u<4){cm.position.set(-2.4,.9,.2);cm.rotation.set(1.2-u*.25,0,.3-u*.07)}else if(u<7){var k2=(u-4)/3;cm.position.set(-2.4+k2*1.2,.9+k2*.75,.2-k2*.5);cm.rotation.set(Math.max(-.05,.2-k2*.25),-.6*k2,0)}else if(u<11){cm.position.set(-1.2+(u-7)*.25,1.65,-.3);cm.rotation.set(-.02,-.9+(u-7)*.1,0)}else{var k3=(u-11)/4;cm.position.set(-.2+k3*.2,1.65,-.3-k3*5.2);cm.rotation.set(0,0,0);door.position.x=-1.2*Math.min(1,k3*2)}
+   nx.fillStyle='#14263a';nx.fillRect(0,0,512,288);nx.fillStyle='#d8dde4';nx.fillRect(40,70,140,200);nx.fillStyle='#222';nx.beginPath();nx.arc(110,60,42,0,7);nx.fill();nx.fillStyle='#b00';nx.fillRect(0,232,512,56);nx.fillStyle='#fff';nx.font='bold 22px sans-serif';nx.fillText('CHANNEL 8 · FICTIONAL BROADCAST',12,256);nx.font='18px sans-serif';nx.fillText('MISSING 19-YEAR-OLD NATHAN RETURNS HOME',12,280);nx.font='bold 16px monospace';nx.fillStyle='#ff0';nx.fillText('FICTIONAL — NOT REAL NEWS',300,24);nT.needsUpdate=true;
+   var ni=Math.min(news.length-1,Math.floor(u/3.6));sub(news[ni]);o.once('n1',12,function(){try{if(window.speechSynthesis&&!muted){var ut=new SpeechSynthesisUtterance(news.slice(1).join(' ').replace(/"/g,''));ut.rate=1;ut.pitch=1;ut.volume=SET.ra?.4:.75;speechSynthesis.speak(ut)}}catch(e){}})}
+  else if(t<40){if(!g3.visible){g2.visible=false;g3.visible=true;sc.background.set(0x0b1022);sc.fog.color.set(0x0b1022);sc.fog.density=.02;try{speechSynthesis.cancel()}catch(e){}}var u2=t-26;o.fade.style.opacity=u2<1?1-u2:0;
+   cm.position.set(0,1.65,Math.max(-8,-u2*1.3));cm.rotation.set(0,u2>4?-Math.min(.55,(u2-4)*.3):0,0);
+   if(u2<5)sub('You walk outside. The street is quiet. Too quiet.');else if(u2<9)sub('Under the streetlight across the road, something has been standing very still.');else sub('');
+   if(u2>6&&u2<9){bo.position.y=0;bo.scale.setScalar(1+(RND()-.5)*.03)}if(u2>=9&&u2<11){var f=(u2-9)/2;bo.scale.set(1+(RND()-.5)*f,1-f,1+(RND()-.5)*f);bo.position.y=f*2;bo.visible=RND()>f*.7;if(!o.fed.zap){o.fed.zap=1;bs({f:2500,q:.3,d:1.5,v:SET.ra?.12:.3});tn({t:'sawtooth',f:90,f2:2000,d:1.6,v:SET.ra?.08:.2})}}if(u2>=11)bo.visible=false;
+   if(u2>11.5){o.title.textContent='BUT IT CAME HOME WITH YOU.';o.title.style.color='#d33';o.title.style.opacity=Math.min(1,(u2-11.5)/1);o.fade.style.opacity=Math.min(.85,(u2-11.5)/1.5)}}
+  else done2()})}
+HU.finalCinematic=finalCinematic;
+// =====================================================================
+// interaction and per frame
+// =====================================================================
+addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat)return;var tg=e.target;if(tg&&(tg.tagName=='INPUT'||tg.tagName=='TEXTAREA'))return;
+ if(LIFT&&HD.cr&&HD.cr.pw&&Math.hypot(LIFT.x-P.x,LIFT.z-P.z)<1.9){e.stopImmediatePropagation();e.preventDefault();say('The containment lift shudders and starts to descend...',2);setTimeout(facility,300)}},true);
+var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{if(!playing())return;
+ if(SYM&&!HD.sym[LVL]){var d=Math.hypot(SYM.x-P.x,SYM.z-P.z),f=[-Math.sin(P.yaw),-Math.cos(P.yaw)],dot=(f[0]*(SYM.x-P.x)+f[1]*(SYM.z-P.z))/(d||1);if(d<3.4&&dot>.8&&los(P.x,P.z,SYM.x-(SYM.x-P.x)*.1,SYM.z-(SYM.z-P.z)*.1)){SYM.t+=dt;if(SYM.t>.6){HD.sym[LVL]=1;hsave();var c=symCount();say('You memorize a symbol painted on the wall: '+GLY[LVL]+'  ('+c+'/19)'+(c>=19?' — every symbol. Something deep below has noticed.':''),6);tn({f:180,f2:90,d:1.4,v:.2});HU.toast('✦ SYMBOL '+GLY[LVL]+' FOUND ('+c+'/19)','#f99')}}else SYM.t=0}
+ if(LIFT&&HD.cr&&HD.cr.pw&&msgT<=0&&Math.hypot(LIFT.x-P.x,LIFT.z-P.z)<1.9)say('[F] Take the CONTAINMENT LIFT down to Sub-Level C',.1);
+ }catch(e){if(!tick.e){tick.e=1;console.error('HU3b tick',e)}}})();
+// phone app: secrets, Level 20 requirements and the endings gallery
+APPS.push(['✦ SECRETS','husec']);
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);if(PHN.scr!='husec')return r0;var r=MB.querySelector('.ph');if(!r||!r.children[1])return r0;try{r.children[0].querySelector('span:nth-child(2)').textContent='SECRETS'}catch(e){}var q=l20Req(),cr=HD.cr||{};
+ r.children[1].innerHTML='<small><b>LEVEL 20 — THE PLACE THAT REMEMBERS</b><br>'+(l20Open()?'<span style="color:#9f9">UNLOCKED — look for a new button in any elevator.</span>':'<span style="color:#f99">LOCKED</span>')+'<br>Hidden symbols: '+q.sym+'/19 '+'<br><span style="font-size:16px;letter-spacing:2px">'+GLY.map(function(g2,i){return HD.sym[i]?g2:'·'}).join('')+'</span><br>VHS clues played (tapes 00, 05, 09): '+q.tapes+'/3<br>Control room: terminal '+(cr.pw?'✔':'✖')+' · sigil '+(cr.sigil?'✔':'✖')+'<br><br><b>ENDINGS</b><br>'+'ABCDEFGH'.split('').map(function(k){return (HD.end[k]?'✔ ':'🔒 ')+k+' — '+(HD.end[k]?ENDS[k][0]:'???')}).join('<br>')+(HD.cine?'<br><br><span class="ch" data-hu7="cine">▶ WATCH THE FINAL CINEMATIC AGAIN</span>':'')+'<br><br><b>OTHER SECRETS</b><br>Control room: '+(cr.found?'found':'?')+' · W-7 corridor: '+(HD.dlbc?'survived':'?')+' · Sub-Level C: '+(HD.cb&&HD.cb.done?'escaped':'?')+' · false realities seen through: '+(HD.fr|0)+'</small>';return r0};
+HU.symGive=function(){for(var i=0;i<=18;i++)HD.sym[i]=1;hsave();if(SYM)SYM.m.visible=false;return 'All 19 hidden symbols marked as found.'};
+HU.l20Unlock=function(){HU.symGive();HD.vhs=HD.vhs||{};['v0','v5','v9'].forEach(function(k){HD.vhs[k]=HD.vhs[k]||{d:1,c:1};HD.vhs[k].d=1;HD.vhs[k].c=1;HD.vhs[k].p=1});HD.cr=HD.cr||{};HD.cr.pw=1;HD.cr.sigil=1;hsave();return 'Level 20 requirements completed (for testing). Use any elevator.'};
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 3C: rare suits & cosmetics, death replays ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof SHOP=='undefined'||typeof SUITS=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+// =====================================================================
+// 18. RARE SUITS AND COSMETIC REWARDS (earned, never bought twice)
+// =====================================================================
+// id, name, rarity, colour, description, unlock condition, check()
+var RS=[
+ ['c_lobby','Lobby Wanderer Jacket','common','#c8a850','A damp yellow jacket that smells like old carpet.','Escape 3 different levels.',function(){return (SV.done||[]).length>=3}],
+ ['c_survivor','Survivor\'s Windbreaker','uncommon','#3a8a6a','Torn at the shoulder. Still waterproof.','Survive 5 monster chases.',function(){var e=HD.enc||{},n=0;for(var k in e)n+=e[k].e|0;return n>=5}],
+ ['c_rescuer','Rescuer\'s Vest','rare','#e86a1a','Hi-vis orange with a hand-drawn cross on the back.','Rescue 3 lost wanderers.',function(){var r=HD.res||{};return Object.keys(r).filter(function(k){return r[k]=='saved'}).length>=3}],
+ ['c_archivist','Archivist\'s Coat','rare','#5a4a7a','Pockets full of tape labels.','Find and play the VHS tapes of 5 different levels.',function(){var v=HD.vhs||{};return Object.keys(v).filter(function(k){return v[k].p}).length+Object.keys(HD.vhsP||{}).length>=5}],
+ ['c_control','Aster Institute Lab Coat','rare','#d8dde4','"CONTROL ZERO" stitched over the pocket.','Discover a hidden room: the Level 0 control room.',function(){return !!(HD.cr&&HD.cr.found)}],
+ ['c_nightmare','Nightmare Plate Suit','legendary','#3a0a0a','Scratched black plates. It has seen things.','Survive the Don\'t Look Back challenge, or escape a level on DON\'T LOOK BACK difficulty.',function(){return !!(HD.dlbc&&HD.dlbc.done)||!!(HD.meta&&HD.meta.flags&&HD.meta.flags.dlbEsc)}],
+ ['c_containment','Containment Suit','legendary','#c8e040','Sub-Level C issue. The visor is cracked.','Escape the containment facility.',function(){return !!(HD.cb&&HD.cb.done)}],
+ ['c_remember','The Remembered','secret','#e8e0c8','It looks like your own clothes. Exactly like them.','Complete Level 20.',function(){return !!HD.l20}],
+ ['c_ending','Static Suit','secret','#8a8a9a','Television static that moves when you do.','Reach one of the special endings (B to G).',function(){var e=HD.end||{};return ['B','C','D','E','F','G'].some(function(k){return e[k]})}]];
+RS.forEach(function(r){if(!SUITS.find(function(s){return s.id==r[0]}))SUITS.push({id:r[0],n:r[1],c:r[3],w:0,r:r[2][0].toUpperCase()+r[2].slice(1),m:.4,earned:1});if(!SHOP.find(function(s){return s.id==r[0]}))SHOP.push({id:r[0],cat:'SUITS',n:r[1],r:r[2],c:r[3],d:r[4]+' 🏆 Unlock: '+r[5],earned:1})});
+function isOwned(id){return (typeof SHO!='undefined'&&SHO.indexOf(id)>=0)||(typeof OWN!='undefined'&&OWN.indexOf(id)>=0)}
+HU.unlock=function(id){var r=RS.find(function(q){return q[0]==id});if(!r||isOwned(id))return false;if(SHO.indexOf(id)<0){SHO.push(id);ls_('brsh',SHO)}if(OWN.indexOf(id)<0){OWN.push(id);saveSuit()}HU.toast('🏆 COSMETIC UNLOCKED: '+r[1]+' ('+r[2].toUpperCase()+')','#ffd27a');return true};
+function checkAll(){RS.forEach(function(r){try{if(!isOwned(r[0])&&r[6]())HU.unlock(r[0])}catch(e){}})}
+setInterval(checkAll,2500);setTimeout(checkAll,1200);
+// earned suits cannot be bought: show the unlock condition instead of a price
+var oAct=phAct;phAct=function(a){if(/^buy:c_/.test(a)){var id=a.slice(4),r=RS.find(function(q){return q[0]==id});if(r&&!isOwned(id)){say('This suit cannot be bought. Unlock it: '+r[5],4);return phScr()}}return oAct.apply(this,arguments)};
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);try{
+ if(PHN.scr=='shop'&&(PHN.tab||'SUITS')=='SUITS'){RS.forEach(function(r){var b=[].slice.call(MB.querySelectorAll('b')).find(function(x){return x.textContent==r[1]});if(!b)return;var row=b.parentElement;if(!isOwned(r[0]))row.innerHTML=row.innerHTML.replace(/<span class=["']ch["'] data-p=["']buy:[^"']+["']>BUY \$\d+<\/span>|NOT ENOUGH MONEY \(\$\d+\)/,'<span style="color:#ffd27a">🔒 '+e2(r[5])+'</span>')})}
+ if(PHN.scr=='hurs'){var r=MB.querySelector('.ph');if(r&&r.children[1]){try{r.children[0].querySelector('span:nth-child(2)').textContent='RARE SUITS'}catch(e){}
+  var col={common:'#ccc',uncommon:'#6f6',rare:'#6af',legendary:'#fc4',secret:'#f6c'};r.children[1].innerHTML='<small>Earned cosmetics. They look different but give the same protection as a Rare suit — no unfair advantage.</small>'+RS.map(function(q){var own=isOwned(q[0]),eq=SUIT==q[0];return '<div style="display:flex;gap:8px;align-items:center;margin:8px 0;border-bottom:1px solid #444;padding-bottom:6px;'+(own?'':'opacity:.65')+'"><canvas data-rsp="'+q[0]+'" width="60" height="80" style="width:60px;height:80px;position:static;border:1px solid #333;flex:none"></canvas><div><b>'+(own||q[2]!='secret'?e2(q[1]):'??? (secret)')+'</b> <small style="color:'+col[q[2]]+'">'+q[2].toUpperCase()+'</small><br><small>'+(own||q[2]!='secret'?e2(q[4]):'')+'<br>'+(own?(eq?'<span style="color:#9f9">EQUIPPED</span> · <span class="ch" data-p="equip:'+q[0]+'">UNEQUIP</span>':'<span style="color:#9f9">OWNED</span> · <span class="ch" data-p="equip:'+q[0]+'">EQUIP</span>'):'🔒 '+e2(q[5]))+'</small></div></div>'}).join('');
+  [].slice.call(r.querySelectorAll('canvas[data-rsp]')).forEach(function(cv){var id=cv.dataset.rsp,x=cv.getContext('2d');try{if(isOwned(id)||RS.find(function(q){return q[0]==id})[2]!='secret')drawChar(x,60,80,{suit:id,bg:'clean',pose:'stand'});else{x.fillStyle='#111';x.fillRect(0,0,60,80);x.fillStyle='#555';x.font='30px serif';x.fillText('?',20,50)}}catch(e){}})}}}catch(e){}return r0};
+APPS.push(['🏆 RARE SUITS','hurs']);
+HU.suitsAll=function(){var n=0;RS.forEach(function(r){if(HU.unlock(r[0]))n++});return 'Unlocked '+n+' rare suits.'};
+// =====================================================================
+// 19. DEATH REPLAYS — reconstructed from recorded game events (last ~20 s)
+// =====================================================================
+var REC=[],RMAX=210,recT=0,lastSan=P.san,lastCards=P.cards,lastSt='';
+var oCap=HU.cap;HU.cap=function(t,s){try{if(playing())ev('sound',t)}catch(e){}return oCap?oCap.apply(this,arguments):null};
+var EVB=[];function ev(k,t){EVB.push({k:k,t:t})}
+function mpos(){try{if(CF.bal&&PG.length){var b=null,bd=1e9;PG.forEach(function(p){var d=Math.hypot(p.x-P.x,p.z-P.z);if(d<bd){bd=d;b=p}});return b?[b.x,b.z,'party']:null}if(CF.tile)return WM.on?[WM.x,WM.z,'water']:null;if(lm||mon.visible)return [M.x,M.z,lm?'lm':'mon']}catch(e){}return null}
+(function tick(){requestAnimationFrame(tick);if(!playing()||HU.PK&&HU.PK.cur)return;var now=P.t;if(now-recT<.1)return;recT=now;
+ if(P.san<lastSan-4){ev('damage','Sanity −'+Math.round(lastSan-P.san))}lastSan=P.san;if(P.cards>lastCards)ev('objective','Picked up '+CF.kn+' ('+P.cards+'/'+CF.k+')');lastCards=P.cards;
+ var st=M.state;if(st=='chase'&&lastSt!='chase')ev('chase','The monster starts chasing');lastSt=st;if(HU.LO&&HU.LO.ph==2&&!tick.bo){tick.bo=1;ev('blackout','Blackout')}if(!(HU.LO&&HU.LO.ph==2))tick.bo=0;if(HU.CC&&HU.CC.st=='attack'&&!tick.at){tick.at=1;ev('attack','The Copycat winds up an attack')}if(!(HU.CC&&HU.CC.st=='attack'))tick.at=0;try{if(window.LVX&&LVX.AT&&LVX.AT.t>0&&!tick.lx){tick.lx=1;ev('attack','Attack warning')}if(!(window.LVX&&LVX.AT&&LVX.AT.t>0))tick.lx=0}catch(e){}
+ var m=mpos();REC.push({t:now,x:+P.x.toFixed(2),z:+P.z.toFixed(2),y:+P.yaw.toFixed(3),p:+P.pit.toFixed(3),h:+(P.h||1.7).toFixed(2),fl:P.fl&&P.bat>0?1:0,m:m?[+m[0].toFixed(2),+m[1].toFixed(2),m[2]]:null,g:GR.on?[+GR.x.toFixed(2),+GR.z.toFixed(2)]:null,ch:st=='chase'?1:0,san:Math.round(P.san),e:EVB.length?EVB.splice(0):null});if(REC.length>RMAX)REC.shift()})();
+var oDie=die;die=function(){var was=P.dead,r=oDie.apply(this,arguments);if(!was&&P.dead){try{var cause=GR.k==5?(GR.m||'a monster'):GR.k==4?'your mind slipped':GR.k==3?'the Party Goers':GR.k==2?'the water':GR.k==1?'the Grinner':'the Boiled One';var rp={lv:LVL,cause:cause,at:Date.now(),s:REC.slice()};if(rp.s.length){rp.s[rp.s.length-1].e=(rp.s[rp.s.length-1].e||[]).concat([{k:'death',t:'Final attack: '+cause}])}HU.lastReplay=rp;try{localStorage.setItem('brrp',JSON.stringify(rp))}catch(e){}showBtn()}catch(e){}}return r};
+var BTN=null;function showBtn(){if(BTN)BTN.remove();BTN=document.createElement('div');BTN.textContent='▶ WATCH DEATH REPLAY';BTN.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;background:#1a1408;border:1px solid #e4d56a;color:#e4d56a;font:bold 14px monospace;padding:8px 16px;cursor:pointer;opacity:0;transition:opacity 1s';document.body.appendChild(BTN);setTimeout(function(){BTN.style.opacity=1},2200);BTN.onclick=function(e){e.stopPropagation();openReplay(HU.lastReplay)}}
+var RP=null;
+function openReplay(rp){if(!rp||!rp.s.length)return;if(BTN)BTN.style.display='none';var s=rp.s,t0=s[0].t,t1=s[s.length-1].t,dur=Math.max(.1,t1-t0);
+ var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:61;pointer-events:none;font:13px monospace;color:#e4d56a';ov.innerHTML='<div style="position:absolute;left:0;right:0;top:0;background:rgba(0,0,0,.75);padding:8px 12px;text-align:center;pointer-events:auto"><b>GAMEPLAY REPLAY</b> — reconstructed from recorded game events (not a video) · Level '+rp.lv+' · cause: '+e2(rp.cause)+'</div><canvas id="rp-map" width="200" height="200" style="width:200px;height:200px;position:absolute;right:12px;top:48px;border:1px solid #6a5c20;background:#000c"></canvas><div id="rp-ev" style="position:absolute;left:12px;top:48px;max-width:46vw;line-height:1.6;text-shadow:0 0 4px #000"></div><div style="position:absolute;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);padding:10px;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;pointer-events:auto"><span class="ch" id="rp-play" style="cursor:pointer">❚❚ PAUSE</span><input id="rp-tl" type="range" min="0" max="1000" value="0" style="width:min(50vw,420px)"><span id="rp-t">0.0s</span><span class="ch" data-sp=".5" style="cursor:pointer">0.5×</span><span class="ch" data-sp="1" style="cursor:pointer;color:#fff">1×</span><span class="ch" data-sp="2" style="cursor:pointer">2×</span><span class="ch" id="rp-close" style="cursor:pointer;color:#f99">✖ RETURN TO GAME</span></div>';document.body.appendChild(ov);
+ var st={t:0,play:true,sp:1,ov:ov,s:s,t0:t0,dur:dur,rp:rp,seen:{}};RP=st;var $r=function(id){return document.getElementById(id)};
+ $r('rp-play').onclick=function(){st.play=!st.play;this.textContent=st.play?'❚❚ PAUSE':'▶ PLAY';if(st.play&&st.t>=dur)st.t=0};$r('rp-tl').oninput=function(){st.t=this.value/1000*dur;st.play=false;$r('rp-play').textContent='▶ PLAY'};
+ [].slice.call(ov.querySelectorAll('[data-sp]')).forEach(function(b){b.onclick=function(){st.sp=+b.dataset.sp;[].slice.call(ov.querySelectorAll('[data-sp]')).forEach(function(q){q.style.color=q===b?'#fff':''})}});
+ $r('rp-close').onclick=function(){closeReplay()};
+ // hide the death overlay while watching
+ try{st.ovd=$('ov').style.display;$('ov').style.display='none';st.red=$('red').style.opacity;$('red').style.opacity=0}catch(e){}
+ var lt=performance.now();(function fr(){if(RP!==st)return;requestAnimationFrame(fr);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;if(st.play){st.t+=dt*st.sp;if(st.t>=dur){st.t=dur;st.play=false;$r('rp-play').textContent='↺ REPLAY'}}$r('rp-tl').value=Math.round(st.t/dur*1000);$r('rp-t').textContent=st.t.toFixed(1)+'s / '+dur.toFixed(1)+'s';
+  // events up to now
+  var evs=[];s.forEach(function(q){if(q.t-t0<=st.t&&q.e)q.e.forEach(function(e){evs.push((q.t-t0).toFixed(1)+'s · '+({sound:'🔊 ',damage:'💥 ',objective:'⭐ ',chase:'🏃 ',blackout:'⚡ ',attack:'⚠ ',death:'☠ '}[e.k]||'')+e.t)})});$r('rp-ev').innerHTML=evs.slice(-8).map(e2).join('<br>');
+  drawMap(st)})()}
+function sampleAt(st){var s=st.s,t=st.t0+st.t,i=0;while(i<s.length-1&&s[i+1].t<=t)i++;var a=s[i],b=s[Math.min(s.length-1,i+1)],k=b.t>a.t?Math.min(1,(t-a.t)/(b.t-a.t)):0,L=function(u,v){return u+(v-u)*k};var ay=a.y,by=b.y;var dy=Math.atan2(Math.sin(by-ay),Math.cos(by-ay));return {x:L(a.x,b.x),z:L(a.z,b.z),y:ay+dy*k,p:L(a.p,b.p),h:L(a.h,b.h),fl:a.fl,m:a.m&&b.m?[L(a.m[0],b.m[0]),L(a.m[1],b.m[1]),a.m[2]]:a.m,g:a.g,ch:a.ch,san:a.san}}
+function drawMap(st){var c=document.getElementById('rp-map');if(!c)return;var x=c.getContext('2d'),q=sampleAt(st),sc=200/(W*S),s=st.s;x.clearRect(0,0,200,200);x.fillStyle='#000';x.fillRect(0,0,200,200);for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]){x.fillStyle='#4a4020';x.fillRect(i*S*sc,j*S*sc,S*sc+.5,S*sc+.5)}
+ x.strokeStyle='#3f8';x.beginPath();s.forEach(function(r,k){if(r.t-st.t0>st.t)return;k?x.lineTo(r.x*sc,r.z*sc):x.moveTo(r.x*sc,r.z*sc)});x.stroke();x.strokeStyle='#f44';x.beginPath();var f=0;s.forEach(function(r){if(r.t-st.t0>st.t||!r.m)return;f?x.lineTo(r.m[0]*sc,r.m[1]*sc):x.moveTo(r.m[0]*sc,r.m[1]*sc);f=1});x.stroke();
+ x.fillStyle='#3f8';x.beginPath();x.arc(q.x*sc,q.z*sc,3.5,0,7);x.fill();x.strokeStyle='#3f8';x.beginPath();x.moveTo(q.x*sc,q.z*sc);x.lineTo((q.x-Math.sin(q.y)*6)*sc,(q.z-Math.cos(q.y)*6)*sc);x.stroke();if(q.m){x.fillStyle='#f33';x.beginPath();x.arc(q.m[0]*sc,q.m[1]*sc,3.5,0,7);x.fill()}if(q.g){x.fillStyle='#fd3';x.fillRect(q.g[0]*sc-2,q.g[1]*sc-2,4,4)}x.fillStyle='#ccc';x.font='10px monospace';x.fillText('you',4,12);x.fillStyle='#f66';x.fillText('monster',30,12);x.fillStyle='#aaa';x.fillText('sanity '+q.san+'%',120,12)}
+function closeReplay(){var st=RP;if(!st)return;RP=null;st.ov.remove();try{$('ov').style.display=st.ovd||'flex';$('red').style.opacity=st.red||.97}catch(e){}if(BTN)BTN.style.display='block'}
+// the 3D view: the real level, the camera placed where you were, the monster where it was
+var oP=window.PFX;window.PFX=function(s,c){if(RP){try{var q=sampleAt(RP);c.position.set(q.x,q.h,q.z);c.rotation.set(q.p,q.y,0);if(typeof sp!='undefined'){sp.intensity=q.fl?2.4:0;sp2.intensity=sp.intensity*.8}var mm=lm||mon;if(q.m&&mm){mm.visible=true;mm.position.set(q.m[0],0,q.m[1]);mm.rotation.y=Math.atan2(q.x-q.m[0],q.z-q.m[1]);mm.scale.setScalar(1)}if(typeof grin!='undefined'){grin.visible=!!q.g;if(q.g)grin.position.set(q.g[0],1.55,q.g[1])}}catch(e){}}if(oP)oP(s,c);else ren.render(s,c)};
+HU.replay=function(){var rp=HU.lastReplay;if(!rp){try{rp=JSON.parse(localStorage.getItem('brrp'))}catch(e){}}if(!rp)return 'No death replay recorded yet.';openReplay(rp);return 'Opening the last death replay.'};
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
@@ -4211,7 +4684,7 @@ function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
   '<h4>ACTIONS ON '+esc2(nm.toUpperCase())+'</h4>'+btn('revive','REVIVE PLAYER','',ig?'':'Start a level first')+btn('heal','RESTORE HEALTH','',ig?'':'Start a level first')+btn('resetpos','RESET PLAYER POSITION','dg',ig?'':'Start a level first')+btn('allsuits','GIVE ALL SUITS')+
   '<div class="row">Cash amount <input id="acash" type="number" min="1" max="100000" value="500" style="width:110px">'+btn('cash+','GIVE BACKROOMS CASH')+btn('cash-','REMOVE BACKROOMS CASH','dg')+'</div>'+
   '<div class="row">'+btn('tpto','TELEPORT TO PLAYER','',NOPLAY)+btn('bring','BRING PLAYER TO ME','',NOPLAY)+btn('kick','KICK FROM LOBBY','dg',NOPLAY)+'<br><span class="dim">'+NOPLAY+' These buttons switch on when lobbies exist.</span></div>'}
- if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+'<h4>HORROR UPDATE</h4>'+btn('hu:lo','START LIGHTS-OUT EVENT')+btn('hu:lon','END BLACKOUT')+btn('hu:san','SET SANITY TO 20%')+btn('hu:hall','FORCE A HALLUCINATION')+btn('hu:ea','NEXT ELEVATOR RIDE: ANOMALY')+btn('hu:dlbc',"DON'T LOOK BACK CHALLENGE")+btn('hu:fake','ENTER A FAKE EXIT')+btn('hu:keys','GIVE CONTROL-ROOM KEYCARDS')+btn('hu:vhs','GIVE ALL LEVEL 0-9 TAPES')+btn('hu:tv','TELEPORT TO THE TV')+
+ if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+'<h4>HORROR UPDATE</h4>'+btn('hu:lo','START LIGHTS-OUT EVENT')+btn('hu:lon','END BLACKOUT')+btn('hu:san','SET SANITY TO 20%')+btn('hu:hall','FORCE A HALLUCINATION')+btn('hu:ea','NEXT ELEVATOR RIDE: ANOMALY')+btn('hu:dlbc',"DON'T LOOK BACK CHALLENGE")+btn('hu:fake','ENTER A FAKE EXIT')+btn('hu:keys','GIVE CONTROL-ROOM KEYCARDS')+btn('hu:vhs','GIVE ALL LEVEL 0-9 TAPES')+btn('hu:tv','TELEPORT TO THE TV')+btn('hu:fac','ENTER THE CONTAINMENT FACILITY')+btn('hu:l20','UNLOCK + ENTER LEVEL 20')+btn('hu:cine','PLAY THE FINAL CINEMATIC')+btn('hu:suits','UNLOCK ALL RARE SUITS')+btn('hu:replay','OPEN LAST DEATH REPLAY')+btn('hu:stk','OPEN STALKER MODE')+
   '<div class="row">Lighting intensity <input type="range" id="alight" min="20" max="300" value="'+Math.round(ADM.light*100)+'"> '+Math.round(ADM.light*100)+'%</div><div class="row">Fog density <input type="range" id="afog" min="0" max="250" value="'+Math.round((ADM.fog==null?scene.fog.density:ADM.fog)*1000)+'"> '+(ADM.fog==null?'level default':ADM.fog.toFixed(3))+' '+btn('fogreset','RESET FOG')+'</div>'+
   '<h4>ENVIRONMENT</h4>'+btn('quake','TREMOR (shake)')+btn('static','STATIC STORM (sanity drain)')+btn('calm','CALM (restore sanity drain)')+
   '<h4>MOVEMENT</h4>'+btn('tp:start','TELEPORT: START')+btn('tp:elev','TELEPORT: ELEVATOR')+btn('tp:rand','TELEPORT: RANDOM VALID SPOT')+btn('god',ADM.god?'GOD MODE: ON':'GOD MODE: OFF')+btn('free',ADM.free?'FREE CAMERA: ON':'FREE CAMERA: OFF')+'<br><span class="dim">Free camera: WASD fly, mouse look, Space up, C down, Shift fast. Monsters cannot catch you while it is on.</span>'+
@@ -4250,7 +4723,7 @@ function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a
  if(k=='cash+'||k=='cash-'){var amt=cashAmt();if(!(amt>=1&&amt<=100000)){msg('Amount must be a whole number from 1 to 100000.',false);audit(k=='cash+'?'give cash':'remove cash',nm,false,'bad amount');return}
   if(k=='cash+')return guard('give cash',nm+' $'+amt,function(){addCash(amt,'Admin gift');return {msg:'+$'+amt+' → '+nm+' (now $'+CASH.bal+')'}});
   return guard('remove cash',nm+' $'+amt,function(){var t=Math.min(amt,CASH.bal);addCash(-t,'Admin removal');return {msg:'-$'+t+' from '+nm+' (now $'+CASH.bal+')'}},{confirm:'Remove $'+amt+' from '+esc2(nm)+'?'})}
- if(k=='hu')return guard('horror: '+v,'level '+SV.lv,function(){var H=window.HU;if(!H)return {err:'Horror update not loaded.'};if(v=='ea')return {msg:H.elevatorTest()};if(!ig)return {err:'Start a level first.'};if(v=='lo')return {msg:H.lightsOut()};if(v=='lon'){H.lightsOn();return {msg:'Blackout ended.'}}if(v=='san'){P.san=20;return {msg:'Sanity set to 20%. Hallucinations start below 60%.'}}if(v=='dlbc')return {msg:H.dlbChallenge()};if(v=='vhs')return {msg:H.vhsGive?H.vhsGive():'Not available.'};if(v=='tv')return {msg:H.tvHere?H.tvHere():'Not available.'};if(v=='fake')return {msg:H.fakeExit()};if(v=='keys')return {msg:H.crGive?H.crGive():'Not available.'};if(v=='hall'){var r=H.hallucinate();return r?{msg:'Hallucination: '+r}:{err:'Nothing could be placed here. Face a long corridor and try again.'}}return {err:'Unknown action.'}});
+ if(k=='hu')return guard('horror: '+v,'level '+SV.lv,function(){var H=window.HU;if(!H)return {err:'Horror update not loaded.'};if(v=='ea')return {msg:H.elevatorTest()};if(!ig)return {err:'Start a level first.'};if(v=='lo')return {msg:H.lightsOut()};if(v=='lon'){H.lightsOn();return {msg:'Blackout ended.'}}if(v=='san'){P.san=20;return {msg:'Sanity set to 20%. Hallucinations start below 60%.'}}if(v=='dlbc')return {msg:H.dlbChallenge()};if(v=='fac')return {msg:H.facility?H.facility():'Not available.'};if(v=='l20'){if(H.l20Unlock)H.l20Unlock();return {msg:H.level20?H.level20(true):'Not available.'}}if(v=='cine'){if(H.finalCinematic)H.finalCinematic(null);return {msg:'Playing the final cinematic.'}}if(v=='suits')return {msg:H.suitsAll?H.suitsAll():'Not available.'};if(v=='replay')return {msg:H.replay?H.replay():'Not available.'};if(v=='stk'){if(H.stalkerMenu)H.stalkerMenu();return {msg:'Stalker menu opened.'}}if(v=='vhs')return {msg:H.vhsGive?H.vhsGive():'Not available.'};if(v=='tv')return {msg:H.tvHere?H.tvHere():'Not available.'};if(v=='fake')return {msg:H.fakeExit()};if(v=='keys')return {msg:H.crGive?H.crGive():'Not available.'};if(v=='hall'){var r=H.hallucinate();return r?{msg:'Hallucination: '+r}:{err:'Nothing could be placed here. Face a long corridor and try again.'}}return {err:'Unknown action.'}});
  if(k=='tpto'||k=='bring'||k=='kick'||k=='kick2'){msg(NOPLAY,false);audit(k,'',false,'no multiplayer');return}
  if(!ig&&['lightsoff','lightson','outage','emerg','quake','static','calm','tp','god','free','ms','mtp','mremove','mback','ai','follow','spawn','clearall','fix'].indexOf(k)>=0&&!(k=='fix'&&v=='gun')){msg('Start a level first.',false);return}
  if(k=='lightsoff')return guard('lights off','level '+SV.lv,function(){L.black=1e6;return {msg:'All lights off.'}});
