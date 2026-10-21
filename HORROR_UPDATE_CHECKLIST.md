@@ -49,3 +49,22 @@ Legend: ✅ done · 🟡 partly done (what is missing is written next to it) · 
 - **Other secrets:** the Watcher challenge, all 6 fake realities and the nightmare level were tested.
 - **Monsters and tapes:** Copycat state changes, VHS pickup, TV playback and archiving, and the encyclopedia all work.
 - **Stage 3:** rescues, Stalker, the containment facility, Level 20, endings, the cinematic, cosmetics and replays were tested.
+
+# Stage 4 — Complete Lore and Story Expansion
+
+The organization is now **the Threshold Project** everywhere; the old "Aster Institute" name is gone. All lore lives in the new 📚 LORE ARCHIVE phone app, which shows a lore completion % and keeps everything you collect in your save.
+
+| # | Part | Status | What's in the game |
+|---|---|---|---|
+| 1 | The original mystery | ✅ | **Experiment 001** (14 Oct 1987): the Aperture opens, the first team walks in, and their signals come from impossible places. **Later documents:** doors nobody built, the Project starting to contain something, and the Final Directive: close the door. |
+| 2 | The First Wanderers | ✅ | **Five explorers:** Elena Voss, Tomas Reyes, Ilse Marrow, Kit Okonkwo and Ruth Calloway. **What each one has:** a role, a reason for going in, a fear, and recordings that grow more desperate. **Their fates:** each fate unlocks only after you find a specific recording. One is death, one is a disappearance, one may have become part of the Backrooms, and one left clues for you. Tomas is Dana's father, which is why she came looking in 1994. |
+| 3 | The Boiled One | ✅ | **Rare sightings that never attack:** it watches from a long hallway, the level goes silent, electronics fail, it stands behind you in a "safe" room and vanishes when you look, and cryptic phone messages arrive. **Evidence about it:** hospital files from 1979, a "Subject Zero" file with no experiment behind it, appearances on camera only, and damaged tapes that show it even where the camera wasn't pointing. Its origin is never confirmed. |
+| 4 | VHS categories | ✅ | **12 new titled tapes** across the 6 categories: Expedition, Research, Incident, Warning, Corrupted and Future. Each has a recorder, place, date, a playable transcript with subtitles, a clue and links to related tapes. **Contradictions on purpose:** Tomas's two "last" messages disagree, and the Boiled One's origin differs between tapes. |
+| 5 | Monster lore | ✅ | Possible origins for 11 monsters. They unlock as you meet and escape each monster, and none is confirmed. |
+| 6 | Level-by-level story | ✅ | One required story clue on every level 0–19. It is always placed near the start in a reachable spot and follows that level's story from the prompt. Optional collectibles are randomized per run. **Level 20:** a records-of-previous-runs wall and the "deepest record". |
+| 7 | Player identity | ✅ | **Where you show up:** the hotel register (checked in tomorrow), a hospital file and the library's book are under your username, and the Flight 0 manifest lists your name. **Other clues:** a dashcam describes your real progress, a future tape shows your suit, and an unknown sender texts you on 8 levels. **Footsteps:** after one tape, the extra footsteps copy yours. All of it uses only your in-game name, suit and progress. |
+| 8 | Threshold documents | ✅ | The 8 documents from the prompt. The Personnel Report holds the code for the sealed filing room on Level 5, which you open on a keypad to get Kit's hidden tape. |
+| 9 | The final truth | ✅ | **Theory board:** Experiment, Discovery and Observation, plus the Boiled One, with evidence counts that never resolve. **Your choice:** before the Void Elevator you choose what you believe, and the ending text remembers it. |
+| 10 | Multiplayer story | ⛔ | There is no server, so shared sessions are not possible. Everything works solo. |
+| 11 | Story delivery | ✅ | **Ways the story reaches you:** tapes, audio logs, terminals, notes, photos, cameras, elevator announcements, monster behavior, hidden rooms, menu changes and the cinematic. **Pacing:** nothing is unskippable, and the cinematic can be skipped. |
+| 12 | Implementation | ✅ | **Reliability:** required clues are always reachable. **Saves:** found and played states are saved in each save slot. **Admin:** the WORLD tab has buttons to add all lore and to summon a Boiled One sighting. |
