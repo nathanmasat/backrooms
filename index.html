@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
-var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx'];
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc'];
 var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
 try{LS=window.localStorage}catch(e){return}
 function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
@@ -3215,6 +3215,339 @@ var oP=window.PFX,D0=null;window.PFX=function(s,c){try{if(typeof sp!='undefined'
 })();
 </script>
 
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 1: difficulty, runs, mutations, lights-out, sanity hallucinations, elevator anomalies, meta horror, daily challenges ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||typeof THREE=='undefined'||typeof scene=='undefined'||typeof P=='undefined')return;
+var T=THREE,LVL=SV.lv|0,MB=document.getElementById('mp'),RND=Math.random;
+function ld(k,d){try{var v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
+function st(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function hstr(s){var h=2166136261;for(var i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0}
+var HD=ld('brhu',{});HD.meta=HD.meta||{};HD.meta.seen=HD.meta.seen||{};HD.meta.flags=HD.meta.flags||{};HD.rec=HD.rec||{};
+function hsave(){st('brhu',HD)}
+var HU=window.HU={data:HD};
+// ================= DIFFICULTY MODES =================
+var MODES={
+ casual:{n:'CASUAL',c:'#7fd6ff',spd:.8,per:.8,bat:.7,san:.65,cash:.75,sup:3,ev:.7,hall:.6,mut:[0,1],d:'Slower monsters that react later. Extra batteries and Almond Water, slower battery and sanity drain, longer monster attack warnings.'},
+ normal:{n:'NORMAL',c:'#e4d56a',spd:1,per:1,bat:1,san:1,cash:1,sup:0,ev:1,hall:1,mut:[1,2],d:'The intended experience. Balanced monster AI and the standard amount of supplies.'},
+ nightmare:{n:'NIGHTMARE',c:'#ff8a3a',spd:1.1,per:1.2,bat:1.25,san:1.25,cash:1.4,sup:-.35,extra:1,ev:1.35,hall:1.3,mut:[2,3],d:'Faster monsters with sharper eyes and ears. Fewer supplies, one extra objective item on Levels 0-9 and more dangerous random events. Pays 40% more.'},
+ dlb:{n:"DON'T LOOK BACK",c:'#ff3030',spd:1.2,per:1.35,bat:1.5,san:1.45,cash:1.8,sup:-.55,extra:1,ev:1.7,hall:1.6,mut:[3,4],nosave:1,perma:1,d:'Highly aggressive monsters, scarce supplies and dangerous mutations. No SAVE SPOT, and dying ends the run. Pays 80% more, with rare encounters and an exclusive record.'}};
+var MORD=['casual','normal','nightmare','dlb'];
+// ================= MUTATIONS =================
+// id, name, description, danger 0-2
+var MUTS=[
+ ['lights','Lights Out','Lighting failures and blackout events happen much more often.',1],
+ ['battery','Low Battery','Your flashlight and gadgets drain 70% faster.',1],
+ ['fast','Fast Hunters','Monsters move 15% faster.',2],
+ ['silent','Silent World','Monster sounds fade out much faster with distance. Listen closely.',1],
+ ['false','False Signals','The monster scanner shows extra false readings.',1],
+ ['alive','The Building Is Alive','Doors open and slam shut on their own. (Moving walls are simulated by shifting doors; walls never move, so no route is ever cut off.)',1],
+ ['elev','Broken Elevators','The elevator only goes down, and on Levels 0-18 it needs an ELEVATOR FUSE found somewhere on the level (always reachable, marked on your map).',2],
+ ['supply','Extra Supplies','More batteries and Almond Water spawn, but monsters hear you from 25% further.',0],
+ ['double','Double Threat','During lights-out events a second monster, The Grin, hunts on every level.',2]];
+function mut(id){return MUTS.find(function(m){return m[0]==id})}
+function rollMuts(seed,mode){var r=m32(seed),md=MODES[mode],n=md.mut[0]+(r()<.5?0:md.mut[1]-md.mut[0]),pool=MUTS.map(function(m){return m[0]}),l=[];
+ if(mode=='casual')pool=pool.filter(function(id){return mut(id)[3]<2});
+ if(mode=='dlb'){l.push('lights')}
+ while(l.length<n&&pool.length){var k=pool.splice(r()*pool.length|0,1)[0];if(l.indexOf(k)<0)l.push(k)}return l}
+function run(){return HD.run&&!HD.run.over?HD.run:null}
+function has(id){var r=run();return !!(r&&r.mutOn!==false&&r.muts.indexOf(id)>=0)}
+function mode(){var r=run();return MODES[r&&MODES[r.mode]?r.mode:'normal']}
+HU.run=run;HU.has=has;HU.mode=mode;HU.MODES=MODES;HU.MUTS=MUTS;
+function newRun(md,mutOn,seed){seed=seed||((Date.now()^(RND()*1e9))>>>0);HD.run={id:seed,mode:md,mutOn:!!mutOn,muts:mutOn?rollMuts(seed,md):[],t0:Date.now(),deaths:0,esc:0,lv0:SV.lv,over:0,fuse:{},cash:0};hsave();applyRun();lobbyUI();toast('RUN STARTED — '+MODES[md].n,MODES[md].c)}
+function endRun(why){var r=run();if(!r)return;r.over=1;r.end=Date.now();r.res=why;var rec=HD.rec[r.mode]=HD.rec[r.mode]||{runs:0,best:0,done:0};rec.runs++;rec.best=Math.max(rec.best,r.esc);if(why=='escaped')rec.done++;HD.last=r;hsave();lobbyUI()}
+HU.newRun=newRun;HU.endRun=endRun;
+// ================= small UI helpers =================
+var css=document.createElement('style');css.textContent='#hu-cap{position:fixed;left:50%;bottom:25%;transform:translateX(-50%);z-index:12;background:rgba(0,0,0,.7);color:#eee;font:14px sans-serif;padding:4px 12px;pointer-events:none;display:none;max-width:86vw;text-align:center}#hu-hud{position:fixed;left:50%;top:44px;transform:translateX(-50%);z-index:6;font:bold 14px monospace;color:#ffb347;text-shadow:0 0 6px #000;pointer-events:none;text-align:center;white-space:pre}#hu-ntf{position:fixed;right:14px;top:70px;z-index:31;width:260px;background:rgba(20,20,24,.92);border:1px solid #555;border-radius:10px;color:#ddd;font:13px sans-serif;padding:8px 10px;transform:translateX(320px);transition:transform .4s;pointer-events:none}#hu-ntf b{color:#fff}#hu-fx{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.12) 0 2px,rgba(0,0,0,.25) 2px 4px)}#hu-meta{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.72);z-index:40;color:#d22;font:bold clamp(26px,6vw,58px) Georgia,serif;letter-spacing:.2em;text-shadow:0 0 18px #800,3px 0 #f004,-3px 0 #0ff3;pointer-events:none;opacity:0;transition:opacity 1.2s;text-align:center;white-space:pre-line}#hu-term{position:fixed;left:16px;bottom:16px;z-index:3;width:min(420px,80vw);background:#020a04ee;border:1px solid #1f6;color:#3f8;font:12px monospace;padding:10px;white-space:pre-wrap;display:none;pointer-events:none;box-shadow:0 0 18px #1f63}#hu-run{margin:10px auto 0;font:13px monospace;color:#cdbb66;text-align:center;max-width:90vw}#hu-pmi{font:13px monospace;color:#cdbb66;margin:10px;text-align:center;max-width:80vw}.hu-m{display:block;margin:6px 0;padding:6px 10px;border:1px solid #555;cursor:pointer}.hu-m.on{border-color:#fff;background:#ffffff14}.hu-tag{display:inline-block;margin:2px 3px;padding:1px 6px;border:1px solid #7a6a2a;font-size:12px}';document.head.appendChild(css);
+function mk(id,tag){var d=document.createElement(tag||'div');d.id=id;document.body.appendChild(d);return d}
+var CAP=mk('hu-cap'),HUD=mk('hu-hud'),NTF=mk('hu-ntf'),FX=mk('hu-fx'),MET=mk('hu-meta'),TERM=mk('hu-term');
+var capT=0;function cap(t,s){if(!SET.sub)return;CAP.textContent=t;CAP.style.display='block';capT=s||3}
+function toast(t,c){var d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;left:50%;top:22%;transform:translateX(-50%);z-index:31;color:'+(c||'#ffe680')+';font:bold 20px monospace;text-shadow:0 0 10px #000;pointer-events:none;transition:opacity 1.2s;text-align:center;max-width:90vw';document.body.appendChild(d);setTimeout(function(){d.style.opacity=0},2600);setTimeout(function(){d.remove()},4000)}
+var ntT=0;function notify(from,msg){NTF.innerHTML='📱 <b>'+e2(from)+'</b><br>'+e2(msg);NTF.style.transform='translateX(0)';ntT=4.5;if(typeof AC!='undefined'&&AC)tone({f:1320,f2:1320,d:.12,v:.08})}
+HU.toast=toast;HU.cap=cap;HU.notify=notify;
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+function lvlN(i){return (LV[i]&&LV[i].n.split('— ')[1])||('Level '+i)}
+// ================= apply the run to this level =================
+var R2=m32(((typeof SEED!='undefined'?SEED:1)+LVL*104729)|0),applied=false,BASEMP=null,XI=[];
+function cellsAt(cx,cz,a,b){return open.filter(function(o){if(CL[o[0]*W+o[1]])return false;var q=Math.hypot(cc(o[0])-cx,cc(o[1])-cz);return q>=a&&q<=b})}
+function reach(fi,fj,i,j){if(fi==i&&fj==j)return true;var p=bfs(fi,fj,i,j);return !!(p&&p.length)}
+function pickCell(cx,cz,a,b,rng,dead){var c=cellsAt(cx,cz,a,b);if(dead)c=c.filter(isDead);for(var k=0;k<14&&c.length;k++){var o=c.splice((rng||RND)()*c.length|0,1)[0];if(reach(ce(cx),ce(cz),o[0],o[1]))return o}return null}
+function isDead(o){var n=0,i=o[0],j=o[1];[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(a<0||b<0||a>=W||b>=W||g[a][b])n++});return n>=3}
+function applyRun(){if(applied)return;var r=run();if(!r)return;applied=true;var md=mode();
+ SET.diff=md.spd;// Levels 10-19 read this for speed and attack warning time
+ var mp2=MP[LVL];if(mp2&&LVL>=3){if(!BASEMP)BASEMP={sg:mp2.sg,hr:mp2.hr};var f=md.per*(has('supply')?1.25:1);mp2.sg=BASEMP.sg*md.per;mp2.hr=BASEMP.hr*f}
+ // supplies
+ var sup=items.filter(function(it){return !it.got&&(it.type=='bat'||it.type=='water')});
+ if(md.sup<0){var cut=Math.round(sup.length*-md.sup);for(var i=0;i<cut&&sup.length;i++){var it=sup.splice(R2()*sup.length|0,1)[0];it.got=true;it.m.visible=false;it.hu=1}}
+ var add=(md.sup>0?md.sup:0)+(has('supply')?4:0);for(var k=0;k<add;k++){var c=pickCell(cc(1),cc(1),6,999,R2);if(!c)break;var x=cc(c[0])+R2()-.5,z=cc(c[1])+R2()-.5;if(k%2){var G=mkWater();G.position.set(x,.11,z);scene.add(G);items.push({type:'water',m:G,x:x,z:z,note:''})}else mkItem('bat',0xffaa22,[.1,.18,.1],x,z,.1)}
+ // one extra objective item on Nightmare / Don't Look Back (Levels 0-9 only, always reachable from the start)
+ var cards=items.filter(function(it){return it.type=='card'});
+ if(md.extra&&LVL<10&&CF.k>=1&&cards.length==CF.k&&!CF.tile&&!CF.bal){var c2=pickCell(cc(1),cc(1),40,999,R2)||pickCell(cc(1),cc(1),16,999,R2);if(c2){mkItem('card',0x44ff88,[.3,.02,.2],cc(c2[0]),cc(c2[1]),.05);CF.k++;HU.extraCard=1}}
+ // broken elevators: an elevator fuse
+ if(has('elev')&&LVL<19){var fc=pickCell(cc(1),cc(1),30,999,R2)||pickCell(cc(1),cc(1),12,999,R2);if(fc){var fm=new T.Group(),b1=new T.Mesh(new T.CylinderGeometry(.07,.07,.26,10),new T.MeshBasicMaterial({color:0xffcc33})),b2=new T.Mesh(new T.CylinderGeometry(.075,.075,.05,10),new T.MeshBasicMaterial({color:0x888888}));b2.position.y=.13;var b3=b2.clone();b3.position.y=-.13;fm.add(b1,b2,b3);fm.rotation.z=Math.PI/2;fm.position.set(cc(fc[0]),.3,cc(fc[1]));scene.add(fm);var got=r.fuse&&r.fuse[LVL]==SEED;fm.visible=!got;XI.push({k:'fuse',m:fm,x:cc(fc[0]),z:cc(fc[1]),got:got,i:fc[0],j:fc[1]})}}
+ HU.fuse=function(){var f=XI.find(function(q){return q.k=='fuse'});return f?f.got:true};
+}
+HU.applyRun=applyRun;
+if(run())applyRun();else SET.diff=1;
+// ================= monsters: speed by difficulty, mutation and blackout =================
+function spdF(){var f=1,r=run();if(r&&LVL<10)f*=mode().spd;if(has('fast'))f*=1.15;if(LO.ph==2)f*=1.2;return Math.min(f,1.35)}
+function wrapMove(name){var o=window[name];if(typeof o!='function')return;window[name]=function(dt){var sx=M.x,sz=M.z,r=o.apply(this,arguments);try{var f=spdF(),dx=M.x-sx,dz=M.z-sz;if(f!=1&&!P.dead&&Math.hypot(dx,dz)<1.5){M.x=sx+dx*f;M.z=sz+dz*f}}catch(e){}return r}}
+wrapMove('updMon');wrapMove('updLM');
+// Double Threat: The Grin also hunts during lights-out events on every level
+var oGrin=updGrin;updGrin=function(dt){if(has('double')&&LO.ph==2&&SV.lv>=3&&!CF.bal&&!P.dead){if(GR.on&&Math.hypot(P.x-GR.x,P.z-GR.z)<1.5){GR.k=1;die();return}var s=SV.lv;SV.lv=0;try{return oGrin.apply(this,arguments)}finally{SV.lv=s}}
+ if(LO.ph!=2&&SV.lv>=3&&GR.on&&!P.dead){GR.on=false;grin.visible=false}return oGrin.apply(this,arguments)};
+// ================= LIGHTS-OUT EVENTS =================
+var LOK=[6,9,19].indexOf(LVL)<0&&!CF.open;
+var LO=HU.LO={ph:0,t:0,cd:(75+R2()*45)/mode().ev/(has('lights')?1.6:1),dur:0,locked:[],gen:null,sup:null,snd:0,cnt:0};
+function loEligible(){return LOK&&playing()&&!(LVX0()&&window.LVX.dark)}
+function LVX0(){return !!(window.LVX&&window.LVX.on)}
+var loMesh=null;
+function genMesh(){var G=new T.Group(),bm=function(c){return new T.MeshLambertMaterial({color:c})};var body=new T.Mesh(new T.BoxGeometry(1,.8,.6),bm(0x6a6a30));body.position.y=.4;G.add(body);var tank=new T.Mesh(new T.CylinderGeometry(.18,.18,.8,10),bm(0x444444));tank.rotation.z=Math.PI/2;tank.position.set(0,.95,0);G.add(tank);
+ var led=new T.Mesh(new T.BoxGeometry(.08,.08,.02),new T.MeshBasicMaterial({color:0xff2200}));led.position.set(.3,.6,.31);G.add(led);var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xff5a20,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));gl.scale.set(1.4,1.4,1);gl.position.set(.3,.6,.4);G.add(gl);G.userData={led:led,gl:gl};G.visible=false;scene.add(G);return G}
+function supMesh(){var G=new T.Group();var bx=new T.Mesh(new T.BoxGeometry(.5,.35,.4),new T.MeshLambertMaterial({color:0x2a4a6a}));bx.position.y=.18;G.add(bx);var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0x66ccff,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.55}));gl.scale.set(1,1,1);gl.position.y=.4;G.add(gl);G.visible=false;scene.add(G);return G}
+function alarm(){if(typeof AC=='undefined'||!AC)return;var v=SET.ra?.07:.18;for(var i=0;i<3;i++)setTimeout(function(){tone({t:'sawtooth',f:620,f2:980,d:.55,v:v,lp:2600})},i*700)}
+function loStart(force){if(LO.ph)return;LO.ph=1;LO.t=3.5;LO.cnt++;cap('[emergency alarm — the lights are failing]',3.5);say('⚠ POWER FAILURE — find shelter, a light, or the emergency generator',4);alarm();HU.ev('lo_warn')}
+function loDark(){var md=mode(),lo=md==MODES.casual?20:md==MODES.normal?24:30,hi=md==MODES.casual?30:md==MODES.normal?38:45;LO.ph=2;LO.dur=LO.t=lo+RND()*(hi-lo);L.black=LO.t+1;L.fk=0;P.san=Math.max(0,P.san-4*md.san);
+ if(typeof AC!='undefined'&&AC){burst({f:160,t:'lowpass',d:1.2,v:.7});tone({f:110,f2:40,d:1.6,v:.35})}
+ cap('[the power dies — emergency lights flicker on]',3);
+ // lock some closed doors that are well away from the player
+ var now=Date.now();LO.locked=[];DOORS.forEach(function(d){if(!d.open&&Math.hypot(d.x-P.x,d.z-P.z)>7&&RND()<.5&&!(d.locked>now)){d.locked=now+LO.t*1000;LO.locked.push(d)}});
+ // generator
+ var c=pickCell(P.x,P.z,9,24);if(c){if(!LO.gm)LO.gm=genMesh();LO.gm.position.set(cc(c[0])+.8,0,cc(c[1])+.8);if(solid(LO.gm.position.x,LO.gm.position.z))LO.gm.position.set(cc(c[0]),0,cc(c[1]));LO.gm.visible=true;LO.gen={x:LO.gm.position.x,z:LO.gm.position.z,pulls:0}}
+ // a rare supply crate in an optional dark dead end
+ var s=pickCell(P.x,P.z,12,34,null,true);if(s){if(!LO.sm)LO.sm=supMesh();LO.sm.position.set(cc(s[0]),0,cc(s[1]));LO.sm.visible=true;LO.sup={x:cc(s[0]),z:cc(s[1])}}
+ if(LVL>=3&&MP[LVL]){LO.hrB=MP[LVL].hr;MP[LVL].hr*=1.3}
+ LO.snd=2}
+function loEnd(fixed){if(LO.ph!=2&&LO.ph!=1)return;var was=LO.ph;LO.ph=0;L.black=0;L.lvl=1;L.fk=.8;L.nb=Math.max(L.nb,35+RND()*20);
+ var md=mode();LO.cd=(110+RND()*80)/md.ev/(has('lights')?1.6:1);
+ LO.locked.forEach(function(d){if(d.locked>Date.now())d.locked=0});LO.locked=[];
+ if(LO.gm)LO.gm.visible=false;LO.gen=null;if(LO.hrB!=null&&MP[LVL]){MP[LVL].hr=LO.hrB;LO.hrB=null}
+ setTimeout(function(){if(LO.sm&&LO.ph==0){LO.sm.visible=false;LO.sup=null}},15000);
+ if(was==2&&!P.dead){say(fixed?'⚡ You restarted the generator. The lights come back.':'The lights hum back to life.',3);cap('[the lights hum back on]',2.5);HU.ev('black');if(fixed)HU.ev('gen');award(fixed?60:30,'enc')}}
+HU.lightsOut=function(){if(!LOK){return 'Lights-out events are not used on this level.'}if(LO.ph)return 'A lights-out event is already happening.';loStart(1);return 'Lights-out event started.'};
+HU.lightsOn=function(){loEnd(true)};
+function loTick(dt){if(!LOK)return;
+ if(LO.ph==0){if(!loEligible())return;LO.cd-=dt;if(LO.cd<=0)loStart()}
+ else if(LO.ph==1){LO.t-=dt;L.fk=.3;if(LO.t<=0)loDark()}
+ else if(LO.ph==2){LO.t-=dt;L.black=Math.max(L.black,LO.t+.5);L.nb=Math.max(L.nb,30);
+  // emergency lights help a little: soften the darkness sanity drain
+  if(!(P.fl&&P.bat>0))P.san=Math.min(100,P.san+2.6*dt);
+  // phantom sounds where no creature is
+  LO.snd-=dt;if(LO.snd<=0){LO.snd=2.5+RND()*3.5;if(typeof AC!='undefined'&&AC){var a=RND()*6.28,dd=6+RND()*9,x=P.x+Math.cos(a)*dd,z=P.z+Math.sin(a)*dd;if(RND()<.5){var o=P3(x,z,.3,false);for(var i=0;i<4;i++)setTimeout(function(){step(o,.4,true)},i*420);cap('[footsteps nearby — nothing there]',2)}else{amb3(RND()*4|0,x,z);cap('[something moves in the dark]',2)}}}
+  // scanner interference
+  if(P.scan&&RND()<dt*.35&&RB.sd<=0){RB.sd=.7}
+  if(LO.t<=0)loEnd(false)}}
+// player interaction: generator (hold F 3 times), supply crate (walk over)
+addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;
+ if(LO.ph==2&&LO.gen&&Math.hypot(LO.gen.x-P.x,LO.gen.z-P.z)<2.2){e.stopImmediatePropagation();e.preventDefault();LO.gen.pulls++;if(typeof AC!='undefined'&&AC){burst({f:300,t:'lowpass',d:.5,v:.7});tone({f:70,f2:120,d:.5,v:.3})}noise(9);
+  if(LO.gen.pulls>=3){loEnd(true)}else say('You pull the starter cord... ('+LO.gen.pulls+'/3) [F]',2)}},true);
+// ================= SANITY & HALLUCINATIONS =================
+var HL={t:25,safe:0,warnSafe:0,sil:null,door:null,mark:null,warp:0,flash:0,n:0};
+function silMesh(col,eyes){var G=new T.Group(),m=new T.MeshBasicMaterial({color:col||0x040404});
+ function b(w,h,d,x,y){var q=new T.Mesh(new T.BoxGeometry(w,h,d),m);q.position.set(x,y,0);G.add(q);return q}
+ b(.4,1.05,.24,0,1.5);b(.25,.32,.26,0,2.22);b(.11,1.05,.13,-.11,.52);b(.11,1.05,.13,.11,.52);b(.08,1.05,.1,-.27,1.4);b(.08,1.05,.1,.27,1.4);
+ if(eyes){var em=new T.MeshBasicMaterial({color:0x9a8a70});[-.06,.06].forEach(function(x){var q=new T.Mesh(new T.BoxGeometry(.035,.02,.01),em);q.position.set(x,2.25,.135);G.add(q)})}
+ G.visible=false;scene.add(G);return G}
+HU.silMesh=silMesh;
+function fwd(){return [-Math.sin(P.yaw),-Math.cos(P.yaw)]}
+function looking(x,z,cosMin){var f=fwd(),dx=x-P.x,dz=z-P.z,d=Math.hypot(dx,dz)||1;return (f[0]*dx+f[1]*dz)/d>(cosMin||.9)}
+var HALL={
+ steps:function(){if(typeof AC=='undefined'||!AC)return false;var f=fwd();for(var i=0;i<5;i++)(function(i){setTimeout(function(){if(!playing())return;var dd=7-i*1.2,o=P3(P.x-f[0]*dd,P.z-f[1]*dd,.2,false);step(o,.45,true)},i*480)})(i);cap('[footsteps behind you]',2.5);return true},
+ sil:function(){var d=clearDist();if(d<8)return false;if(!HL.sil)HL.sil=silMesh(0x030303,true);var f=fwd(),k=d-1.2;HL.sil.position.set(P.x+f[0]*k,0,P.z+f[1]*k);HL.sil.rotation.y=Math.atan2(P.x-HL.sil.position.x,P.z-HL.sil.position.z);HL.sil.visible=true;HL.silT=5;HL.silSeen=0;return true},
+ door:function(){var d=clearDist();if(d>9||d<2.5)return false;if(!HL.door){HL.door=new T.Mesh(new T.BoxGeometry(2,2.6,.2),new T.MeshBasicMaterial({color:0xcc1111}))}scene.add(HL.door);var f=fwd(),k=d-.25;HL.door.position.set(P.x+f[0]*k,1.3,P.z+f[1]*k);HL.door.rotation.y=P.yaw;HL.door.visible=true;HL.doorT=25;return true},
+ warp:function(){if(SET.hv)return false;HL.warp=3.2;cap('[the room stretches]',2);return true},
+ flash:function(){if(SET.hx||SET.rf)return false;HL.flash=.45;if(typeof AC!='undefined'&&AC)burst({f:3000,q:.4,d:.4,v:SET.ra?.08:.2});return true},
+ scan:function(){if(!P.scan)return false;var a=RND()*6.28,q=5+RND()*12;RB.b.push({x:Math.cos(a)*q,z:Math.sin(a)*q,d:q,u:0});RB.tr=Math.min(RB.tr,q);RB.a=1;return true},
+ mark:function(){var c=pickCell(P.x,P.z,10,26);if(!c)return false;HL.mark={x:cc(c[0]),z:cc(c[1]),t:12};if(typeof MAPON!='undefined'&&!MAPON)say('Something shows up on your map. [M]',2);return true},
+ phone:function(){var nm=UN||'you',lv=SV.lv,m=[['UNKNOWN','you left the lights on, '+nm+'.'],['Missed call','from: '+nm],['UNKNOWN','why did you come back to Level '+lv+'?'],['UNKNOWN','turn around.'],['Photos','1 new photo. Taken 3 seconds ago.'],['UNKNOWN','we can hear your footsteps.'],['Wanderer?','are you still on Level '+lv+'? i can see your light']][RND()*7|0];notify(m[0],m[1]);return true}};
+HU.hallucinate=function(k){var ks=k?[k]:Object.keys(HALL);for(var i=0;i<12;i++){var p=ks[RND()*ks.length|0];if(HALL[p]()){HL.n++;LS.hall++;if(LS.hall==3)HU.ev('hall3');return p}}return null};
+function sanTick(dt){var md=mode(),dM=Math.hypot(M.x-P.x,M.z-P.z),monOn=!!(lm||(!CF.tile&&!CF.bal));
+ if(monOn&&dM<10&&!P.hide)P.san=Math.max(0,P.san-1.2*dt*md.san);
+ var lit=L.lvl>.85&&!(LO.ph==2);if(lit&&dM>18)P.san=Math.min(100,P.san+.32*dt/md.san);
+ var safe=P.sit||(typeof inRoomClosed=='function'&&inRoomClosed()&&lit)||(lit&&dM>40);if(safe){HL.safe=0;HL.warnSafe=0}else HL.safe+=dt;
+ if(HL.safe>150){P.san=Math.max(0,P.san-.35*dt*md.san);if(!HL.warnSafe){HL.warnSafe=1;say('You have been out in the open too long. Find a lit, quiet room.',4)}}
+ // hallucinations
+ if(P.san<60){HL.t-=dt;if(HL.t<=0){HL.t=((P.san<15?5:P.san<35?9:15)+RND()*8)/md.hall;HU.hallucinate()}}else HL.t=Math.max(HL.t,8);
+ if(HL.sil&&HL.sil.visible){HL.silT-=dt;var sd=Math.hypot(HL.sil.position.x-P.x,HL.sil.position.z-P.z);if(looking(HL.sil.position.x,HL.sil.position.z,.93)&&los(P.x,P.z,HL.sil.position.x,HL.sil.position.z)){HL.silSeen+=dt;if(HL.silSeen>.2&&!HL.silHit){HL.silHit=1;P.san=Math.max(0,P.san-3*md.san);cap('[a figure at the end of the hall]',2)}}
+  if(sd<5||HL.silSeen>1.4||HL.silT<=0){HL.sil.visible=false;HL.silHit=0;L.fk=Math.max(L.fk,.25)}}
+ if(HL.door&&HL.door.visible){HL.doorT-=dt;if(Math.hypot(HL.door.position.x-P.x,HL.door.position.z-P.z)<1.7){HL.door.visible=false;say('The door was never there.',3);HD.meta.flags.fakeexit=1;hsave();if(typeof AC!='undefined'&&AC)burst({f:800,q:.5,d:.8,v:.3})}else if(HL.doorT<=0)HL.door.visible=false}
+ if(HL.mark){HL.mark.t-=dt;if(Math.hypot(HL.mark.x-P.x,HL.mark.z-P.z)<6){say('Nobody is here.',2);HL.mark=null}else if(HL.mark.t<=0)HL.mark=null}}
+// ================= DAILY SURVIVAL CHALLENGES (local only) =================
+var DPOOL=[
+ ['black','easy','Survive a lights-out event',60],
+ ['hall3','easy','Survive 3 hallucinations on one level',60],
+ ['san50','easy','Escape a level with sanity above 50%',60],
+ ['gen','medium','Restart an emergency generator during a blackout',110],
+ ['nolight','medium','Escape a level using your flashlight for less than 20 seconds',120],
+ ['light','medium','Escape a level carrying 1 item or fewer',110],
+ ['mut2','medium','Escape a level with 2 or more mutations active',120],
+ ['nochase','hard','Escape a level without ever being chased',160],
+ ['fast','hard','Escape a level in under 4 minutes',150],
+ ['nm','hard','Escape a level on NIGHTMARE or DON\'T LOOK BACK',180]];
+var DC=ld('brdc',{key:'',ids:[],done:[],claimed:[],lastT:0,hist:{}});DC.hist=DC.hist||{};var CLOCK=false;
+function dayKey(t){var d=new Date(t);return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0')+'-'+String(d.getUTCDate()).padStart(2,'0')}
+function dcToday(){var now=Date.now(),k=dayKey(now);CLOCK=false;if(DC.lastT&&now<DC.lastT-10*60*1000){CLOCK=true;return DC}if(DC.key&&k<DC.key){CLOCK=true;return DC}
+ DC.lastT=Math.max(DC.lastT||0,now);if(k!=DC.key){var r=m32(hstr('brdc'+k)),pick=function(lv){var c=DPOOL.filter(function(p){return p[1]==lv});return c[r()*c.length|0][0]};DC.key=k;DC.ids=[pick('easy'),pick('medium'),pick('hard')];DC.done=[];DC.claimed=(DC.hist[k]||[]).slice()}st('brdc',DC);return DC}
+dcToday();
+HU.ev=function(id){var d=dcToday();if(CLOCK||d.ids.indexOf(id)<0||d.done.indexOf(id)>=0)return;d.done.push(id);st('brdc',d);var c=DPOOL.find(function(p){return p[0]==id});toast('📅 DAILY CHALLENGE COMPLETE: '+c[2]+' — claim $'+c[3]+' in DAILY CHALLENGES','#9f9')};
+function claim(id){var d=dcToday();if(CLOCK)return 'Your device clock moved backwards. Rewards are paused until it is fixed.';if(d.ids.indexOf(id)<0)return 'That challenge is not active today.';if(d.done.indexOf(id)<0)return 'Not completed yet.';
+ if(d.claimed.indexOf(id)>=0||(d.hist[d.key]||[]).indexOf(id)>=0)return 'Already claimed.';var c=DPOOL.find(function(p){return p[0]==id});d.claimed.push(id);d.hist[d.key]=(d.hist[d.key]||[]).concat(id);var ks=Object.keys(d.hist).sort();while(ks.length>40)delete d.hist[ks.shift()];st('brdc',d);HU.raw=1;try{addCash(c[3],'Daily challenge: '+c[2])}finally{HU.raw=0}return 'Claimed $'+c[3]+'!'}
+function cdText(){var n=Date.now(),t=new Date(n),nx=Date.UTC(t.getUTCFullYear(),t.getUTCMonth(),t.getUTCDate()+1),s=Math.max(0,(nx-n)/1000|0);return Math.floor(s/3600)+'h '+String(Math.floor(s%3600/60)).padStart(2,'0')+'m '+String(s%60).padStart(2,'0')+'s'}
+function dcHTML(msg){var d=dcToday();return '<div style="font-size:12px;color:#fc6;border:1px solid #7a6a2a;padding:5px;margin:6px 0">LOCAL PROGRESS — saved on this device only. NOT server-verified: this game has no server, so challenges and rewards cannot be checked online.</div>'+(CLOCK?'<div style="color:#f66">Your device clock moved backwards. Challenges and rewards are paused until the clock is correct again.</div>':'')+(msg?'<div style="color:#9f9">'+e2(msg)+'</div>':'')+
+ d.ids.map(function(id){var c=DPOOL.find(function(p){return p[0]==id}),dn=d.done.indexOf(id)>=0,cl=d.claimed.indexOf(id)>=0;return '<div style="margin:8px 0;border-bottom:1px solid #444;padding-bottom:6px"><b>'+e2(c[2])+'</b><br><small>Difficulty: <span style="color:'+({easy:'#9f9',medium:'#fc6',hard:'#f66'}[c[1]])+'">'+c[1].toUpperCase()+'</span> · Reward: $'+c[3]+'</small><br>'+(cl?'<span style="color:#9f9">✔ CLAIMED</span>':dn?'<span class="ch" data-hu="claim:'+id+'" style="color:#9f9">✔ COMPLETE — CLAIM $'+c[3]+'</span>':'<span style="opacity:.7">☐ Not completed</span>')+'</div>'}).join('')+'<div>Next rotation in <span id="hu-cd">'+cdText()+'</span> (midnight UTC)</div>'}
+setInterval(function(){var e=document.getElementById('hu-cd');if(e)e.textContent=cdText()},1000);
+// per-level stats for challenges
+var LS={t:0,flT:0,chased:0,hall:0};
+// ================= escape / death / win hooks =================
+var oNext=nextLv;nextLv=function(n){try{onEscape()}catch(e){}return oNext.apply(this,arguments)};
+var oLR=levelReward;levelReward=function(){HU.lvl=1;try{return oLR.apply(this,arguments)}finally{HU.lvl=0}};
+var oCash=addCash;addCash=function(n,why){var r=run();if(n>0&&HU.lvl&&!HU.raw&&r){var f=mode().cash;if(f!=1){n=Math.round(n*f);why=(why||'')+' ×'+f+' '+mode().n}}return oCash.call(this,n,why)};
+function onEscape(){if(HU.escaped)return;HU.escaped=1;var r=run();
+ if(r){r.esc++;var ms=r.mutOn!==false?r.muts:[],bonus=0;ms.forEach(function(id){bonus+=10*(1+mut(id)[3])});if(ms.length>=3)bonus+=100;bonus=Math.round(bonus*mode().cash);
+  if(bonus){HU.raw=1;try{oCash(bonus,'Mutation bonus ('+ms.length+' active)')}finally{HU.raw=0}r.cash=(r.cash||0)+bonus;setTimeout(function(){toast('☣ MUTATION BONUS +$'+bonus+(ms.length>=3?' (hard combination!)':''),'#ff9a5a')},900)}
+  if(r.mode=='nightmare'||r.mode=='dlb')HD.meta.flags.hardEsc=Date.now();if(r.mode=='dlb')HD.meta.flags.dlbEsc=1;var rec=HD.rec[r.mode]=HD.rec[r.mode]||{runs:0,best:0,done:0};rec.best=Math.max(rec.best,r.esc);hsave()}
+ if(LS.flT<20)HU.ev('nolight');if(!LS.chased)HU.ev('nochase');if(typeof INV!='undefined'&&INV.length<=1)HU.ev('light');if(r&&r.mutOn!==false&&r.muts.length>=2)HU.ev('mut2');if(LS.t<240)HU.ev('fast');if(r&&(r.mode=='nightmare'||r.mode=='dlb'))HU.ev('nm');if(P.san>50)HU.ev('san50')}
+var oDie=die;die=function(){var was=P.dead,res=oDie.apply(this,arguments);if(!was&&P.dead){var r=run();if(r){r.deaths++;hsave();if(mode().perma){endRun('died');setTimeout(function(){try{var p=$('ov').querySelector('p');if(p)p.insertAdjacentHTML('afterbegin','<b style="color:#f33">RUN OVER — DON\'T LOOK BACK MODE</b><br>Levels escaped this run: '+r.esc+'<br><br>')}catch(e){}},16700)}}}return res};
+var oWin=winGame;winGame=function(){var w=P.won;var res=oWin.apply(this,arguments);if(!w&&P.won){try{onEscape()}catch(e){}endRun('escaped');HD.meta.flags.won=1;hsave()}return res};
+// Broken Elevators: the exit needs the fuse, and the elevator only goes down
+var oExit=exitLevel;exitLevel=function(){if(has('elev')&&LVL<19&&P.cards>=CF.k&&!HU.fuse()){say('The elevator is dead. Find the ELEVATOR FUSE first (marked on your map, M).',4);if(!started&&!P.dead){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}return}return oExit.apply(this,arguments)};
+var oEP=elevP;elevP=function(){var r=oEP.apply(this,arguments);if(has('elev')){try{[].slice.call(MB.querySelectorAll('[data-a^="el:"]')).forEach(function(e){if(e.dataset.a!='el:next'){var n=e.nextSibling;if(n&&n.tagName=='BR')n.remove();e.remove()}});var pn=MB.querySelector('.pn');if(pn)pn.insertAdjacentHTML('beforeend','<div style="color:#f96">☣ BROKEN ELEVATORS: this elevator only goes down.'+(LVL<19?(HU.fuse()?' Fuse installed ✓':' It needs the ELEVATOR FUSE.'):'')+'</div>')}catch(e){}}return r};
+// Don't Look Back mode: no save spots
+document.addEventListener('click',function(e){if(e.target&&e.target.id=='p-save'&&mode().nosave&&run()){e.stopImmediatePropagation();e.preventDefault();say("No save spots in DON'T LOOK BACK mode.",3)}},true);
+// ================= ELEVATOR ANOMALIES =================
+var EA=HU.EA={pending:null};
+var oElv=elevator;elevator=function(n,f){try{if(n!==0){var p=Math.min(.75,.3*mode().ev+(has('elev')?.2:0));if(HU.forceEA||RND()<p)EA.pending=mkEA(n)}}catch(e){}HU.forceEA=0;return oElv.apply(this,arguments)};
+function mkEA(n){var list=['display','stop','hall','memory','speaker','panel','knock'],k=HU.forceEAk&&list.indexOf(HU.forceEAk)>=0?HU.forceEAk:list[RND()*list.length|0];HU.forceEAk=null;var a={k:k,n:n,hold:0,fired:0};a.at=(k=='display'||k=='panel')?1.4:2.2+RND()*.8;a.len={display:0,panel:0,stop:3.6,hall:4.4,memory:4.4,speaker:3.6,knock:4.2}[k];a.code=RND()<.15?'20':['-1','404','Ω','∞','7½','B13'][RND()*6|0];a.bi=RND()*5|0;HD.meta.ea=(HD.meta.ea||0)+1;if(a.k=='panel'&&a.code=='20')HD.meta.flags.saw20=1;hsave();return a}
+var oMk=mkCS;mkCS=function(){var o=oMk.apply(this,arguments);if(EA.pending){var a=EA.pending;EA.pending=null;a.o=o;EA.cur=a;var oRun=o.run;o.run=function(tick){return oRun.call(o,function(dt,t){if(a.hold>0){o.t-=dt}else tick(dt,o.t);try{eaTick(a,dt)}catch(e){a.hold=0}})}}else EA.cur=null;return o};
+var oBE=buildElev;buildElev=function(sc){var E=oBE.apply(this,arguments);if(EA.cur&&!EA.cur.E)EA.cur.E=E;return E};
+function snd(o){if(typeof AC!='undefined'&&AC)try{o()}catch(e){}}
+function eaBuild(a){var sc=a.o.sc,G=new T.Group(),B=function(c){return new T.MeshBasicMaterial({color:c})},bx=function(w,h,d,x,y,z,c){var m=new T.Mesh(new T.BoxGeometry(w,h,d),B(c));m.position.set(x,y,z);G.add(m);return m};
+ var mem=a.k=='memory',src=mem?(function(){var c=[];for(var i=0;i<=SV.max&&i<LV.length;i++)if(i!=a.n)c.push(i);return c.length?c[RND()*c.length|0]:0})():null,lv=mem?LV[src]:null;a.src=src;
+ var wc=mem?new T.Color(lv.w).getHex():0x1c1e1a,fc=mem?new T.Color(lv.c).getHex():0x0c0c0c;
+ bx(.1,3,12,-1.6,1.5,-9,wc);bx(.1,3,12,1.6,1.5,-9,wc);bx(3.3,.1,12,0,0,-9,fc);bx(3.3,.1,12,0,3,-9,mem?0xbdb48a:0x111111);bx(3.3,3,.1,0,1.5,-15,mem?wc:0x050505);
+ for(var i=0;i<4;i++){var lp=bx(.8,.04,.5,0,2.94,-4-i*3,mem?0xfff6c8:0x333322);lp.userData.f=1}
+ if(mem){var c=document.createElement('canvas');c.width=256;c.height=64;var x=c.getContext('2d');x.fillStyle='#111';x.fillRect(0,0,256,64);x.fillStyle='#e4d56a';x.font='bold 30px monospace';x.textAlign='center';x.fillText('LEVEL '+src,128,44);var sg=new T.Mesh(new T.PlaneGeometry(1.4,.35),new T.MeshBasicMaterial({map:new T.CanvasTexture(c)}));sg.position.set(0,2.3,-14.9);G.add(sg)}
+ var s=new T.Group(),sm=B(0x020202);[[.4,1.05,.24,0,1.5],[.25,.32,.26,0,2.22],[.11,1.05,.13,-.11,.52],[.11,1.05,.13,.11,.52]].forEach(function(q){var m=new T.Mesh(new T.BoxGeometry(q[0],q[1],q[2]),sm);m.position.set(q[3],q[4],0);s.add(m)});s.position.set(mem?.6:0,0,mem?-12:-13);G.add(s);a.sil=s;
+ sc.add(G);a.G=G;a.out=sc.children.find(function(c){return c.geometry&&c.geometry.parameters&&c.geometry.parameters.width==12&&c.geometry.parameters.height==6})}
+function eaStart(a){var E=a.E,k=a.k;
+ if(k=='stop'){snd(function(){burst({f:120,t:'lowpass',d:1,v:.9,a:.003});tone({f:55,f2:30,d:2,v:.5});setTimeout(function(){burst({f:900,q:6,d:1.2,v:.25,a:.4})},900)});a.o.sub('The elevator grinds to a halt between floors...');cap('[metal groans — the elevator stops]',3)}
+ if(k=='hall'||k=='memory'){eaBuild(a);snd(function(){tone({f:880,d:.6,v:.15})});a.o.sub(k=='hall'?'The doors open... onto a hallway that should not be here.':'The doors open onto Level '+a.src+'. You were here before. Weren\'t you?');cap(k=='hall'?'[the doors slide open onto an unknown hallway]':'[the doors open — this looks like Level '+a.src+']',3.5)}
+ if(k=='speaker'){a.o.sub('[ELEVATOR SPEAKER, distorted]: ...do not... look... back...');cap('[speaker crackles: "do not look back"]',3.5);snd(function(){for(var i=0;i<8;i++)setTimeout(function(){burst({f:1800+RND()*2000,q:2,d:.15,v:SET.ra?.08:.2})},i*260)});
+  try{if(window.speechSynthesis&&!muted){var u=new SpeechSynthesisUtterance('Do not. Look. Back.');u.pitch=.1;u.rate=.55;u.volume=SET.ra?.35:.7;speechSynthesis.speak(u)}}catch(e){}}
+ if(k=='knock'){a.o.sub('The lights die. Something is on the roof.');cap('[three knocks on the elevator roof]',3);snd(function(){[.6,1.1,1.6].forEach(function(t){setTimeout(function(){burst({f:180,t:'lowpass',d:.3,v:SET.ra?.4:1});tone({f:80,d:.25,v:.6})},t*1000)});for(var i=0;i<5;i++)setTimeout(function(){burst({f:140,t:'lowpass',d:.25,v:.5})},2200+i*230)})}}
+function eaTick(a,dt){var o=a.o,E=a.E,t=o.t;if(!E||!o.go)return;
+ if(!a.fired&&t>=a.at){a.fired=1;a.hold=a.len;a.h0=a.len;if(a.len)eaStart(a)}
+ if(a.k=='display'&&t>1.4&&t<4.7){a.dd=(a.dd||0)-dt;if(a.dd<=0){a.dd=.3+RND()*.3;a.s=['13','-1','6','0','??','19','4','—','666'][RND()*9|0]}E.floor(a.s,'#f33');if(!a.c1){a.c1=1;cap('[the floor display changes by itself]',2.5)}}
+ if(a.k=='panel'&&t>1.4&&t<4.7){E.floor(a.code,'#9cf');E.btn.forEach(function(m,i){m.color.setHex(i==a.bi?(Math.sin(t*10)>0?0x66aaff:0x112244):0x441111)});if(!a.c1){a.c1=1;o.sub('A button you have never seen glows: '+a.code);cap('[an unfamiliar floor button lights up: '+a.code+']',3)}}
+ if(a.hold>0){a.hold-=dt;var el=a.h0-a.hold,cm=o.cm,k=a.k;
+  if(k=='stop'){E.light.intensity=RND()<.15?.6:.05;o.fade.style.opacity=E.light.intensity<.1?.55:0;E.lp.material.color.setHex(0x221d14);E.floor('—','#f33');cm.position.x=(RND()-.5)*.01}
+  if(k=='hall'||k=='memory'){var v=Math.min(1,el/1)*Math.min(1,Math.max(0,a.hold)/1);E.doors(v);if(a.out)a.out.visible=false;if(a.sil)a.sil.position.z+=dt*(k=='hall'?.9:.5);E.light.intensity=RND()<.05?.3:1;a.G.children.forEach(function(m){if(m.userData.f)m.visible=RND()>.04});if(a.hold<=0){E.doors(0);a.G.visible=false;if(a.out)a.out.visible=true}}
+  if(k=='speaker'){E.light.intensity=.35+Math.sin(el*30)*.1;E.lp.material.color.setHex(0x661010);E.floor('!!','#f80')}
+  if(k=='knock'){E.light.intensity=el>3.4?1.3:0;o.fade.style.opacity=el>3.4?0:(el>2.1&&el<3.3?.7:.86);E.lp.material.color.setHex(el>3.4?0xfff4d8:0x080808);if(el>2.1&&el<3.3)cm.position.y=1.62+(RND()-.5)*.02*(SET.rs?.2:1)}
+  if(a.hold<=0){o.fade.style.opacity=0;E.light.intensity=1.3;E.lp.material.color.setHex(0xfff4d8);o.sub('');snd(function(){burst({f:200,t:'lowpass',d:.6,v:.6})})}}}
+HU.elevatorTest=function(k){HU.forceEA=1;HU.forceEAk=k||null;return 'The next elevator ride will have an anomaly'+(k?(': '+k):'')+'.'};
+// ================= META HORROR: the main menu remembers you =================
+var meta=HD.meta,now=Date.now(),away=meta.last?now-meta.last:0,fresh=false;try{fresh=!sessionStorage.getItem('brhuS');sessionStorage.setItem('brhuS','1')}catch(e){}
+meta.last=now;hsave();setInterval(function(){meta.last=Date.now();hsave()},60000);
+var MEV=null,menuSil=null,menuSilT=0;
+function metaPick(){var c=[],done=(SV.done||[]),dl=done.indexOf(19)>=0;
+ if(away>20*3600e3&&(PS.e||PS.d))c.push(['back','YOU CAME BACK.']);
+ if((PS.d|0)>=25)c.push(['steps','WE REMEMBER YOUR FOOTSTEPS.']);
+ if(meta.flags.fakeexit||(SV.max>=9&&done.indexOf(9)>=0))c.push(['notexit','THAT WAS NOT THE EXIT.']);
+ if(SV.max>=10&&UN)c.push(['name','IT KNOWS YOUR NAME,\n'+UN.toUpperCase()+'.']);
+ if(meta.flags.dlbEsc||SV.ending||meta.flags.won)c.push(['dlb',"DON'T LOOK BACK."]);
+ if(meta.flags.hardEsc)c.push(['light','']);
+ if(dl||SV.max>=19)c.push(['term','']);
+ if((PS.e|0)>=3)c.push(['char','']);
+ if(meta.flags.won||SV.ending||meta.flags.saw20)c.push(['music','']);
+ if(!c.length)return null;var first=c.filter(function(q){return !meta.seen[q[0]]});if(first.length)return first[0];if(!fresh||RND()>.14)return null;return c[RND()*c.length|0]}
+function metaShow(){if(typeof MENU=='undefined'||!MENU)return;var ev=metaPick();if(!ev)return;MEV=ev[0];meta.seen[MEV]=(meta.seen[MEV]||0)+1;hsave();
+ if(ev[1]){setTimeout(function(){MET.textContent=ev[1];MET.style.opacity=1;var t=document.getElementById('tt');if(t){t.style.textShadow='4px 0 #f00,-4px 0 #0ff';setTimeout(function(){t.style.textShadow=''},250)}snd(function(){tone({f:46,f2:38,d:4,v:.3,a:1})});setTimeout(function(){MET.style.opacity=0},4200)},2500)}
+ if(MEV=='term'){var r=HD.last,lines=['> BACKROOMS RESEARCH TERMINAL','> SUBJECT: '+(UN||'UNKNOWN WANDERER'),'> LEVELS DOCUMENTED: '+(SV.max+1)+' / 20','> RECORDED DEATHS: '+(PS.d|0),'> STATUS: RETURNED ('+(PS.e|0)+' TIMES)','> NOTE: SUBJECT KEEPS COMING BACK.','> NOTE: SOMETHING CAME BACK WITH THEM.'];if(r)lines.splice(5,0,'> LAST RUN: '+MODES[r.mode].n+', '+r.esc+' LEVELS, '+(r.res||'?').toUpperCase());TERM.style.display='block';TERM.textContent='';var all=lines.join('\n'),i=0,iv=setInterval(function(){if(!MENU){clearInterval(iv);TERM.style.display='none';return}i+=2;TERM.textContent=all.slice(0,i)+(i%4<2?'█':'');if(i>=all.length+60){clearInterval(iv);setTimeout(function(){TERM.style.display='none'},9000)}},40)}
+ if(MEV=='dlb'||MEV=='char'||MEV=='steps'){setTimeout(function(){if(!MENU)return;var col=0x030303;if(MEV=='char'){try{var s=SUITS.find(function(q){return q.id==SUIT});if(s)col=new T.Color(s.c).multiplyScalar(.45).getHex();else col=0x2a2f3a}catch(e){}}menuSil=menuSil||silMesh(col,MEV!='char');menuSil.children.forEach(function(m){if(m.material&&m.geometry.parameters.width>.05)m.material.color.setHex(col)});
+  var a=(typeof SV!='undefined'&&SV.lv==0?-Math.PI/2:0),d=Math.min(18,clearDist()),fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),k=Math.max(4,d-1.5);menuSil.position.set(P.x+fx*k,0,P.z+fz*k);menuSil.rotation.y=Math.atan2(P.x-menuSil.position.x,P.z-menuSil.position.z);menuSil.visible=true;menuSilT=MEV=='char'?2.2:5},4000)}}
+HU.metaTest=function(id){meta.seen[id]=0;delete meta.seen[id];var keep=metaPick;metaPick=function(){metaPick=keep;var c={back:'YOU CAME BACK.',steps:'WE REMEMBER YOUR FOOTSTEPS.',notexit:'THAT WAS NOT THE EXIT.',name:'IT KNOWS YOUR NAME,\n'+(UN||'WANDERER').toUpperCase()+'.',dlb:"DON'T LOOK BACK.",light:'',term:'',char:'',music:''};return [id,c[id]]};metaShow()};
+setTimeout(metaShow,600);
+// menu drone (music change after a major secret)
+var drone=null;function droneTick(){var want=MENU&&MEV=='music'&&typeof AC!='undefined'&&AC&&!muted;if(want&&!drone){try{var g=AC.createGain();g.gain.value=0;g.connect(SFXB);var o1=AC.createOscillator(),o2=AC.createOscillator();o1.type='sine';o2.type='triangle';o1.frequency.value=41.2;o2.frequency.value=61.9;o1.connect(g);o2.connect(g);o1.start();o2.start();drone={g:g,o:[o1,o2]}}catch(e){}}if(drone){drone.g.gain.value+=((want?.09:0)-drone.g.gain.value)*.02;if(!want&&drone.g.gain.value<.002){drone.o.forEach(function(o){o.stop()});drone.g.disconnect();drone=null}}}
+// ================= RUN SETUP / LOBBY / PAUSE UI =================
+var SU={mode:'normal',mut:true,seed:(Date.now()^(RND()*1e9))>>>0,cb:null};
+function mutList(ids){return ids.length?ids.map(function(id){var m=mut(id);return '<span class="hu-tag" title="'+e2(m[2])+'" style="border-color:'+['#7a6a2a','#a8742a','#c33'][m[3]]+'">'+e2(m[1])+'</span>'}).join(''):'<span style="opacity:.6">none</span>'}
+function setupP(cb){if(cb)SU.cb=cb;var md=MODES[SU.mode],forced=SU.mode=='nightmare'||SU.mode=='dlb',mo=forced||SU.mut,ms=mo?rollMuts(SU.seed,SU.mode):[];
+ pnl('<b>NEW RUN — CHOOSE YOUR DIFFICULTY</b><br><small style="opacity:.75">The difficulty and mutations stay locked for the whole run. A run lasts until you finish the game'+(SU.mode=='dlb'?' or die':'')+', or abandon it.</small>'+MORD.map(function(k){var m=MODES[k];return '<div class="hu-m'+(SU.mode==k?' on':'')+'" data-hu="mode:'+k+'"><b style="color:'+m.c+'">'+m.n+'</b><br><small>'+e2(m.d)+'</small></div>'}).join('')+
+ '<div style="margin:8px 0"><b>RUN MUTATIONS</b> '+(forced?'<small>(always on in '+md.n+')</small>':'<span class="ch" data-hu="mut">['+(SU.mut?'ON':'OFF')+'] toggle</span>')+'<br>'+mutList(ms)+'<br><small style="opacity:.75">'+ms.map(function(id){var m=mut(id);return '• '+e2(m[1])+': '+e2(m[2])}).join('<br>')+'</small>'+(ms.length?'<br><small style="color:#fc6">Bonus: extra cash for every level escaped with mutations, +$100 for 3 or more.</small>':'')+'</div>'+
+ '<div class="bt pl" data-hu="start">START RUN</div>')}
+function runInfoHTML(){var r=run();if(!r)return '<span style="opacity:.7">No run in progress. Pick a difficulty when you press PLAY.</span>';var m=MODES[r.mode];return 'RUN: <b style="color:'+m.c+'">'+m.n+'</b> · escaped '+r.esc+' · deaths '+r.deaths+'<br>MUTATIONS: '+mutList(r.mutOn!==false?r.muts:[])}
+function runP(msg){var r=run(),rec=MORD.filter(function(k){return HD.rec[k]}).map(function(k){var q=HD.rec[k];return MODES[k].n+': '+q.runs+' runs, best '+q.best+' levels, '+q.done+' finished'}).join('<br>');
+ pnl('<b>RUN & DIFFICULTY</b><br>'+(msg?'<div style="color:#9f9">'+e2(msg)+'</div>':'')+runInfoHTML()+(r?'<br><small>'+r.muts.map(function(id){var m=mut(id);return '• '+e2(m[1])+': '+e2(m[2])}).join('<br>')+'</small><br><small style="opacity:.7">Started '+new Date(r.t0).toLocaleString()+'</small><br><br><span class="ch" data-hu="abandon" style="color:#f77">'+(SU.ab?'CLICK AGAIN TO CONFIRM: ABANDON THIS RUN':'ABANDON RUN (pick a new difficulty)')+'</span>':'<br><br><span class="ch" data-hu="setup">SET UP A NEW RUN</span>')+(rec?'<br><br><b>RECORDS</b><br><small>'+rec+'</small>':'')+'<br>')}
+function dcP(msg){pnl('<b>📅 DAILY SURVIVAL CHALLENGES</b>'+dcHTML(msg))}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu]');if(!el)return;e.stopPropagation();var a=el.dataset.hu,i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a.slice(i+1);
+ if(k=='mode'){SU.mode=v;setupP()}else if(k=='mut'){SU.mut=!SU.mut;setupP()}
+ else if(k=='start'){var forced=SU.mode=='nightmare'||SU.mode=='dlb';newRun(SU.mode,forced||SU.mut,SU.seed);SU.seed=(Date.now()^(RND()*1e9))>>>0;closeP();var cb=SU.cb;SU.cb=null;if(cb)cb();}
+ else if(k=='abandon'){if(!SU.ab){SU.ab=1;runP();return}SU.ab=0;endRun('abandoned');runP('Run abandoned. Press PLAY to start a new one.')}
+ else if(k=='setup'){setupP(null)}
+ else if(k=='claim'){var m=claim(v);if(PHN&&PHN.scr=='hudc'&&MB.querySelector('.ph')){HU.phMsg=m;phScr()}else dcP(m)}},true);
+var oSG=startGame;startGame=function(){var self=this,args=arguments;if(!run()){setupP(function(){oSG.apply(self,args)});return}return oSG.apply(this,arguments)};
+// lobby line + menu buttons
+var lob=document.createElement('div');lob.id='hu-run';try{var mb=document.getElementById('mb');mb.after(lob);var bp=document.getElementById('b-play'),b1=document.createElement('div'),b2=document.createElement('div');b1.className=b2.className='bt';b1.id='b-run';b1.textContent='RUN & DIFFICULTY';b2.id='b-dc';b2.textContent='DAILY CHALLENGES';bp.after(b1);b1.after(b2);b1.onclick=function(){SU.ab=0;run()?runP():setupP(null)};b2.onclick=function(){dcP()}}catch(e){}
+function lobbyUI(){lob.innerHTML=runInfoHTML()}lobbyUI();
+var pmi=document.createElement('div');pmi.id='hu-pmi';try{document.getElementById('pm').appendChild(pmi)}catch(e){}
+// accessibility: add the new options and show that monster difficulty now comes from the run
+var oPnl=pnl;pnl=function(h){if(typeof h=='string'&&h.indexOf('<b>ACCESSIBILITY</b>')==0){var t=function(k,n,d){return '<div style="margin:6px 0"><span class="ch" data-lx="acc:'+k+'">'+(SET[k]?'☑':'☐')+' '+n+'</span><br><small style="opacity:.7">'+d+'</small></div>'};
+  h=h.replace(/<div style="margin:8px 0">Monster difficulty[\s\S]*?<\/small><\/div>/,'<div style="margin:8px 0">Monster difficulty: <b>'+mode().n+'</b> (chosen per run: RUN & DIFFICULTY on the main menu)</div>');
+  h+=t('hv','Reduce visual distortion','Turns off the low-sanity blur, colour shifting and stretching-room hallucinations.')+t('hx','Reduce intense screen effects','Turns off static bursts and screen-flash hallucinations.')}
+ return oPnl.apply(this,[h].concat([].slice.call(arguments,1)))};
+// ================= PHONE APPS =================
+APPS.push(['☣ RUN','hurun'],['📅 DAILY','hudc']);
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);if(PHN.scr=='hurun'||PHN.scr=='hudc'){var r=MB.querySelector('.ph');if(r&&r.children[1]){try{r.children[0].querySelector('span:nth-child(2)').textContent=PHN.scr=='hurun'?'RUN':'DAILY'}catch(e){}
+ if(PHN.scr=='hurun'){var x=run();r.children[1].innerHTML='<small>'+runInfoHTML()+'</small>'+(x?'<br><small>'+x.muts.map(function(id){var m=mut(id);return '• <b>'+e2(m[1])+'</b>: '+e2(m[2])}).join('<br>')+'</small>':'')+'<br><br><small>Lights-out events this level: '+LO.cnt+(LO.ph==2?' · <b style="color:#f66">BLACKOUT NOW — '+Math.ceil(LO.t)+'s</b>':'')+'<br>Sanity '+Math.round(P.san)+'% · hallucinations this level: '+LS.hall+'</small>'}
+ else{r.children[1].innerHTML='<small>'+dcHTML(HU.phMsg)+'</small>';HU.phMsg=null}}}return r0};
+// ================= per-frame tick =================
+var last=performance.now(),pmShown=false;
+(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-last)/1000);last=n;
+ try{
+ if(capT>0){capT-=dt;if(capT<=0)CAP.style.display='none'}
+ if(ntT>0){ntT-=dt;if(ntT<=0)NTF.style.transform='translateX(320px)'}
+ droneTick();
+ if(menuSil&&menuSil.visible){menuSilT-=dt;if(menuSilT<=0||!MENU)menuSil.visible=false}
+ var pm=document.getElementById('pm');if(pm){var sh=pm.style.display=='flex';if(sh&&!pmShown){pmi.innerHTML=runInfoHTML()+(run()&&mode().nosave?'<br><small style="color:#f66">SAVE SPOT is disabled in this mode.</small>':'')}pmShown=sh}
+ if(!playing()){HUD.textContent='';return}
+ if(!run()){newRun('normal',true);say('A NORMAL run started automatically. Change difficulty from RUN & DIFFICULTY on the main menu.',5)}
+ var md=mode();LS.t+=dt;if(P.fl&&P.bat>0)LS.flT+=dt;if(M.state=='chase'||(GR.on&&grin.visible))LS.chased=1;
+ // battery and sanity drain by difficulty / mutation
+ var bf=md.bat*(has('battery')?1.7:1);if(HU.lb!=null&&P.bat<HU.lb&&HU.lb-P.bat<3)P.bat=Math.max(0,Math.min(100,P.bat-(HU.lb-P.bat)*(bf-1)));
+ if(HU.ls!=null&&P.san<HU.ls&&HU.ls-P.san<3&&md.san!=1)P.san=Math.max(0,Math.min(100,P.san-(HU.ls-P.san)*(md.san-1)));
+ // the old short power cuts: rarer on Casual, more often with Lights Out
+ if(L.black>0&&!HU.wb&&LO.ph==0){var f=(md==MODES.casual?1.6:md==MODES.normal?1:.85)/(has('lights')?1.7:1);L.nb*=f}HU.wb=L.black>0;
+ loTick(dt);sanTick(dt);
+ if(AC&&A.mp&&!HU.sil0){HU.sil0=1;if(has('silent'))A.mp.rolloffFactor=2.9}
+ if(has('false')&&P.scan&&RB.a>=.99&&RND()<.35&&!HU.fs){HU.fs=1;var a=RND()*6.28,q=6+RND()*14;RB.b.push({x:Math.cos(a)*q,z:Math.sin(a)*q,d:q,u:0})}if(RB.a<.9)HU.fs=0;
+ // the building is alive: doors move on their own
+ if(has('alive')){HU.al=(HU.al==null?20:HU.al)-dt;if(HU.al<=0){HU.al=18+RND()*20;var ds=DOORS.filter(function(d){return Math.hypot(d.x-P.x,d.z-P.z)>7&&!(d.locked>Date.now())});for(var i=0;i<2&&ds.length;i++){var d=ds.splice(RND()*ds.length|0,1)[0];d.open=!d.open;CL[d.ci*W+d.cj]=d.open?0:1;if(AC){var o=P3(d.x,d.z,1.2,false);burst({f:d.open?400:160,t:'lowpass',d:.6,v:.9,out:o})}}cap('[a door slams somewhere]',2)}}
+ // pickups: fuse and blackout supply crate
+ XI.forEach(function(it){if(it.got)return;it.m.rotation.y+=dt*2;if(Math.hypot(it.x-P.x,it.z-P.z)<1.3){it.got=true;it.m.visible=false;if(it.k=='fuse'){var r=run();r.fuse=r.fuse||{};r.fuse[LVL]=SEED;hsave();say('Picked up: ELEVATOR FUSE. The elevator can run again.',4);if(AC)tone({f:660,f2:990,d:.3,v:.2})}}});
+ if(LO.sup&&LO.sm&&LO.sm.visible&&Math.hypot(LO.sup.x-P.x,LO.sup.z-P.z)<1.3){LO.sm.visible=false;LO.sup=null;var rw=RND(),txt;if(rw<.4&&window.GX){var ids=['gx_glow','gx_drink','gx_med','gx_smoke','gx_batt','gx_noise'],id=ids[RND()*ids.length|0];GX.give(id);txt=(GX.list.find(function(q){return q[0]==id})||[0,'a gadget'])[1]+' (open GADGETS on your phone)'}else if(rw<.7){P.bat=Math.min(100,P.bat+50);txt='a fresh battery (+50%)'}else{var c=30+(RND()*50|0);HU.raw=1;try{addCash(c,'Blackout supply crate')}finally{HU.raw=0}txt='$'+c}say('Rare supplies: '+txt+'!',4);if(AC)tone({f:520,f2:1040,d:.3,v:.2})}
+ // HUD line
+ var hl=[];if(LO.ph==1)hl.push('⚠ POWER FAILURE');if(LO.ph==2){var s='⚡ BLACKOUT '+Math.ceil(LO.t)+'s';if(LO.gen){var dx=LO.gen.x-P.x,dz=LO.gen.z-P.z,dd=Math.hypot(dx,dz),ang=Math.atan2(Math.sin(Math.atan2(-dx,-dz)-P.yaw),Math.cos(Math.atan2(-dx,-dz)-P.yaw)),ar=Math.abs(ang)<.4?'▲':Math.abs(ang)>2.7?'▼':ang>0?'◀':'▶';s+='  ·  GENERATOR '+Math.round(dd)+'m '+ar+(dd<2.2?'  [F] pull cord ('+LO.gen.pulls+'/3)':'')}hl.push(s)}
+ var fu=XI.find(function(q){return q.k=='fuse'});if(fu&&!fu.got&&P.cards>=CF.k)hl.push('☣ ELEVATOR FUSE NEEDED');HUD.textContent=hl.join('\n');
+ }catch(e){if(!HU.err){HU.err=1;console.error('HU tick',e)}}
+ finally{if(typeof P!='undefined'){HU.lb=P.bat;HU.ls=P.san}}})();
+// ================= visuals right before each frame =================
+var oP=window.PFX,AMB0=null,FOV0=null;window.PFX=function(s,c){try{
+ if(!AMB0&&typeof amb!='undefined')AMB0=amb.color.clone();
+ if(typeof started!='undefined'&&started){
+  if(LO.ph==2){var pu=.55+.45*Math.max(0,Math.sin(performance.now()/1000*(SET.rf?1.2:3.2)));pm.color.setRGB(.42*pu,.03,.02);amb.color.setRGB(1,.25,.2);amb.intensity=Math.max(amb.intensity,.07*SET.br);if(LO.gm&&LO.gm.visible){var on=Math.sin(performance.now()/180)>0;LO.gm.userData.led.material.color.setHex(on?0xff3300:0x330000);LO.gm.userData.gl.visible=on}}
+  else if(AMB0)amb.color.copy(AMB0);
+  if(SET.hv&&!(window.GX&&GX._nv))ren.domElement.style.filter='';
+  if(HL.warp>0){HL.warp-=1/60;var w=Math.sin(HL.warp*2.2);ren.domElement.style.transform='scale('+(1+.06*w)+','+(1-.05*w)+') skewX('+(3*w)+'deg)';if(HL.warp<=0)ren.domElement.style.transform=''}
+  if(HL.flash>0){HL.flash-=1/60;FX.style.opacity=HL.flash>0?(.5+RND()*.5):0}else if(FX.style.opacity!='0')FX.style.opacity=0;
+  if(typeof MAPON!='undefined'&&MAPON&&typeof mc!='undefined'){var t=performance.now()/1000;if(LO.gen){mc.fillStyle=Math.sin(t*8)>0?'#ff7a20':'#aa3a00';mc.fillRect(ce(LO.gen.x)*4-1,ce(LO.gen.z)*4-1,6,6)}var fu=XI.find(function(q){return q.k=='fuse'&&!q.got});if(fu){mc.fillStyle='#ffcc33';mc.fillRect(fu.i*4-1,fu.j*4-1,6,6)}if(HL.mark&&Math.sin(t*5)>0){mc.fillStyle='#4af';mc.beginPath();mc.arc(ce(HL.mark.x)*4+2,ce(HL.mark.z)*4+2,3.5,0,7);mc.fill();mc.font='9px monospace';mc.fillText('WANDERER?',Math.min(110,ce(HL.mark.x)*4+6),ce(HL.mark.z)*4+5)}}}
+ else if(typeof MENU!='undefined'&&MENU&&MEV=='light'){pm.color.setRGB(.55,.08,.05);if(AMB0)amb.color.setRGB(1,.3,.25)}
+ }catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+})();
+</script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
@@ -3338,7 +3671,7 @@ function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
   '<h4>ACTIONS ON '+esc2(nm.toUpperCase())+'</h4>'+btn('revive','REVIVE PLAYER','',ig?'':'Start a level first')+btn('heal','RESTORE HEALTH','',ig?'':'Start a level first')+btn('resetpos','RESET PLAYER POSITION','dg',ig?'':'Start a level first')+btn('allsuits','GIVE ALL SUITS')+
   '<div class="row">Cash amount <input id="acash" type="number" min="1" max="100000" value="500" style="width:110px">'+btn('cash+','GIVE BACKROOMS CASH')+btn('cash-','REMOVE BACKROOMS CASH','dg')+'</div>'+
   '<div class="row">'+btn('tpto','TELEPORT TO PLAYER','',NOPLAY)+btn('bring','BRING PLAYER TO ME','',NOPLAY)+btn('kick','KICK FROM LOBBY','dg',NOPLAY)+'<br><span class="dim">'+NOPLAY+' These buttons switch on when lobbies exist.</span></div>'}
- if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+
+ if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+'<h4>HORROR UPDATE</h4>'+btn('hu:lo','START LIGHTS-OUT EVENT')+btn('hu:lon','END BLACKOUT')+btn('hu:san','SET SANITY TO 20%')+btn('hu:hall','FORCE A HALLUCINATION')+btn('hu:ea','NEXT ELEVATOR RIDE: ANOMALY')+
   '<div class="row">Lighting intensity <input type="range" id="alight" min="20" max="300" value="'+Math.round(ADM.light*100)+'"> '+Math.round(ADM.light*100)+'%</div><div class="row">Fog density <input type="range" id="afog" min="0" max="250" value="'+Math.round((ADM.fog==null?scene.fog.density:ADM.fog)*1000)+'"> '+(ADM.fog==null?'level default':ADM.fog.toFixed(3))+' '+btn('fogreset','RESET FOG')+'</div>'+
   '<h4>ENVIRONMENT</h4>'+btn('quake','TREMOR (shake)')+btn('static','STATIC STORM (sanity drain)')+btn('calm','CALM (restore sanity drain)')+
   '<h4>MOVEMENT</h4>'+btn('tp:start','TELEPORT: START')+btn('tp:elev','TELEPORT: ELEVATOR')+btn('tp:rand','TELEPORT: RANDOM VALID SPOT')+btn('god',ADM.god?'GOD MODE: ON':'GOD MODE: OFF')+btn('free',ADM.free?'FREE CAMERA: ON':'FREE CAMERA: OFF')+'<br><span class="dim">Free camera: WASD fly, mouse look, Space up, C down, Shift fast. Monsters cannot catch you while it is on.</span>'+
@@ -3377,6 +3710,7 @@ function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a
  if(k=='cash+'||k=='cash-'){var amt=cashAmt();if(!(amt>=1&&amt<=100000)){msg('Amount must be a whole number from 1 to 100000.',false);audit(k=='cash+'?'give cash':'remove cash',nm,false,'bad amount');return}
   if(k=='cash+')return guard('give cash',nm+' $'+amt,function(){addCash(amt,'Admin gift');return {msg:'+$'+amt+' → '+nm+' (now $'+CASH.bal+')'}});
   return guard('remove cash',nm+' $'+amt,function(){var t=Math.min(amt,CASH.bal);addCash(-t,'Admin removal');return {msg:'-$'+t+' from '+nm+' (now $'+CASH.bal+')'}},{confirm:'Remove $'+amt+' from '+esc2(nm)+'?'})}
+ if(k=='hu')return guard('horror: '+v,'level '+SV.lv,function(){var H=window.HU;if(!H)return {err:'Horror update not loaded.'};if(v=='ea')return {msg:H.elevatorTest()};if(!ig)return {err:'Start a level first.'};if(v=='lo')return {msg:H.lightsOut()};if(v=='lon'){H.lightsOn();return {msg:'Blackout ended.'}}if(v=='san'){P.san=20;return {msg:'Sanity set to 20%. Hallucinations start below 60%.'}}if(v=='hall'){var r=H.hallucinate();return r?{msg:'Hallucination: '+r}:{err:'Nothing could be placed here. Face a long corridor and try again.'}}return {err:'Unknown action.'}});
  if(k=='tpto'||k=='bring'||k=='kick'||k=='kick2'){msg(NOPLAY,false);audit(k,'',false,'no multiplayer');return}
  if(!ig&&['lightsoff','lightson','outage','emerg','quake','static','calm','tp','god','free','ms','mtp','mremove','mback','ai','follow','spawn','clearall','fix'].indexOf(k)>=0&&!(k=='fix'&&v=='gun')){msg('Start a level first.',false);return}
  if(k=='lightsoff')return guard('lights off','level '+SV.lv,function(){L.black=1e6;return {msg:'All lights off.'}});
