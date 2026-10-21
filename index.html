@@ -3419,7 +3419,7 @@ document.addEventListener('click',function(e){if(e.target&&e.target.id=='p-save'
 // ================= ELEVATOR ANOMALIES =================
 var EA=HU.EA={pending:null};
 var oElv=elevator;elevator=function(n,f){try{if(n!==0){var p=Math.min(.75,.3*mode().ev+(has('elev')?.2:0));if(HU.forceEA||RND()<p)EA.pending=mkEA(n)}}catch(e){}HU.forceEA=0;return oElv.apply(this,arguments)};
-function mkEA(n){var list=['display','stop','hall','memory','speaker','panel','knock'],k=HU.forceEAk&&list.indexOf(HU.forceEAk)>=0?HU.forceEAk:list[RND()*list.length|0];HU.forceEAk=null;var a={k:k,n:n,hold:0,fired:0};a.at=(k=='display'||k=='panel')?1.4:2.2+RND()*.8;a.len={display:0,panel:0,stop:3.6,hall:4.4,memory:4.4,speaker:3.6,knock:4.2}[k];a.code=RND()<.15?'20':['-1','404','Ω','∞','7½','B13'][RND()*6|0];a.bi=RND()*5|0;HD.meta.ea=(HD.meta.ea||0)+1;if(a.k=='panel'&&a.code=='20')HD.meta.flags.saw20=1;hsave();return a}
+function mkEA(n){var list=['display','stop','hall','memory','speaker','panel','knock'],k=HU.forceEAk&&list.indexOf(HU.forceEAk)>=0?HU.forceEAk:list[RND()*list.length|0];HU.forceEAk=null;var a={k:k,n:n,hold:0,fired:0};a.at=(k=='display'||k=='panel')?1.4:2.2+RND()*.8;a.len={display:0,panel:0,stop:3.6,hall:4.4,memory:4.4,speaker:3.6,knock:4.2}[k];a.code=HU.forceCode||(RND()<.15?'20':['-1','404','Ω','∞','7½','B13'][RND()*6|0]);HU.forceCode=null;a.bi=RND()*5|0;HD.meta.ea=(HD.meta.ea||0)+1;if(a.k=='panel'&&a.code=='20')HD.meta.flags.saw20=1;hsave();return a}
 var oMk=mkCS;mkCS=function(){var o=oMk.apply(this,arguments);if(EA.pending){var a=EA.pending;EA.pending=null;a.o=o;EA.cur=a;var oRun=o.run;o.run=function(tick){return oRun.call(o,function(dt,t){if(a.hold>0){o.t-=dt}else tick(dt,o.t);try{eaTick(a,dt)}catch(e){a.hold=0}})}}else EA.cur=null;return o};
 var oBE=buildElev;buildElev=function(sc){var E=oBE.apply(this,arguments);if(EA.cur&&!EA.cur.E)EA.cur.E=E;return E};
 function snd(o){if(typeof AC!='undefined'&&AC)try{o()}catch(e){}}
@@ -3548,6 +3548,546 @@ var oP=window.PFX,AMB0=null,FOV0=null;window.PFX=function(s,c){try{
  }catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
 })();
 </script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 2A: pocket encounters (Don't Look Back challenge, fake exits), Level 0 secret control room ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof mkCS!='function'||typeof THREE=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+function cvTex(w,h,f){var c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);var t=new T.CanvasTexture(c);t.userData={c:c};return t}
+function signTex(txt,fg,bg,font,w,h){return cvTex(w||256,h||64,function(x,W2,H2){if(bg!==null){x.fillStyle=bg||'#111';x.fillRect(0,0,W2,H2)}font=font||'bold 30px monospace';var fs=+((font.match(/(\d+)px/)||[0,30])[1]),ls=String(txt).split('\n');while(fs>8&&ls.some(function(l){x.font=font.replace(/\d+px/,fs+'px');return x.measureText(l).width>W2*.94}))fs-=2;x.font=font.replace(/\d+px/,fs+'px');x.fillStyle=fg||'#e4d56a';x.textAlign='center';x.textBaseline='middle';ls.forEach(function(l,i,a){x.fillText(l,W2/2,H2/2+(i-(a.length-1)/2)*(fs+6))})})}
+var runSeed=(HU.run()&&HU.run().id)||1;
+var R3=m32((runSeed*31+LVL*7907)|0);
+// =====================================================================
+// POCKET ENGINE: small self-contained first-person spaces (own scene)
+// =====================================================================
+var PK=HU.PK={cur:null};
+function pocket(def){if(PK.cur)return null;var ws=typeof started!='undefined'&&started;started=false;try{document.exitPointerLock()}catch(e){}
+ var o=mkCS();o.fade.style.opacity=1;var sc=o.sc,cm=o.cm;
+ sc.background=new T.Color(def.bg==null?0:def.bg);sc.fog=new T.FogExp2(def.fogc==null?(def.bg||0):def.fogc,def.fd==null?.06:def.fd);
+ var am=new T.AmbientLight(def.ambc||0xffffff,def.amb==null?.25:def.amb);sc.add(am);
+ var sl=new T.SpotLight(0xfff4d8,0,30,.6,.5,1.1);cm.add(sl);var tg=new T.Object3D();tg.position.set(0,-.05,-1);cm.add(tg);sl.target=tg;
+ var mk=function(css){var d=document.createElement('div');d.style.cssText='position:fixed;z-index:9;pointer-events:none;text-shadow:0 0 5px #000;'+css;document.body.appendChild(d);return d};
+ var hud=mk('left:14px;bottom:14px;font:12px monospace;color:#ddd;line-height:1.6'),pr=mk('left:50%;top:60%;transform:translateX(-50%);font:bold 15px monospace;color:#fff;text-align:center'),ms=mk('left:50%;bottom:13%;transform:translateX(-50%);font:15px monospace;color:#e4d56a;text-align:center;max-width:86vw'),tip=mk('left:50%;top:12px;transform:translateX(-50%);font:12px monospace;color:#bbb;text-align:center;max-width:92vw');
+ var C={o:o,sc:sc,cm:cm,am:am,sl:sl,x:def.x||0,z:def.z||0,yaw:def.yaw||0,pit:0,h:1.65,boxes:[],low:[],acts:[],K:{},t:0,msgT:0,bob:0,fl:def.fl!==false&&P.bat>0,def:def,done:false,flash:0};
+ C.mat=function(c,b){return b?new T.MeshBasicMaterial({color:c}):new T.MeshLambertMaterial({color:c})};
+ C.box=function(x0,z0,x1,z1,y0,y1,c,solid,mat){var m=new T.Mesh(new T.BoxGeometry(Math.max(.01,x1-x0),Math.max(.01,y1-y0),Math.max(.01,z1-z0)),mat||C.mat(c));m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);sc.add(m);if(solid!==false)C.boxes.push({x0:x0,x1:x1,z0:z0,z1:z1,m:m,on:true});return m};
+ C.solid=function(m){return C.boxes.find(function(b){return b.m===m})};
+ C.plane=function(x0,z0,x1,z1,y,c,down,mat){var m=new T.Mesh(new T.PlaneGeometry(x1-x0,z1-z0),mat||C.mat(c));m.rotation.x=down?PI/2:-PI/2;m.position.set((x0+x1)/2,y,(z0+z1)/2);sc.add(m);return m};
+ C.sign=function(txt,x,y,z,ry,w,h,fg,bg,font,basic){var m=new T.Mesh(new T.PlaneGeometry(w,h),new (basic===false?T.MeshLambertMaterial:T.MeshBasicMaterial)({map:signTex(txt,fg,bg,font,Math.round(256*w/Math.max(w,h)*1.5),Math.round(256*h/Math.max(w,h)*1.5)),transparent:bg===null}));m.position.set(x,y,z);m.rotation.y=ry||0;sc.add(m);return m};
+ C.light=function(x,y,z,c,i,d){var l=new T.PointLight(c,i,d||10);l.position.set(x,y,z);sc.add(l);return l};
+ C.bulb=function(x,y,z,c){var m=new T.Mesh(new T.BoxGeometry(.5,.05,.5),C.mat(c||0xfff3c8,true));m.position.set(x,y,z);sc.add(m);return m};
+ C.human=function(body,skin,x,z,ry,h){var G=new T.Group(),mb=C.mat(body),ms2=C.mat(skin||0xc89a7a),s=(h||1.75)/1.75,b=function(w,hh,d,px,py,mt){var q=new T.Mesh(new T.BoxGeometry(w,hh,d),mt);q.position.set(px,py,0);G.add(q);return q};
+  G.userData.legs=[b(.16,.85,.18,-.1,.43,C.mat(0x22252a)),b(.16,.85,.18,.1,.43,C.mat(0x22252a))];b(.46,.62,.26,0,1.17,mb);G.userData.head=b(.24,.27,.25,0,1.62,ms2);G.userData.arms=[b(.11,.6,.13,-.3,1.15,mb),b(.11,.6,.13,.3,1.15,mb)];G.scale.setScalar(s);G.position.set(x,0,z);G.rotation.y=ry||0;sc.add(G);return G};
+ C.act=function(a){if(a.on==null)a.on=true;C.acts.push(a);return a};
+ C.say=function(t,s){ms.textContent=t;C.msgT=s||4};C.tip=function(t){tip.innerHTML=t};
+ function nearAct(){var best=null,bd=1e9,fx=-Math.sin(C.yaw),fz=-Math.cos(C.yaw);C.acts.forEach(function(a){if(!a.on)return;var dx=a.x-C.x,dz=a.z-C.z,d=Math.hypot(dx,dz);if(d>(a.r||1.9))return;var dot=(fx*dx+fz*dz)/Math.max(d,.01);if(d>1&&dot<.35)return;if(d<bd){bd=d;best=a}});return best}
+ C.near=nearAct;
+ function blk(x,z){var cr=!!C.K.KeyC;for(var i=0;i<C.boxes.length;i++){var b=C.boxes[i];if(!b.on)continue;if(x>b.x0-.3&&x<b.x1+.3&&z>b.z0-.3&&z<b.z1+.3)return true}if(!cr)for(var j=0;j<C.low.length;j++){var l=C.low[j];if(x>l.x0&&x<l.x1&&z>l.z0&&z<l.z1)return true}return false}
+ C.blocked=blk;
+ // input
+ function kd(e){var c=e.code;if(c=='Escape')return;var tg=e.target;if(tg&&(tg.tagName=='INPUT'||tg.tagName=='TEXTAREA'))return;C.K[c]=1;e.stopImmediatePropagation();if(c=='Tab'||c=='Space')e.preventDefault();if(e.repeat)return;
+  if(c=='KeyF'||c=='KeyE'){var a=nearAct();if(a)a.fn(C,a)}
+  if(c=='KeyT'&&P.bat>0)C.fl=!C.fl;
+  if(def.key)def.key(C,c)}
+ function ku(e){C.K[e.code]=0;if(e.code!='Escape')e.stopImmediatePropagation()}
+ function mm(e){if(document.pointerLockElement!==o.cv)return;C.yaw-=e.movementX*.0022*(SET.sens||1);C.pit=Math.max(-1.3,Math.min(1.3,C.pit-e.movementY*.0022*(SET.sens||1)*(SET.inv?-1:1)))}
+ function md(e){if(e.button==2&&def.key){def.key(C,'Mouse2');e.preventDefault()}}
+ var tl=null;function ts(e){var t=e.touches[0];tl=t?[t.clientX,t.clientY]:null}function tm(e){var t=e.touches[0];if(!t||!tl)return;if(t.clientX<innerWidth*.4)return;C.yaw-=(t.clientX-tl[0])*.006;C.pit=Math.max(-1.3,Math.min(1.3,C.pit-(t.clientY-tl[1])*.006));tl=[t.clientX,t.clientY]}
+ addEventListener('keydown',kd,true);addEventListener('keyup',ku,true);document.addEventListener('mousemove',mm);o.cv.addEventListener('mousedown',md);o.cv.addEventListener('contextmenu',function(e){e.preventDefault()});o.cv.addEventListener('touchstart',ts);o.cv.addEventListener('touchmove',tm);
+ o.cv.addEventListener('click',function(){try{o.cv.requestPointerLock()}catch(e){}});try{o.cv.requestPointerLock()}catch(e){}
+ function cleanup(){removeEventListener('keydown',kd,true);removeEventListener('keyup',ku,true);document.removeEventListener('mousemove',mm);[hud,pr,ms,tip].forEach(function(d){d.remove()});try{document.exitPointerLock()}catch(e){}}
+ C.exit=function(res){if(C.done)return;C.done=true;cleanup();o.end();PK.cur=null;try{for(var k in K)K[k]=0}catch(e){}
+  try{if(def.onExit)def.onExit(res,C)}catch(e){console.error(e)}
+  if(res!='dead'&&!P.dead&&!C.stay){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}};
+ C.kill=function(nm,lv){if(C.done)return;C.exit('dead');if(nm=='mind'){GR.k=4;die();return}GR.k=5;GR.m=nm;try{if(window.JS3)JS3.lvOv=lv}catch(e){}die();setTimeout(function(){try{JS3.lvOv=null}catch(e){}},100)};
+ PK.cur=C;
+ try{def.build(C)}catch(e){console.error('pocket build',e)}
+ if(def.title){o.title.textContent=def.title}
+ o.run(function(dt,t){if(C.done)return;C.t+=dt;var K2=C.K,TM=window.TOUCHMOVE;
+  o.fade.style.opacity=Math.max(0,1-C.t*1.5);o.title.style.opacity=def.title?(C.t<.6?C.t/.6:C.t<3.2?1:Math.max(0,1-(C.t-3.2))):0;
+  var fx=-Math.sin(C.yaw),fz=-Math.cos(C.yaw),rx=Math.cos(C.yaw),rz=-Math.sin(C.yaw),ix=(K2.KeyD||K2.ArrowRight?1:0)-(K2.KeyA||K2.ArrowLeft?1:0),iz=(K2.KeyW||K2.ArrowUp?1:0)-(K2.KeyS||K2.ArrowDown?1:0);
+  if(TM&&(TM.x||TM.y)){ix=TM.x;iz=-TM.y}if(C.freeze>0){C.freeze-=dt;ix=iz=0}
+  var mv=Math.hypot(ix,iz),cr=!!K2.KeyC,spr=!!(K2.ShiftLeft||K2.ShiftRight)&&mv&&!cr&&!P.tired&&P.st>0;
+  if(spr)P.st-=15*dt;else P.st=Math.min(100,P.st+(mv?8:14)*dt);if(P.st<=0)P.tired=true;if(P.tired&&P.st>30)P.tired=false;
+  var v=(cr?1.5:spr?5.2:3)*(def.spd||1);if(mv>1){ix/=mv;iz/=mv}
+  var vx=(fx*iz+rx*ix)*v*dt,vz=(fz*iz+rz*ix)*v*dt;if(vx&&!blk(C.x+vx,C.z))C.x+=vx;if(vz&&!blk(C.x,C.z+vz))C.z+=vz;
+  C.h+=((cr?1.0:1.65)-C.h)*Math.min(1,dt*8);if(mv)C.bob+=dt*v*2.2;
+  if(C.fl&&P.bat>0){P.bat=Math.max(0,P.bat-.3*dt);sl.intensity=2.3}else{sl.intensity=0;if(P.bat<=0)C.fl=false}
+  if(C.flash>0){C.flash-=dt;sl.intensity=9;sl.angle=.9}else sl.angle=.6;
+  if(def.tick)try{def.tick(C,dt)}catch(e){console.error('pocket tick',e);C.exit('error')}
+  if(C.done)return;
+  if(C.msgT>0){C.msgT-=dt;if(C.msgT<=0)ms.textContent=''}
+  var a=nearAct();pr.textContent=a?'[F] '+a.label:'';
+  o.hint.textContent=(!window.TOUCHMOVE&&document.pointerLockElement!==o.cv&&C.t>1)?'CLICK TO LOOK AROUND':'';
+  hud.innerHTML='SANITY '+bar(P.san,'#a6c')+'<br>BATTERY '+bar(P.bat,'#8c8')+'<br>STAMINA '+bar(P.st,'#cc9');
+  cm.position.set(C.x,C.h+Math.sin(C.bob)*.035,C.z);cm.rotation.set(C.pit,C.yaw,0)});
+ return C}
+function bar(v,c){var n=Math.round(Math.max(0,Math.min(100,v))/10);return '<span style="color:'+c+'">'+'█'.repeat(n)+'</span><span style="opacity:.3">'+'█'.repeat(10-n)+'</span>'}
+HU.pocket=pocket;
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+// =====================================================================
+// 4. THE DON'T LOOK BACK CHALLENGE — THE WATCHER
+// =====================================================================
+function dlbChallenge(from,done){var sym=['◯','△','▢'],ord=[0,1,2].sort(function(){return RND()-.5}),seq=[],wrong=0,W2={z:5,x:0,frz:0,stp:0},doorA=null,doorB=null,won=false,t0=0;
+ return pocket({title:"DON'T LOOK BACK",bg:0x030305,fd:.045,amb:.13,ambc:0xb8c0ff,x:0,z:-1,yaw:0,
+ build:function(C){var wc=0x2c2e33,fc=0x141414,cc2=0x1b1b1e;
+  C.plane(-1.6,-74,1.6,8.5,0,fc);C.plane(-1.6,-74,1.6,8.5,3,cc2,true);
+  C.box(-1.85,-74,-1.6,8.5,0,3,wc);C.box(1.6,-25,1.85,8.5,0,3,wc);C.box(1.6,-42,1.85,-27,0,3,wc);C.box(1.6,-74,1.85,-44,0,3,wc);C.box(-1.85,8.5,1.85,8.8,0,3,wc);C.box(-1.85,-74.3,1.85,-74,0,3,wc);
+  // the vent shortcut (crouch with C)
+  C.plane(1.85,-44,3.0,-25,0,fc);C.plane(1.85,-44,3.0,-25,1.25,0x0c0c0c,true);C.box(1.85,-44,3.0,-25,1.25,3,wc,false);C.box(3.0,-44,3.25,-25,0,3,wc);C.box(1.6,-25,3.25,-24.75,0,3,wc);C.box(1.6,-44.25,3.25,-44,0,3,wc);
+  C.low.push({x0:1.62,x1:3.0,z0:-44,z1:-25});C.sign('VENT ↘ (crouch: C)',1.58,1.2,-26,-PI/2,1.1,.3,'#9cf',null,'bold 22px monospace');
+  // crates and debris
+  [[-1.6,-9,-.3,-7.8],[.4,-13,1.6,-11.8],[-1.6,-15.5,-.6,-14.6],[-.5,-29,1.6,-27.8],[-1.6,-31.5,.2,-30.6],[-1.6,-37,-.2,-35.6],[.5,-39.5,1.6,-38.2],[-1.6,-50,-.3,-48.8],[.3,-54,1.6,-52.8]].forEach(function(b,i){C.box(b[0],b[1],b[2],b[3],0,.9+(i%3)*.35,[0x4a3a22,0x3a3a3a,0x50402a][i%3])});
+  // bulbs
+  C.bulbs=[];for(var z=4;z>-72;z-=8){var bm=C.bulb(0,2.97,z,0xfff0c0);C.bulbs.push(bm)}
+  // door A and its lever
+  doorA=C.box(-1.6,-20.2,1.6,-19.8,0,3,0x5a5e66);C.sign('DOOR A — USE THE LEVER',0,2.4,-19.75,0,1.8,.35,'#ffcc66',null,'bold 20px monospace');
+  var lv=C.box(-1.6,-17.4,-1.45,-16.6,.9,1.5,0xaa2222,false);C.act({x:-1.2,z:-17,r:1.8,label:'Pull the lever (opens door A)',fn:function(C,a){a.on=false;lv.rotation.z=.8;var b=C.solid(doorA);b.on=false;doorA.position.y=3.6;bs({f:200,t:'lowpass',d:1,v:.7});C.say('Door A grinds open. The Watcher heard it.',3);W2.v0=(W2.v0||0)+.2}});
+  C.sign('ORDER:  '+ord.map(function(i){return sym[i]}).join('   '),0,2.2,-20.5,PI,2,.5,'#ff6',null,'bold 34px monospace');C.sign('ORDER:  '+ord.map(function(i){return sym[i]}).join('   '),0,2.2,-19.5,0,2,.5,'#ff6',null,'bold 34px monospace');
+  // symbol panels
+  [[-1.58,-24,PI/2],[1.58,-33,-PI/2],[-1.58,-41,PI/2]].forEach(function(p,i){var m=C.sign(sym[i],p[0],1.5,p[1],p[2],.6,.6,'#cfe',  '#122','bold 120px monospace');C.panels=(C.panels||[]);C.panels.push(m);
+   C.act({x:p[0]+(p[0]<0?.4:-.4),z:p[1],r:1.8,label:'Press the '+sym[i]+' panel',fn:function(C){var want=ord[seq.length];if(i==want){seq.push(i);m.material.color.setHex(0x66ff99);tn({f:500+seq.length*160,d:.25,v:.2});if(seq.length==3){var b=C.solid(doorB);b.on=false;doorB.position.y=3.6;C.say('The exit door unlocks! Go!',3);bs({f:180,t:'lowpass',d:1.4,v:.8})}else C.say(sym[i]+' accepted ('+seq.length+'/3)',2)}else{seq=[];wrong++;C.panels.forEach(function(q){q.material.color.setHex(0xffffff)});tn({t:'sawtooth',f:200,f2:90,d:.6,v:.25});C.say('WRONG ORDER. The panels reset — and it moves faster.',3)}}})});
+  doorB=C.box(-1.6,-60.2,1.6,-59.8,0,3,0x6a2222);C.sign('EXIT — ENTER THE ORDER',0,2.4,-59.75,0,1.8,.35,'#ff8a8a',null,'bold 20px monospace');
+  C.sign('EXIT',0,2.6,-73.9,0,1,.4,'#3f6','#020','bold 44px monospace');C.light(0,2.2,-70,0x66ff88,1.2,12);
+  // the Watcher (the Level 19 model)
+  try{W2.m=MART.lm(19,Math.random,[0,3.4])}catch(e){W2.m=new T.Group();W2.m.add(new T.Mesh(new T.BoxGeometry(.6,3.2,.4),C.mat(0x111111)))}W2.m.position.set(0,0,W2.z);C.sc.add(W2.m);
+  C.tip("Keep THE WATCHER in your sight: it only moves when you are not looking at it.<br>T flashlight · R or right-click: FLASH it (5% battery) · C crouch · F use");
+  C.say('It is behind you.',4);t0=0},
+ key:function(C,c){if(c!='KeyR'&&c!='Mouse2')return;if(P.bat<5){C.say('Not enough battery to flash.',2);return}P.bat-=5;C.flash=.18;C.fl=true;tn({f:2400,d:.08,v:.12});var a=look(C);if(a.f&&a.d<26){W2.frz=2.6;C.say('The flash stuns it!',1.5);bs({f:900,q:.5,d:.4,v:.3})}},
+ tick:function(C,dt){t0+=dt;var a=look(C),d=a.d;
+  // speed ramps up; wrong answers make it faster
+  var v=Math.min(5.4,(1.3+t0*.04+(W2.v0||0))*Math.pow(1.12,wrong));
+  if(t0<4)v=0;if(W2.frz>0){W2.frz-=dt;v=0}
+  var lit=(C.fl&&P.bat>0&&d<26)||d<4.5;if(a.f&&lit)v=0;else if(a.p&&lit)v*=.3;
+  if(v>0){var dx=C.x-W2.m.position.x,dz=C.z-W2.m.position.z,L2=Math.hypot(dx,dz)||1;W2.m.position.x+=dx/L2*v*dt;W2.m.position.z+=dz/L2*v*dt;W2.stp-=dt;if(W2.stp<=0){W2.stp=Math.max(.25,.9-v*.12);bs({f:220,t:'lowpass',d:.25,v:Math.min(.8,4/Math.max(1.5,d))})}}
+  W2.m.rotation.y=Math.atan2(C.x-W2.m.position.x,C.z-W2.m.position.z);var U=W2.m.userData;if(U.arms)U.arms.forEach(function(q,i){q.rotation.x=Math.sin(t0*6+i*3)*.5*(v>0?1:.05)});if(U.legs)U.legs.forEach(function(q,i){q.rotation.x=Math.sin(t0*6+i*3)*.5*(v>0?1:.05)});
+  if(!a.f&&d<6&&v>0&&RND()<dt*1.5){bs({f:3500,q:.5,d:.5,v:.12});C.say('[breathing, right behind you]',1.2)}
+  if(a.f&&lit&&d<14){P.san=Math.max(0,P.san-2*dt)}else P.san=Math.min(100,P.san+.4*dt);
+  C.bulbs.forEach(function(b,i){b.visible=RND()>(.02+Math.max(0,8-Math.abs(b.position.z-W2.m.position.z))*.03)});
+  if(P.san<=0){C.kill('mind');return}
+  if(d<1.2&&t0>4){C.kill('The Watcher',19);return}
+  if(C.z<-68&&!won){won=true;C.exit('won')}},
+ onExit:function(res){if(res=='won'){HD.dlbc=HD.dlbc||{};HD.dlbc.done=(HD.dlbc.done||0)+1;HD.dlbc.best=Math.min(HD.dlbc.best||1e9,Math.round(t0));hsave();HU.raw=1;try{addCash(250,"Survived the Don't Look Back challenge")}finally{HU.raw=0}HU.toast("YOU DIDN'T LOOK BACK — +$250",'#9f9');HU.ev&&HU.ev('dlbc');try{HU.encEsc&&HU.encEsc('m19')}catch(e){}if(done)done(true)}else if(res!='dead'&&done)done(false)}});
+ function look(C){var fx=-Math.sin(C.yaw)*Math.cos(C.pit),fz=-Math.cos(C.yaw)*Math.cos(C.pit),dx=W2.m.position.x-C.x,dz=W2.m.position.z-C.z,d=Math.hypot(dx,dz)||.01,c=(fx*dx+fz*dz)/d;return {d:d,f:c>.94,p:c>.82}}}
+HU.dlbChallenge=function(){if(PK.cur)return 'Already inside an encounter.';if(!playing())return 'Start a level first.';dlbChallenge('admin');return "Don't Look Back challenge started."};
+// =====================================================================
+// 5. FAKE EXITS AND FALSE REALITIES
+// =====================================================================
+var SCN=['house','parking','street','safe','menu','earlier'];
+function falseReality(kind,back){var clues=0,hid=null,out=false;
+ var defs={
+ house:{bg:0x0a0806,fd:.03,amb:.55,ambc:0xffe6c0,x:0,z:2,yaw:0,build:function(C){C.plane(-4,-4,4,3.5,0,0x5a3a22);C.plane(-4,-4,4,3.5,2.7,0xdcd4c0,true);C.box(-4.2,-4,-4,3.5,0,2.7,0xc8b890);C.box(4,-4,4.2,3.5,0,2.7,0xc8b890);C.box(-4.2,3.5,4.2,3.7,0,2.7,0xc8b890);C.box(-4.2,-4.2,-1,-4,0,2.7,0xc8b890);C.box(1,-4.2,4.2,-4,0,2.7,0xc8b890);C.box(-1,-4.2,1,-4,2.1,2.7,0xc8b890);
+   var fd=C.box(-1,-4.15,1,-4.05,0,2.1,0x6a4020);C.sign('FRONT DOOR',0,2.25,-3.95,0,.8,.18,'#fff','#3a2a18','bold 20px sans-serif');C.act({x:0,z:-3.4,r:1.6,label:'Go outside (front door)',fn:function(C){out=true;C.exit('wrong')}});
+   C.box(-3.6,1,-1.2,2,0,.8,0x3a5a7a);C.box(1.5,-.5,3.2,.2,0,.5,0x5a3a20);var tv=C.box(2,3.1,3.6,3.4,.6,1.5,0x111111);C.light(0,2.4,0,0xffe6b0,.9,12);
+   C.sign('',-4.05,1.5,-1.5,PI/2,1.6,1.1,null,null,null);var win=new T.Mesh(new T.PlaneGeometry(1.6,1.1),new T.MeshBasicMaterial({map:cvTex(256,176,function(x,w,h){x.fillStyle='#c8b450';x.fillRect(0,0,w,h);x.fillStyle='#e8dc90';for(var i=0;i<6;i++)x.fillRect(20+i*40,10,20,8);x.fillStyle='#8a7a30';x.fillRect(0,h*.62,w,h);x.fillStyle='rgba(0,0,0,.6)';x.fillRect(w*.42,h*.2,w*.16,h*.42);x.strokeStyle='#432';x.lineWidth=8;x.strokeRect(0,0,w,h);x.beginPath();x.moveTo(w/2,0);x.lineTo(w/2,h);x.moveTo(0,h/2);x.lineTo(w,h/2);x.stroke()})}));win.position.set(-3.98,1.5,-1.5);win.rotation.y=PI/2;C.sc.add(win);
+   C.act({x:-3.3,z:-1.5,r:1.8,label:'Look out of the window',fn:function(C,a){a.on=false;clues++;C.say('Outside the window... yellow wallpaper. Fluorescent lights. That is not a street.',4);HU.cap&&HU.cap('[the fluorescent hum leaks through the glass]',3)}});
+   var clk=C.sign('',2.5,1.9,3.45,PI,.6,.6,null,null);var face=new T.Mesh(new T.CircleGeometry(.3,24),new T.MeshBasicMaterial({map:cvTex(128,128,function(x){x.fillStyle='#f4eed8';x.beginPath();x.arc(64,64,62,0,7);x.fill();x.fillStyle='#222';x.font='bold 16px serif';x.textAlign='center';for(var i=1;i<=12;i++){var a=i/12*PI*2;x.fillText(i,64+Math.sin(a)*48,70-Math.cos(a)*48)}})}));face.position.set(1.2,1.9,3.44);face.rotation.y=PI;C.sc.add(face);
+   var hm=new T.Mesh(new T.BoxGeometry(.02,.22,.01),C.mat(0x111111,true));hm.geometry.translate(0,.1,0);hm.position.set(1.2,1.9,3.42);hm.rotation.y=PI;C.sc.add(hm);var mm=new T.Mesh(new T.BoxGeometry(.015,.27,.01),C.mat(0x881111,true));mm.geometry.translate(0,.13,0);mm.position.set(1.2,1.9,3.41);mm.rotation.y=PI;C.sc.add(mm);C.hands=[hm,mm];
+   C.act({x:1.2,z:2.7,r:1.8,label:'Look at the clock',fn:function(C,a){clues++;if(clues>=2&&!hid){C.say('The clock runs BACKWARDS. When you stop its hands, the wallpaper behind it splits open...',5);reveal(C,1.2,3.4,PI)}else C.say('The second hand is turning... backwards.',3)}})},
+   tick:function(C,dt){if(C.hands){C.hands[1].rotation.z+=dt*2.2;C.hands[0].rotation.z+=dt*.18}}},
+ parking:{bg:0x05070a,fd:.05,amb:.3,ambc:0xb0c0d0,x:0,z:8,yaw:0,build:function(C){C.plane(-14,-14,14,10,0,0x26262a);C.box(-14.2,-14,-14,10,0,4,0x3a3a40);C.box(14,-14,14.2,10,0,4,0x3a3a40);C.box(-14.2,10,14.2,10.2,0,4,0x3a3a40);C.box(-14.2,-14.2,14.2,-14,0,4,0x3a3a40);C.plane(-14,-14,14,10,4,0x1a1a1e,true);
+   for(var i=-2;i<=2;i++){for(var j=0;j<2;j++){if(i==1&&j==0)continue;var x=i*5,z=-2-j*7;C.box(x-1,z-2.1,x+1,z+2.1,0,1.3,[0x5a1a1a,0x1a3a5a,0x2a2a2a,0x6a6a6a][(i+j+4)%4]);}}
+   for(var k=-3;k<=3;k++)C.plane(k*5-.05,-12,k*5+.05,5,.01,0xdddd88);C.light(0,3.6,0,0xd8e8ff,.9,18);C.light(-10,3.6,-8,0xd8e8ff,.6,14);
+   C.sign('EXIT →',10,2.6,9.9,PI,1.6,.5,'#3f6','#020','bold 40px monospace');C.act({x:10,z:9,r:2,label:'Leave through the EXIT ramp',fn:function(C){out=true;C.exit('wrong')}});
+   C.sign('TIXE',-13.9,1.6,-6,PI/2,1,.4,'#f33','#200','bold 40px monospace');C.box(-14.1,-6.8,-13.95,-5.2,0,2.2,0x404048,false);
+   C.alarm=4;C.act({x:10,z:-2,r:2.8,label:'Listen to the car alarm',fn:function(C,a){a.on=false;clues++;C.say('The alarm plays the exact same 4 seconds. Over. And over. Like a recording.',4)}});
+   C.act({x:-13.2,z:-6,r:1.9,label:'Look at the backwards sign',fn:function(C,a){clues++;if(clues>=2&&!hid){C.say('"TIXE". The stairwell door behind it was never painted on the plan.',4);reveal(C,-13.95,-6,PI/2)}else C.say('A sign that reads TIXE. Something about this place is a reflection.',3)}})},
+   tick:function(C,dt){C.alarm-=dt;if(C.alarm<=0){C.alarm=4;for(var i=0;i<6;i++)setTimeout(function(){tn({t:'square',f:880,d:.16,v:.06,lp:2200})},i*330)}}},
+ street:{bg:0x0a0c18,fd:.025,amb:.35,ambc:0x9aa8d8,x:0,z:12,yaw:0,build:function(C){C.plane(-4,-30,4,14,0,0x2a2a2e);C.plane(-9,-30,-4,14,.05,0x4a4a48);C.plane(4,-30,9,14,.05,0x4a4a48);C.box(-9.2,-30,-9,14,0,6,0x3a2a2a);C.box(9,-30,9.2,14,0,6,0x2a2a3a);C.box(-9.2,14,9.2,14.2,0,6,0x0a0a12);C.box(-9.2,-30.2,9.2,-30,0,6,0x0a0a12);
+   for(var z=10;z>-28;z-=8){C.box(-8.9,z-3,-8.6,z,0,4,[0x6a4a3a,0x4a5a6a,0x5a5a3a][(z/8|0)%3+((z<0)?1:0)%3|0]);C.light(z%16?-3.6:3.6,4,z,0xffd8a0,.7,11)}
+   var sky=new T.Mesh(new T.PlaneGeometry(40,14),new T.MeshBasicMaterial({map:cvTex(512,180,function(x,w,h){var gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#05060e');gr.addColorStop(1,'#1a1e3a');x.fillStyle=gr;x.fillRect(0,0,w,h);for(var i=0;i<120;i++){x.fillStyle='rgba(255,255,255,'+Math.random()+')';x.fillRect(Math.random()*w,Math.random()*h*.8,1,1)}x.fillStyle='#f4f0d8';x.beginPath();x.arc(150,50,22,0,7);x.fill();x.fillStyle='#e8c8c0';x.beginPath();x.arc(360,70,30,0,7);x.fill()}),fog:false}));sky.position.set(0,9,-29.9);C.sc.add(sky);
+   C.act({x:0,z:-18,r:4,label:'Look up at the sky',fn:function(C,a){a.on=false;clues++;C.say('Two moons. One of them is closer than it was a minute ago.',4)}});
+   var npc=C.human(0x3a4a5a,0xc8a080,-5.5,0,PI/2,1.75);C.box(-6.2,-.8,-5.8,.8,0,.5,0x4a3020,false);var said=0;
+   C.act({x:-4.6,z:0,r:2,label:'Talk to the man on the bench',fn:function(C){said++;tn({t:'triangle',f:180,f2:140,d:.4,v:.08});if(said<3)C.say('MAN: "Nice evening, isn\'t it?"',3);else{clues++;C.say('MAN: "Nice evening, isn\'t it?"  ...the exact same words, the exact same voice. Then, quietly: "Go back the way you came."',6);if(!hid)reveal(C,0,13.6,PI)}}});
+   C.sign('HOME →',0,2.4,-29.8,0,1.6,.45,'#fff','#2a3a2a','bold 36px sans-serif');C.act({x:0,z:-28.6,r:2,label:'Walk towards HOME',fn:function(C){out=true;C.exit('wrong')}})},
+   tick:function(){}},
+ safe:{bg:0x0a0a0a,fd:.02,amb:.6,ambc:0xfff2e0,x:0,z:1.5,yaw:0,build:function(C){C.plane(-3,-3,3,3,0,0x6a5a4a);C.plane(-3,-3,3,3,2.6,0xe8e0d0,true);C.box(-3.2,-3,-3,3,0,2.6,0xb8c8b8);C.box(3,-3,3.2,3,0,2.6,0xb8c8b8);C.box(-3.2,3,3.2,3.2,0,2.6,0xb8c8b8);C.box(-3.2,-3.2,-.7,-3,0,2.6,0xb8c8b8);C.box(.7,-3.2,3.2,-3,0,2.6,0xb8c8b8);C.box(-.7,-3.2,.7,-3,2.1,2.6,0xb8c8b8);
+   C.box(-2.8,1.2,-.8,2.9,0,.55,0xdddddd);C.box(-2.8,2.4,-.8,2.9,.55,.75,0xb04040);C.box(1.6,1.8,2.8,2.9,0,.8,0x6a4a2a);C.light(0,2.3,0,0xfff0d8,.9,10);C.sign('SAFE ROOM',0,2.3,-2.95,0,1.2,.3,'#2a5','#eee','bold 26px sans-serif');
+   C.loops=0;C.act({x:0,z:-2.5,r:1.4,label:'Open the door and leave',fn:function(C){C.loops++;if(C.loops>=3){out=true;C.exit('wrong');return}C.x=0;C.z=1.5;C.yaw=0;C.o.fade.style.opacity=1;C.t=Math.min(C.t,.3);clues++;C.say(C.loops==1?'You step through the door... into the same room.':'Again. The same room. The same bed. The door leads back here.',4);if(C.loops==1)HU.notify&&HU.notify('UNKNOWN','you never left the room.');if(clues>=2&&!hid)reveal(C,-1.8,2.95,PI,true)}});
+   C.act({x:-1.8,z:2.2,r:1.6,label:'Look behind the bed',fn:function(C,a){clues++;C.say('Behind the bed: a ventilation grate. Cold air. It smells like old carpet.',3);if(!hid)reveal(C,-1.8,2.95,PI,true)}})},tick:function(){}},
+ menu:{bg:0x000000,fd:.02,amb:.4,x:0,z:0,yaw:0,build:function(C){C.plane(-8,-8,8,8,0,0x0a0a0a);C.box(-8.2,-8,-8,8,0,5,0x050505);C.box(8,-8,8.2,8,0,5,0x050505);C.box(-8.2,-8.2,8.2,-8,0,5,0x050505);C.box(-8.2,8,8.2,8.2,0,5,0x050505);
+   C.sign('THE BACKROOMS',0,3.2,-7.9,0,6,1,'#e4d56a',null,'bold 60px Georgia');var pl=C.sign('[ PLAY ]',0,1.6,-7.9,0,2.2,.6,'#e4d56a','#1a1608','bold 44px monospace');C.act({x:0,z:-7,r:2,label:'Press PLAY',fn:function(C){out=true;C.exit('wrong')}});
+   C.sign("DON'T LOOK BACK",0,3.2,7.9,PI,6,1,'#c22',null,'bold 60px Georgia');C.sign('[ CONTINUE ]',0,1.6,7.9,PI,2.4,.6,'#9cf','#08101a','bold 44px monospace');C.act({x:0,z:7,r:2,label:'Press CONTINUE',fn:function(C){if(!hid){clues=2;reveal(C,0,7.95,PI)}C.exit('right')}});
+   C.light(0,4,-4,0xffeeaa,.8,12);C.light(0,4,4,0xff3030,.3,10);C.say('A menu. Floating in the dark. It is very quiet.',4);C.act({x:0,z:-5,r:3,label:'Read the title',fn:function(C,a){a.on=false;clues++;C.say('The letters on this menu are mirrored when you look closely. Something is written behind you.',4)}})},tick:function(){}},
+ earlier:{bg:0x1a1608,fd:.05,amb:.5,ambc:0xfff0b0,x:0,z:10,yaw:0,build:function(C){var wc=new T.Color(LV[0].w).getHex();C.plane(-2,-16,2,12,0,0x6a5a2a);C.plane(-2,-16,2,12,2.9,0xd8cc90,true);C.box(-2.2,-16,-2,12,0,2.9,wc);C.box(2,-16,2.2,12,0,2.9,wc);C.box(-2.2,12,2.2,12.2,0,2.9,wc);C.box(-2.2,-16.2,2.2,-16,0,2.9,wc);
+   for(var z=10;z>-16;z-=5)C.bulb(0,2.88,z);C.light(0,2.6,0,0xfff4c0,.8,16);C.sign('LEVEL 0',0,2.4,11.95,PI,1.2,.3,'#e4d56a','#111','bold 26px monospace');
+   var ch=new T.Group();[[.5,.05,.5,0,.45,0],[.05,.45,.05,-.22,.22,-.22],[.05,.45,.05,.22,.22,-.22],[.05,.45,.05,-.22,.22,.22],[.05,.45,.05,.22,.22,.22],[.5,.5,.05,0,.75,.24]].forEach(function(q){var m=new T.Mesh(new T.BoxGeometry(q[0],q[1],q[2]),C.mat(0x6a4a2a));m.position.set(q[3],q[4],q[5]);ch.add(m)});ch.rotation.x=PI;ch.position.set(.8,2.9,-4);C.sc.add(ch);
+   C.act({x:.8,z:-4,r:2.2,label:'Look up at the chair',fn:function(C){clues++;C.say('A chair. Stuck to the ceiling, exactly where the floor should have it. Behind it, the ceiling tile is loose.',4);if(!hid)reveal(C,-1.95,-4,PI/2)}});
+   var ex=C.box(-1,-15.95,1,-15.85,0,2.2,0xcc1111);C.act({x:0,z:-15,r:1.8,label:'Take the red exit door',fn:function(C){out=true;C.exit('wrong')}});C.say('This is the Lobby. You came from here... didn\'t you?',4)},tick:function(){}}};
+ function reveal(C,x,z,ry,low){if(hid)return;hid=1;var m=C.sign('✦ HIDDEN WAY BACK ✦',x+Math.sin(ry)*.05,1.1,z+Math.cos(ry)*.05,ry,1.6,.35,'#9cf','#000','bold 26px monospace');C.light(x+Math.sin(ry)*.8,1.2,z+Math.cos(ry)*.8,0x66aaff,1.2,6);C.act({x:x+Math.sin(ry)*.7,z:z+Math.cos(ry)*.7,r:1.8,label:low?'Crawl through the vent (the way back)':'Step through the crack (the way back)',fn:function(C){C.exit('right')}});tn({f:300,f2:900,d:.8,v:.15})}
+ var d=defs[kind]||defs.house;d.title='...EXIT?';d.fl=false;var oB=d.build;d.build=function(C){oB(C);C.tip('This place looks safe. Look for things that are wrong. F to inspect.')};
+ d.onExit=function(res){if(res=='right'){HU.raw=1;try{addCash(75,'Saw through a false reality')}finally{HU.raw=0}HD.meta.flags.fakeexit=1;HD.fr=(HD.fr||0)+1;hsave();HU.toast('YOU SAW THROUGH IT — +$75','#9cf');say('You are back where the false exit was. It is gone now.',4);if(back)back(true)}else if(res=='wrong'){setTimeout(function(){nightmare(back)},60)}};
+ return pocket(d)}
+function nightmare(back){var ch={z:8,stp:0},caught=0;
+ return pocket({title:'THE NIGHTMARE LEVEL',bg:0x0e0000,fd:.06,amb:.22,ambc:0xff5040,x:0,z:0,yaw:0,
+ build:function(C){C.plane(-1.6,-48,1.6,12,0,0x1a0404);C.plane(-1.6,-48,1.6,12,2.8,0x120202,true);C.box(-1.8,-48,-1.6,12,0,2.8,0x3a0808);C.box(1.6,-48,1.8,12,0,2.8,0x3a0808);C.box(-1.8,12,1.8,12.2,0,2.8,0x3a0808);C.box(-1.8,-48.2,1.8,-48,0,2.8,0xffffff);
+  for(var z=6;z>-46;z-=9)C.bulb(0,2.78,z,0x661010);C.light(0,2,-45,0xffffff,2,14);
+  ch.m=C.human(0x050505,0x050505,0,ch.z,PI,2.3);C.tip('You took the wrong way out. RUN to the light. Shift to sprint.');C.say('Something is coming. Run to the light!',4);HD.meta.flags.nightmare=(HD.meta.flags.nightmare||0)+1;hsave()},
+ tick:function(C,dt){var v=C.t<2?0:3.6;var dz=C.z-ch.m.position.z,dx=C.x-ch.m.position.x,d=Math.hypot(dx,dz)||1;ch.m.position.x+=dx/d*v*dt;ch.m.position.z+=dz/d*v*dt;ch.m.rotation.y=Math.atan2(dx,dz);ch.stp-=dt;if(ch.stp<=0&&v){ch.stp=.32;bs({f:160,t:'lowpass',d:.25,v:Math.min(.7,4/d)})}
+  if(d<1.1){caught++;P.san=Math.max(0,P.san-20);if(P.san<=0){C.kill('mind');return}C.x=0;C.z=0;ch.m.position.set(0,0,8);C.o.fade.style.opacity=1;C.t=0;C.say('It drags you back to the start. (Sanity −20)',3);tn({t:'sawtooth',f:300,f2:80,d:.7,v:.25})}
+  if(C.z<-44){C.exit('out')}},
+ onExit:function(res){if(res=='out'){say('You wake up in front of the false exit. It is gone now.',4);if(back)back(false)}}})}
+// fake exit doors in the levels
+var FX0=null;
+function placeFakeExit(){if(LVL<1||LVL>18||LVL==9||CF.tile||CF.bal)return;var r=HU.run();if(!r)return;var seen=(r.fx=r.fx||{});if(seen[LVL]==='used')return;
+ var rr=m32((r.id*13+LVL*7177)|0);if(rr()>.35&&!HU.forceFX)return;
+ var cells=open.filter(function(o){var i=o[0],j=o[1],n=0;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(a<0||b<0||a>=W||b>=W||g[a][b])n++});var q=Math.hypot(cc(i)-cc(1),cc(j)-cc(1));return n==3&&q>18&&q<90&&!CL[i*W+j]&&!(i==EL.i&&j==EL.j)});
+ if(!cells.length)return;var c=cells[rr()*cells.length|0],wd=[[1,0],[-1,0],[0,1],[0,-1]].find(function(d){var a=c[0]+d[0],b=c[1]+d[1];return a<0||b<0||a>=W||b>=W||g[a][b]});if(!wd)return;
+ var G=new T.Group(),x=cc(c[0])+wd[0]*1.88,z=cc(c[1])+wd[1]*1.88;G.position.set(x,0,z);G.rotation.y=Math.atan2(-wd[0],-wd[1]);
+ var dm=new T.Mesh(new T.BoxGeometry(2,2.6,.2),new T.MeshBasicMaterial({color:0xcc1111}));dm.position.y=1.3;G.add(dm);var sg=new T.Mesh(new T.PlaneGeometry(.9,.32),new T.MeshBasicMaterial({map:signTex('EXIT','#3f6','#020','bold 44px monospace',128,46)}));sg.position.set(0,2.85,.12);G.add(sg);
+ var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0x40ff70,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.6}));gl.scale.set(1.6,1,1);gl.position.set(0,2.85,.3);G.add(gl);scene.add(G);
+ FX0={g:G,x:cc(c[0])+wd[0]*1.2,z:cc(c[1])+wd[1]*1.2,kind:SCN[rr()*SCN.length|0]}}
+try{placeFakeExit()}catch(e){console.error(e)}
+HU.fakeExit=function(k){if(PK.cur)return 'Already inside an encounter.';if(!playing())return 'Start a level first.';falseReality(k||SCN[RND()*SCN.length|0],null);return 'Entered a false reality.'};
+// =====================================================================
+// 3. LEVEL 0 SECRET CONTROL ROOM
+// =====================================================================
+HD.cr=HD.cr||{keys:{},open:0,pw:0,sigil:0,seen:{}};var CR=HD.cr;CR.keys=CR.keys||{};CR.seen=CR.seen||{};
+var KC=[['red','SECURITY keycard','#e33',0xdd2222],['blue','RESEARCH keycard','#39f',0x2266ee],['gold','DIRECTOR keycard','#fc3',0xddaa22]];
+HU.cr=CR;
+var ROOM=null,KCI=[],MON=[];
+function cellBusy(i,j){if(i<1||j<1||i>=W-1||j>=W-1)return true;if(i<=5&&j<=5)return true;if(i==EL.i&&j==EL.j)return true;if(typeof ex!='undefined'&&ex[0]==i&&ex[1]==j)return true;
+ if(items.some(function(it){return ce(it.x)==i&&ce(it.z)==j}))return true;if(DOORS.some(function(d){return d.ci==i&&d.cj==j}))return true;if(lockers.some(function(l){return Math.abs(l.position.x-cc(i))<3&&Math.abs(l.position.z-cc(j))<3}))return true;
+ if(typeof FURN!='undefined'&&FURN.some(function(f){return ce(f.x)==i&&ce(f.z)==j}))return true;if(typeof VENTS!='undefined'&&VENTS.some(function(v){return (v.ci==i&&v.cj==j)}))return true;if(typeof AMMO!='undefined'&&AMMO.some(function(a){return ce(a.x)==i&&ce(a.z)==j}))return true;return false}
+function reachAll(gr){var seen=new Uint8Array(W*W),q=[[1,1]];seen[W+1]=1;for(var h=0;h<q.length;h++){var c=q[h];for(var k=0;k<4;k++){var a=c[0]+[1,-1,0,0][k],b=c[1]+[0,0,1,-1][k];if(a<0||b<0||a>=W||b>=W||gr[a][b]||seen[a*W+b])continue;seen[a*W+b]=1;q.push([a,b])}}return seen}
+function rebuildWalls(skip){var n=0,m4=new T.Matrix4(),cap=wm.instanceMatrix.count,extra=[];for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]&&!(skip&&skip[i*W+j])){if(n<cap){m4.makeTranslation(cc(i),H/2,cc(j));wm.setMatrixAt(n,m4)}else extra.push([i,j]);n++}
+ wm.count=Math.min(n,cap);wm.instanceMatrix.needsUpdate=true;if(extra.length){if(!rebuildWalls.ex){rebuildWalls.ex=new T.InstancedMesh(wm.geometry,wm.material,64);if(wm.instanceColor){var cl=new T.Color(1,1,1);try{wm.getColorAt(0,cl)}catch(e){}for(var q=0;q<64;q++)rebuildWalls.ex.setColorAt(q,cl);rebuildWalls.ex.instanceColor.needsUpdate=true}scene.add(rebuildWalls.ex)}var e=rebuildWalls.ex;extra.slice(0,64).forEach(function(c,k){m4.makeTranslation(cc(c[0]),H/2,cc(c[1]));e.setMatrixAt(k,m4)});e.count=Math.min(64,extra.length);e.instanceMatrix.needsUpdate=true}else if(rebuildWalls.ex)rebuildWalls.ex.count=0;
+ open.length=0;for(var a=0;a<W;a++)for(var b=0;b<W;b++)if(!g[a][b])open.push([a,b])}
+function buildRoom(){if(LVL!=0||typeof wm=='undefined')return;var rr=m32((SEED*7+101)|0),before=reachAll(g),cands=[];
+ for(var i0=3;i0<W-6;i0++)for(var j0=3;j0<W-6;j0++){if(i0<9&&j0<9)continue;var ok=true;for(var a=-1;a<=3&&ok;a++)for(var b=-1;b<=3&&ok;b++)if(cellBusy(i0+a,j0+b))ok=false;if(ok)cands.push([i0,j0])}
+ for(var t=0;t<cands.length&&t<400;t++){var k=t+(rr()*(cands.length-t)|0),tmp=cands[t];cands[t]=cands[k];cands[k]=tmp;var c=cands[t],i0=c[0],j0=c[1];
+  var doors=[[i0+1,j0-1,0,-1],[i0+1,j0+3,0,1],[i0-1,j0+1,-1,0],[i0+3,j0+1,1,0]].filter(function(d){var oi=d[0]+d[2],oj=d[1]+d[3];return oi>0&&oj>0&&oi<W-1&&oj<W-1&&!g[oi][oj]&&before[oi*W+oj]});if(!doors.length)continue;var dr=doors[rr()*doors.length|0];
+  var g2=g.map(function(r){return r.slice()});for(var a=-1;a<=3;a++)for(var b=-1;b<=3;b++)g2[i0+a][j0+b]=(a>=0&&a<=2&&b>=0&&b<=2)?0:1;
+  var g3=g2.map(function(r){return r.slice()});for(var a2=0;a2<=2;a2++)for(var b2=0;b2<=2;b2++)g3[i0+a2][j0+b2]=1;var after=reachAll(g3),lost=false;
+  for(var q=0;q<W*W&&!lost;q++)if(before[q]){var qi=q/W|0,qj=q%W;if(qi>=i0-1&&qi<=i0+3&&qj>=j0-1&&qj<=j0+3)continue;if(!after[q])lost=true}
+  if(lost)continue;
+  for(var a3=-1;a3<=3;a3++)for(var b3=-1;b3<=3;b3++)g[i0+a3][j0+b3]=g2[i0+a3][j0+b3];
+  ROOM={i0:i0,j0:j0,di:dr[0],dj:dr[1],ux:dr[2],uz:dr[3],cx:cc(i0+1),cz:cc(j0+1)};break}
+ if(!ROOM)return;var skip=new Uint8Array(W*W);rebuildWalls(skip);
+ var R0=ROOM,ux=R0.ux,uz=R0.uz,vx=-uz,vz=ux,P2=function(u,v){return [R0.cx+ux*u+vx*v,R0.cz+uz*u+vz*v]},ry=function(dx,dz){return Math.atan2(dx,dz)};
+ var G=new T.Group();scene.add(G);R0.g=G;var L2=function(c){return new T.MeshLambertMaterial({color:c})},B2=function(c){return new T.MeshBasicMaterial({color:c})};
+ // interior skin: dark metal panels on the walls, concrete floor, dark ceiling
+ var fl2=new T.Mesh(new T.PlaneGeometry(12,12),L2(0x2a2c2e));fl2.rotation.x=-PI/2;fl2.position.set(R0.cx,.012,R0.cz);G.add(fl2);var ce3=new T.Mesh(new T.PlaneGeometry(12,12),L2(0x151618));ce3.rotation.x=PI/2;ce3.position.set(R0.cx,H-.012,R0.cz);G.add(ce3);
+ [[6,0],[-6,0],[0,6],[0,-6]].forEach(function(o){var w=new T.Mesh(new T.PlaneGeometry(12,H),L2(0x34383c));var p=P2(o[0]*.995,o[1]*.995);w.position.set(p[0],H/2,p[1]);w.rotation.y=ry(-(ux*o[0]+vx*o[1]),-(uz*o[0]+vz*o[1]));if(o[0]==6){w.visible=false;R0.inner=w}G.add(w)});
+ var lamp=new T.PointLight(0x9ac8ff,.0,16);lamp.position.set(R0.cx,H-.4,R0.cz);G.add(lamp);R0.lamp=lamp;
+ // the blast door (outside face) with the keycard reader
+ var dpx=cc(R0.di)+ux*(-2.02),dpz=cc(R0.dj)+uz*(-2.02);var bd=new T.Mesh(new T.BoxGeometry(3.9,H,.16),new T.MeshLambertMaterial({map:cvTex(256,200,function(x,w,h){x.fillStyle='#4a4d52';x.fillRect(0,0,w,h);x.fillStyle='#3a3d42';for(var i=0;i<6;i++)x.fillRect(0,i*34+6,w,4);x.fillStyle='#c9a43a';for(var k2=0;k2<14;k2++){x.save();x.translate(k2*20,h-18);x.rotate(-.6);x.fillRect(0,0,9,30);x.restore()}x.fillStyle='#ddd';x.font='bold 18px monospace';x.textAlign='center';x.fillText('RESTRICTED',w/2,60);x.font='12px monospace';x.fillText('ASTER INSTITUTE — CONTROL 0',w/2,82)})}));
+ bd.position.set(cc(R0.di)+ux*2.08,H/2,cc(R0.dj)+uz*2.08);bd.rotation.y=ry(ux,uz);scene.add(bd);R0.door=bd;
+ var rd=new T.Group();var rdb=new T.Mesh(new T.BoxGeometry(.3,.45,.06),L2(0x222222));rd.add(rdb);R0.slots=KC.map(function(k,i){var s=new T.Mesh(new T.BoxGeometry(.06,.06,.02),B2(0x330000));s.position.set(-.08+i*.08,.12,.04);rd.add(s);return s});var dp=new T.Vector3(bd.position.x,1.35,bd.position.z);rd.position.set(dp.x+ux*.06+vx*2.35,1.35,dp.z+uz*.06+vz*2.35);rd.rotation.y=bd.rotation.y;scene.add(rd);
+ R0.dout={x:cc(R0.di+ux),z:cc(R0.dj+uz)};// the corridor cell outside
+ if(CR.open)openRoom(true);
+ // contents
+ var desk=new T.Mesh(new T.BoxGeometry(3.2,.8,1),L2(0x3a3026));var dk=P2(-4.6,0);desk.position.set(dk[0],.4,dk[1]);desk.rotation.y=ry(vx,vz);G.add(desk);
+ var pc=new T.Mesh(new T.BoxGeometry(.6,.42,.05),B2(0x113322));var pk=P2(-4.7,.6);pc.position.set(pk[0],1.05,pk[1]);pc.rotation.y=ry(ux,uz);G.add(pc);R0.pc=pc;
+ // three monitors with live game cameras
+ for(var m=0;m<3;m++){var rt=new T.WebGLRenderTarget(256,160);var scr=new T.Mesh(new T.PlaneGeometry(1.7,1.05),new T.MeshBasicMaterial({map:rt.texture}));var sp=P2(-5.85,-2.6+m*2.6);scr.position.set(sp[0],1.95,sp[1]);scr.rotation.y=ry(ux,uz);G.add(scr);var fr=new T.Mesh(new T.BoxGeometry(1.85,1.2,.08),L2(0x111111));fr.position.set(sp[0]-ux*.05,1.95,sp[1]-uz*.05);fr.rotation.y=scr.rotation.y;G.add(fr);
+  var lb=new T.Mesh(new T.PlaneGeometry(1.7,.2),new T.MeshBasicMaterial({map:signTex(['CAM 01 — LOBBY WEST','CAM 02 — ENTITY TRACKING','CAM 03 — EXIT ELEVATOR'][m],'#3f8','#020','bold 22px monospace',256,30)}));lb.position.set(sp[0]+ux*.01,2.62,sp[1]+uz*.01);lb.rotation.y=scr.rotation.y;G.add(lb);
+  var cmr=new T.PerspectiveCamera(62,1.6,.1,80);cmr.rotation.order='YXZ';MON.push({rt:rt,scr:scr,cam:cmr,k:m})}
+ // fixed camera spots for CAM 01 and CAM 03, and a pool for CAM 02
+ var spots=open.filter(function(o){return !(o[0]>=R0.i0-1&&o[0]<=R0.i0+3&&o[1]>=R0.j0-1&&o[1]<=R0.j0+3)});var camAt=function(c){var best=null;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var n=0;for(var s=1;s<6;s++){var a=c[0]+d[0]*s,b=c[1]+d[1]*s;if(a<0||b<0||a>=W||b>=W||g[a][b])break;n++}if(!best||n>best.n)best={n:n,d:d}});return {x:cc(c[0])-best.d[0]*1.6,z:cc(c[1])-best.d[1]*1.6,yaw:Math.atan2(-best.d[0],-best.d[1])}};
+ var w0=spots.reduce(function(a,c){return c[0]<a[0]||(c[0]==a[0]&&Math.abs(c[1]-20)<Math.abs(a[1]-20))?c:a},spots[0]);MON[0].at=camAt(w0);MON[2].at=camAt([EL.i,EL.j]);
+ R0.pool=[];for(var s=0;s<10;s++){var c2=spots[(rr()*spots.length)|0];R0.pool.push(camAt(c2))}
+ // other stations
+ var st=function(u,v,w,h,d,col,y,lab,fn,id){var m2=new T.Mesh(new T.BoxGeometry(w,h,d),L2(col));var p=P2(u,v);m2.position.set(p[0],y,p[1]);m2.rotation.y=ry(ux,uz);G.add(m2);var q=P2(u+ (u<0?1.2:-1.2)*0+0,v);R0.st=R0.st||[];R0.st.push({x:p[0],z:p[1],lab:lab,fn:fn,id:id,m:m2});return m2};
+ st(-4.6,.6,.8,.5,.5,0x113322,1.05,'Read the classified reports (computer)',reportsP,'pc');
+ st(-4.6,-1.9,.5,.3,.4,0x6a5a3a,.95,'Play the audio log (reel-to-reel)',audioLog,'audio');
+ var tm=st(-1.8,5.7,.9,1.6,.5,0x1a2a1a,.8,'Use the locked terminal',termP,'term');var tsc=new T.Mesh(new T.PlaneGeometry(.6,.4),B2(0x2a6a2a));var tp=P2(-1.8,5.42);tsc.position.set(tp[0],1.25,tp[1]);tsc.rotation.y=ry(-vx,-vz);G.add(tsc);R0.tsc=tsc;
+ st(2.2,5.6,1.2,2,.7,0x4a4e52,1,'Open the containment records cabinet',recordsP,'rec');
+ var pb=new T.Mesh(new T.PlaneGeometry(2.4,1.4),new T.MeshLambertMaterial({map:cvTex(320,190,function(x,w,h){x.fillStyle='#6a4a2a';x.fillRect(0,0,w,h);for(var i=0;i<8;i++){var px=12+(i%4)*76,py=12+(i/4|0)*90;x.fillStyle='#ddd';x.fillRect(px,py,62,78);x.fillStyle='#333';x.fillRect(px+5,py+5,52,52);x.fillStyle='#777';x.beginPath();x.arc(px+31,py+26,12,0,7);x.fill();x.fillRect(px+18,py+38,26,20);x.fillStyle='#a00';x.font='bold 10px monospace';x.fillText('MISSING',px+8,py+72)}x.fillStyle='#ff0';x.font='bold 13px monospace';x.fillText('REMEMBER: QUIET',150,186)})}));var pp=P2(-1.6,-5.85);pb.position.set(pp[0],1.7,pp[1]);pb.rotation.y=ry(vx,vz);G.add(pb);R0.st.push({x:pp[0]+vx*.6,z:pp[1]+vz*.6,lab:'Look at the photographs of missing wanderers',fn:photosP,id:'photo'});
+ var mpb=new T.Mesh(new T.PlaneGeometry(2.4,1.4),new T.MeshLambertMaterial({map:cvTex(320,190,levelMap)}));var mpp=P2(2.4,-5.85);mpb.position.set(mpp[0],1.7,mpp[1]);mpb.rotation.y=ry(vx,vz);G.add(mpb);R0.st.push({x:mpp[0]+vx*.6,z:mpp[1]+vz*.6,lab:'Study the map of the levels',fn:mapP,id:'map'});
+ var wd=new T.Mesh(new T.BoxGeometry(1.4,2.3,.12),new T.MeshLambertMaterial({map:signTex("W-7\nDON'T\nLOOK BACK",'#f33','#1a1a1a','bold 26px monospace',128,200)}));var wp=P2(-4.6,-5.9);wd.position.set(wp[0],1.15,wp[1]);wd.rotation.y=ry(vx,vz);G.add(wd);R0.st.push({x:wp[0]+vx*.7,z:wp[1]+vz*.7,lab:'Open maintenance door W-7',fn:w7,id:'w7'});
+ // the hidden sigil behind the cabinet
+ var sgp=P2(3.3,5.6);R0.sig={x:sgp[0],z:sgp[1]};if(!CR.sigil){var sg=new T.Mesh(new T.CylinderGeometry(.07,.07,.015,12),new T.MeshBasicMaterial({color:0xd8b040}));sg.position.set(sgp[0],.02,sgp[1]);G.add(sg);R0.sigM=sg;R0.st.push({x:sgp[0],z:sgp[1],lab:'Something glints behind the cabinet... pick it up',fn:takeSigil,id:'sigil',hide:1})}
+ // keycards in three different sections of the level
+ var quads=[[0,0],[1,0],[0,1],[1,1]].filter(function(q){return !(q[0]==0&&q[1]==0)});var kr=m32(((HU.run()&&HU.run().id)||SEED)*3+77|0);
+ KC.forEach(function(k,i){if(CR.keys[k[0]])return;var q=quads[i],cs=open.filter(function(o){return (o[0]>=W/2)==!!q[0]&&(o[1]>=W/2)==!!q[1]&&!(o[0]>=R0.i0-1&&o[0]<=R0.i0+3&&o[1]>=R0.j0-1&&o[1]<=R0.j0+3)&&!CL[o[0]*W+o[1]]&&before[o[0]*W+o[1]]});if(!cs.length)cs=open.filter(function(o){return before[o[0]*W+o[1]]});var c3=cs[kr()*cs.length|0];
+  var Gk=new T.Group(),card=new T.Mesh(new T.BoxGeometry(.32,.02,.2),new T.MeshBasicMaterial({map:cvTex(128,80,function(x,w,h){x.fillStyle=k[2];x.fillRect(0,0,w,h);x.fillStyle='#fff';x.fillRect(8,8,30,22);x.fillStyle='#000';x.font='bold 13px monospace';x.fillText(k[1].split(' ')[0],8,58);if(i==0){x.fillStyle='#fff';x.fillRect(0,64,w,6)}if(i==1){x.fillStyle='#ffd700';x.fillRect(86,14,26,20);x.strokeStyle='#a80';x.strokeRect(86,14,26,20)}if(i==2){x.fillStyle='#fff';x.beginPath();for(var s=0;s<5;s++){var a=s*1.2566-PI/2;x.lineTo(100+Math.cos(a)*14,24+Math.sin(a)*14);a+=.628;x.lineTo(100+Math.cos(a)*6,24+Math.sin(a)*6)}x.fill()}})}));Gk.add(card);
+  var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:k[3],blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.7}));gl.scale.set(.9,.9,1);gl.position.y=.08;Gk.add(gl);Gk.position.set(cc(c3[0])+kr()-.5,.06,cc(c3[1])+kr()-.5);scene.add(Gk);KCI.push({k:k,g:Gk,x:Gk.position.x,z:Gk.position.z})});
+ try{[[-4.6,-1.1],[-4.6,0],[-4.6,1.1],[-1.8,5.6],[2.2,5.5]].forEach(function(q){var p=P2(q[0],q[1]);FURN.push({x:p[0],z:p[1],r:.55})})}catch(e){}
+ HU.room=R0}
+function levelMap(x,w,h){x.fillStyle='#e8e0c8';x.fillRect(0,0,w,h);x.strokeStyle='#8a2222';x.lineWidth=1.5;var P3c=[];for(var i=0;i<20;i++){var a=i/20*PI*2,r=62+(i%2)*14;P3c.push([w/2+Math.cos(a)*r*1.5,h/2+Math.sin(a)*r*.9])}
+ x.setLineDash([3,3]);for(var k=0;k<20;k++){x.beginPath();x.moveTo(P3c[k][0],P3c[k][1]);x.lineTo(P3c[(k+7)%20][0],P3c[(k+7)%20][1]);x.stroke()}x.setLineDash([]);x.strokeStyle='#222';for(var k2=0;k2<19;k2++){x.beginPath();x.moveTo(P3c[k2][0],P3c[k2][1]);x.lineTo(P3c[k2+1][0],P3c[k2+1][1]);x.stroke()}
+ P3c.forEach(function(p,i){x.fillStyle='#222';x.beginPath();x.arc(p[0],p[1],7,0,7);x.fill();x.fillStyle='#fff';x.font='bold 8px monospace';x.textAlign='center';x.fillText(i,p[0],p[1]+3)});x.fillStyle='#8a0000';x.beginPath();x.arc(w/2,h/2,10,0,7);x.fill();x.fillStyle='#fff';x.fillText('20?',w/2,h/2+3);x.fillStyle='#8a0000';x.font='bold 9px monospace';x.fillText('"THE PLACE THAT REMEMBERS"',w/2,h-8)}
+function openRoom(silent){var R0=ROOM;if(!R0)return;CR.open=1;hsave();g[R0.di][R0.dj]=0;rebuildWalls();R0.lamp.intensity=1.1;if(!silent){R0.anim=1;bs({f:120,t:'lowpass',d:2.4,v:.9,a:.2});tn({f:60,f2:40,d:2,v:.4});say('The blast door grinds open. A hidden control room.',4)}else{R0.door.position.y=H+1.4}try{if(HU.encDoc)HU.encDoc('cr')}catch(e){}}
+var CRP=null;function crPanel(h){started=false;ELP=true;try{document.exitPointerLock()}catch(e){}pnl(h)}
+function reportsP(){CR.seen.pc=1;hsave();crPanel('<b>ASTER INSTITUTE — CLASSIFIED</b><br><small>Terminal C0-1 · READ ONLY</small><div style="text-align:left;max-height:60vh;overflow:auto;font-size:13px;line-height:1.6"><b>REPORT 0-117 · LOBBY OBSERVATION</b><br>Subject count this cycle: 41. Subjects arrive by "no-clipping" from Baseline Reality. None arrive on purpose. The camera grid in Level 0 is fully operational. Subjects are not to be contacted.<br><br><b>REPORT 0-118 · ENTITY RESPONSE</b><br>The Boiled One responds to observation. It moves less while watched by our cameras. It does not move at all while watched by <i>a subject</i>.<br><br><b>REPORT 0-121 · PROCEDURE</b><br>Staff must follow the <b>PROTOCOL</b> at all times. Lights in observation rooms stay off. Doors stay shut. Nobody speaks.<br><br><b>REPORT 0-130 · INCIDENT</b><br>The camera grid recorded a subject walking out of the Lobby through a wall. The subject was later found on Level 19. The subject\'s footage shows them waving at our camera. Nobody had told them where it was.</div>')}
+function recordsP(){CR.seen.rec=1;hsave();var rows=(typeof MONS!='undefined'?MONS:[]).map(function(m,i){var st=['CONTAINED','BREACHED','UNCONTAINABLE','OBSERVATION ONLY'][(i*7+3)%4];return '<tr><td>E-'+String(i+1).padStart(3,'0')+'</td><td>'+e2(m.n)+'</td><td>'+e2(m.lv)+'</td><td style="color:'+(st=='CONTAINED'?'#9f9':st=='BREACHED'?'#f66':'#fc6')+'">'+st+'</td></tr>'}).join('');
+ crPanel('<b>MONSTER CONTAINMENT RECORDS</b><br><small>Aster Institute · Containment Division · Sub-Level C</small><div style="max-height:55vh;overflow:auto"><table style="font-size:12px;text-align:left;width:100%">'+rows+'</table></div><small style="opacity:.7">Handwritten on the folder: "C-wing breach. The facility below Level 0 is lost. Do NOT open the containment lift."</small>')}
+function photosP(){CR.seen.photo=1;hsave();var names=['Dana Reyes','Marcus Hale','Theo Brandt','June Okafor','Sam Ilves','Priya Natarajan','Wes Corrigan','"subject 0"'];crPanel('<b>MISSING WANDERERS</b><br><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:11px">'+names.map(function(n,i){return '<div style="border:1px solid #555;padding:4px"><div style="height:46px;background:#222;display:flex;align-items:center;justify-content:center;color:#666">▣</div>'+e2(n)+'<br><span style="color:#f77">MISSING</span><br><small>last seen: Level '+[10,10,11,12,14,16,18,0][i]+'</small></div>'}).join('')+'</div><div style="color:#ff6;margin-top:8px">Someone wrote under the photos: <b>"REMEMBER: QUIET"</b></div><small style="opacity:.7">The last photo has no face. Just the Lobby, and someone standing where you are standing now.</small>')}
+function mapP(){CR.seen.map=1;hsave();var c=document.createElement('canvas');c.width=640;c.height=380;var x=c.getContext('2d');x.scale(2,2);levelMap(x,320,190);crPanel('<b>MAP: CONNECTIONS BETWEEN LEVELS</b><br><img src="'+c.toDataURL()+'" style="width:100%;max-width:560px;border:1px solid #555"><br><small>Black lines: routes the wanderers took. Red dotted lines: routes the Institute marked as "do not record". They all cross in the middle, at a level that is not numbered.</small>')}
+function audioLog(){CR.seen.audio=1;hsave();var L3=['[Tape hiss. A man clears his throat.]','Dr. Halloran, Aster Institute, Control Zero. Log forty-one.','We built this room to watch them. The cameras see everything in the Lobby.','The experiment was supposed to keep the entities in their levels. Contain them. Study them.','Last night, the containment lift came up on its own. Empty.','If anyone finds this: the terminal phrase has three words. The second word is ROOM.','[Something knocks on the blast door. Three times.]','...it is not supposed to know where this room is.'];
+ crPanel('<b>AUDIO LOG 41</b><br><div id="hu-alog" style="text-align:left;font-size:13px;line-height:1.7;min-height:150px"></div><small style="opacity:.7">Fictional recording. Captions shown even when sound is off.</small>');var i=0,el=document.getElementById('hu-alog');var nx=function(){if(!el||!el.isConnected)return;if(i>=L3.length)return;el.innerHTML+=e2(L3[i])+'<br>';try{if(window.speechSynthesis&&!muted&&L3[i][0]!='['){var u=new SpeechSynthesisUtterance(L3[i]);u.pitch=.7;u.rate=.9;u.volume=SET.ra?.4:.8;speechSynthesis.speak(u)}}catch(e){}i++;setTimeout(nx,i==7?1800:2600)};nx();if(L3)bs({f:3000,q:.3,d:.6,v:.05})}
+var PAGES=[[0,'LOG 1 — WELCOME','You are reading this because you found three keycards and three words. Congratulations: you are observant. The Institute watches the Backrooms through cameras like the ones on these monitors. There are cameras in every level. Some of them are not ours.'],
+ [5,'LOG 2 — THE WANDERERS','We have records of every wanderer since 1994. We record their names, their routes, how long they last. We never help. Helping changes the data. Dana Reyes\' group was the largest we ever recorded. They almost made it out.'],
+ [10,'LOG 3 — WHO IS WATCHING US','Cameras on Level 15 recorded our own staff walking the red hallways. None of our staff were on Level 15. Someone else runs a camera grid down here, and it is pointed at us.'],
+ [19,'LOG 4 — THE PLACE THAT REMEMBERS','Every route crosses at a level with no number. It remembers everyone who walked the Backrooms. We think it remembers you too. To find it you need the marks left on Levels 0 to 18, the tapes, and the sigil we hid in this room.']];
+function termP(msg){CR.seen.term=1;hsave();if(!CR.pw){crPanel('<b>TERMINAL C0-2 — LOCKED</b><br><small>ACCESS PHRASE REQUIRED (3 words). Every word is somewhere in this room.</small><br><br><input id="hu-pw" maxlength="40" autocomplete="off" placeholder="type the access phrase" style="width:80%"><div style="color:#f66;min-height:18px">'+e2(msg||'')+'</div><span class="ch" data-hu2="pw">UNLOCK</span>');setTimeout(function(){var i=document.getElementById('hu-pw');if(i){i.focus();i.onkeydown=function(e){e.stopPropagation();if(e.key=='Enter')tryPw()}}},50);return}
+ var got=(SV.done||[]).length,mx=Math.max(SV.max|0,got);crPanel('<b>TERMINAL C0-2 — ASTER INSTITUTE</b><div style="text-align:left;max-height:58vh;overflow:auto;font-size:13px;line-height:1.6">'+PAGES.map(function(p){var ok=mx>=p[0];return '<div style="margin:8px 0;border-bottom:1px solid #333"><b>'+(ok?e2(p[1]):'LOG ENCRYPTED')+'</b><br>'+(ok?e2(p[2]):'<span style="opacity:.6">Decrypts when you have reached Level '+p[0]+'.</span>')+'</div>'}).join('')+'<div style="color:#9cf">MAINTENANCE DOOR W-7: '+(CR.w7?'OPEN':'UNLOCKED — "the Watcher corridor"')+'</div></div>')}
+function tryPw(){var i=document.getElementById('hu-pw');if(!i)return;var v=String(i.value||'').toUpperCase().replace(/[^A-Z]/g,'');if(v=='QUIETROOMPROTOCOL'){CR.pw=1;hsave();tn({f:660,f2:1320,d:.4,v:.15});HU.raw=1;try{addCash(100,'Unlocked the control room terminal')}finally{HU.raw=0}termP()}else{CR.tries=(CR.tries||0)+1;hsave();termP('ACCESS DENIED'+(CR.tries>=3?' — hint: one word is on the photo board, one is in the audio log, one is in the reports.':''))}}
+function w7(){if(!CR.pw){say('Door W-7 is sealed. The terminal controls it.',3);return}CR.w7=1;hsave();say("W-7 opens onto a long, dark corridor...",2);setTimeout(function(){dlbChallenge('cr')},300)}
+function takeSigil(st){CR.sigil=1;hsave();if(ROOM&&ROOM.sigM)ROOM.sigM.visible=false;st.done=1;HU.toast('✦ FOUND: THE ARCHIVIST\'S SIGIL — part of a secret ending','#fc6');HU.raw=1;try{addCash(50,'Found the Archivist\'s Sigil')}finally{HU.raw=0}}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu2]');if(!el)return;e.stopPropagation();if(el.dataset.hu2=='pw')tryPw()},true);
+try{buildRoom()}catch(e){console.error('control room',e)}
+// Level 19: an extra entrance to the Watcher corridor
+var W7B=null;function placeW7(){if(LVL!=19)return;var cells=open.filter(function(o){var q=Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1));return q>10&&q<30&&!CL[o[0]*W+o[1]]});if(!cells.length)return;var c=cells[(SEED%cells.length+cells.length)%cells.length];var G=new T.Group();var d=new T.Mesh(new T.BoxGeometry(1.4,2.3,.12),new T.MeshLambertMaterial({map:signTex("W-7\nDON'T\nLOOK BACK",'#f33','#1a1a1a','bold 26px monospace',128,200)}));d.position.y=1.15;G.add(d);G.position.set(cc(c[0]),0,cc(c[1]));scene.add(G);W7B={x:cc(c[0]),z:cc(c[1]),g:G}}
+try{placeW7()}catch(e){}
+// interaction + per-frame
+var CAMI=0;
+addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;var hit=false;
+ if(FX0&&Math.hypot(FX0.x-P.x,FX0.z-P.z)<2.2){hit=true;var fk=FX0;var r=HU.run();if(r){r.fx=r.fx||{};r.fx[LVL]='used';hsave()}scene.remove(fk.g);FX0=null;say('The EXIT door opens...',1);setTimeout(function(){falseReality(fk.kind,null)},250)}
+ else if(W7B&&Math.hypot(W7B.x-P.x,W7B.z-P.z)<2){hit=true;dlbChallenge('l19')}
+ else if(ROOM){var R0=ROOM;if(!CR.open&&Math.hypot(R0.dout.x-P.x,R0.dout.z-P.z)<2.6){hit=true;var n=KC.filter(function(k){return CR.keys[k[0]]}).length;if(n>=3)openRoom();else{say('RESTRICTED. Needs 3 keycards ('+n+'/3): '+KC.map(function(k){return (CR.keys[k[0]]?'✔ ':'✖ ')+k[1]}).join(', '),5);tn({t:'square',f:220,d:.2,v:.08})}}
+  else if(CR.open&&R0.st){var best=null,bd=2;R0.st.forEach(function(s){if(s.done)return;var d=Math.hypot(s.x-P.x,s.z-P.z);if(d<bd){bd=d;best=s}});if(best){hit=true;best.fn(best)}}}
+ if(hit){e.stopImmediatePropagation();e.preventDefault()}},true);
+var lastT=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lastT)/1000);lastT=n;try{
+ KCI.forEach(function(k){if(!k.g.visible)return;k.g.rotation.y+=dt*1.5;if(playing()&&Math.hypot(k.x-P.x,k.z-P.z)<1.3){k.g.visible=false;CR.keys[k.k[0]]=1;hsave();var c=KC.filter(function(q){return CR.keys[q[0]]}).length;say('Picked up: '+k.k[1]+' ('+c+'/3). '+(c<3?'Two more open something in this level...':'All three. Somewhere in the Lobby there is a door that wants them.'),5);tn({f:700,f2:1100,d:.25,v:.18})}});
+ if(ROOM){var R0=ROOM;R0.slots.forEach(function(s,i){s.material.color.setHex(CR.keys[KC[i][0]]?KC[i][3]:0x220000)});if(R0.anim){R0.door.position.y=Math.min(H+1.4,R0.door.position.y+dt*1.2);if(R0.door.position.y>=H+1.4)R0.anim=0}
+  if(playing()&&CR.open){var inR=Math.abs(P.x-R0.cx)<6&&Math.abs(P.z-R0.cz)<6;if(inR&&!CR.found){CR.found=1;hsave();HU.toast('📍 SECRET CONTROL ROOM DISCOVERED','#9cf')}
+   if(inR&&R0.st&&msgT<=0){var bst=null,bd=2;R0.st.forEach(function(s){if(s.done)return;var d=Math.hypot(s.x-P.x,s.z-P.z);if(d<bd&&!(s.hide&&d>1.4)){bd=d;bst=s}});if(bst)say('[F] '+bst.lab,.1)}
+   if(R0.tsc)R0.tsc.material.color.setHex(CR.pw?(Math.sin(n/300)>0?0x33aa55:0x228844):(Math.sin(n/500)>0?0x2a6a2a:0x0a2a0a))}
+  if(playing()&&!CR.open&&Math.hypot(R0.dout.x-P.x,R0.dout.z-P.z)<2.6&&msgT<=0)say('[F] RESTRICTED blast door — keycard reader',.1)}
+ if(playing()&&FX0&&Math.hypot(FX0.x-P.x,FX0.z-P.z)<2.2&&msgT<=0)say('[F] EXIT',.1);
+ if(playing()&&W7B&&Math.hypot(W7B.x-P.x,W7B.z-P.z)<2&&msgT<=0)say("[F] Maintenance door W-7 — the Don't Look Back challenge",.1);
+ }catch(e){if(!tick.e){tick.e=1;console.error('HU2a tick',e)}}})();
+// live game cameras on the control-room monitors (rendered just before each frame)
+var oP=window.PFX;window.PFX=function(s,c){try{if(ROOM&&CR.open&&MON.length&&typeof started!='undefined'&&(started||MENU)&&Math.abs(P.x-ROOM.cx)<16&&Math.abs(P.z-ROOM.cz)<16){var m=MON[CAMI%3];CAMI++;var at=m.at;
+  if(m.k==1){var best=null,bd=1e9;ROOM.pool.forEach(function(p){var d=Math.hypot(p.x-M.x,p.z-M.z);if(d<bd&&los(p.x,p.z,M.x,M.z)){bd=d;best=p}});at=best;if(at){m.cam.position.set(at.x,2.75,at.z);m.cam.lookAt(M.x,1.2,M.z)}}else if(at){m.cam.position.set(at.x,2.75,at.z);m.cam.rotation.set(-.32,at.yaw,0)}
+  if(at){MON.forEach(function(q){q.scr.visible=false});var sl2=sp.intensity,sl3=sp2.intensity;sp.intensity=0;sp2.intensity=0;ren.setRenderTarget(m.rt);ren.render(s,m.cam);ren.setRenderTarget(null);sp.intensity=sl2;sp2.intensity=sl3;MON.forEach(function(q){q.scr.visible=true})}}}catch(e){try{ren.setRenderTarget(null)}catch(x){}}
+ if(oP)oP(s,c);else ren.render(s,c)};
+// inventory shows the control-room keycards
+var oInv=window.invP;if(typeof oInv=='function'){invP=function(){var r=oInv.apply(this,arguments);try{var pn=MB.querySelector('.pn');if(pn){var n=KC.filter(function(k){return CR.keys[k[0]]});pn.insertAdjacentHTML('beforeend','<div style="margin-top:6px"><b>KEYCARDS (saved):</b> '+(n.length?n.map(function(k){return '<span style="color:'+k[2]+'">▮ '+k[1]+'</span>'}).join(' · '):'<span style="opacity:.6">none</span>')+(CR.sigil?'<br><span style="color:#fc6">✦ The Archivist\'s Sigil</span>':'')+'</div>')}}catch(e){}return r}}
+HU.crGive=function(){KC.forEach(function(k){CR.keys[k[0]]=1});hsave();KCI.forEach(function(k){k.g.visible=false});return 'All 3 control-room keycards given.'};
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 2B: the Copycat's new AI, Lost Wanderers VHS expansion, monster encyclopedia, the creature beneath the water ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead}
+function cvTex(w,h,f){var c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return new T.CanvasTexture(c)}
+function fwd(){return [-Math.sin(P.yaw),-Math.cos(P.yaw)]}
+function inView(x,z,c){var f=fwd(),dx=x-P.x,dz=z-P.z,d=Math.hypot(dx,dz)||1;return (f[0]*dx+f[1]*dz)/d>(c||.85)&&los(P.x,P.z,x,z)}
+// =====================================================================
+// 17. ENCOUNTER TRACKING (used by the encyclopedia)
+// =====================================================================
+HD.enc=HD.enc||{};HD.encDocs=HD.encDocs||{};
+function enc(id){return HD.enc[id]=HD.enc[id]||{n:0,e:0,first:null}}
+var lvMon=LVL>=3&&typeof MP!='undefined'&&MP[LVL]?'m'+LVL:CF.tile?'water':CF.bal?'party':'boiled';
+var ENC={chase:false,last:0,seenLvl:false};
+HU.encEsc=function(id){var e=enc(id);e.e++;hsave()};HU.encDoc=function(k){HD.encDocs[k]=1;hsave()};
+function encTick(dt){if(!playing())return;var ch=M.state=='chase'||(lm&&LM.st=='hunt');var now=performance.now()/1000;
+ if(ch&&!ENC.chase){if(now-ENC.last>20){var e=enc(lvMon);e.n++;if(!e.first)e.first=LVL;ENC.last=now;hsave()}ENC.seenLvl=true}
+ if(!ch&&ENC.chase&&!P.dead){var e2_=enc(lvMon);e2_.e++;hsave()}ENC.chase=ch;
+ if(GR.on&&!ENC.grin){ENC.grin=1;var g2=enc('grin');g2.n++;if(g2.first==null)g2.first=LVL;hsave()}if(!GR.on&&ENC.grin&&!P.dead){ENC.grin=0;enc('grin').e++;hsave()}}
+var oDisc=disc;disc=function(id){var e=enc(id);if(!e.n){e.n=1;e.first=LVL;hsave()}return oDisc.apply(this,arguments)};
+var oNx=nextLv;nextLv=function(){try{if(ENC.seenLvl){enc(lvMon).e++;hsave()}}catch(e){}return oNx.apply(this,arguments)};
+// =====================================================================
+// 1. THE COPYCAT — ten-state AI on Level 5, learns from how you play
+// =====================================================================
+var CC=HU.CC={st:'idle',t:0,L:{t:0,spr:0,fl:0,hide:0,cr:0},adapt:{},mimT:30+RND()*20,lisT:18+RND()*15,fig:null,wind:0,lunge:0,stalkT:0,ret:0,lost:0,stp:0,dst:0};
+var CCS=['IDLE','PATROL','LISTEN','INVESTIGATE','MIMIC','STALK','CHASE','ATTACK','SEARCH','RETREAT'];
+if(LVL==5&&lm){
+ var BASE5={sg:MP[5].sg,hr:MP[5].hr};
+ // a copied appearance: the player's own suit colour, or a lost wanderer's jacket
+ var mkFig=function(){var G=new T.Group(),sc2=0x2a3a5a;try{var s=SUITS.find(function(q){return q.id==SUIT});if(s)sc2=new T.Color(s.c).getHex()}catch(e){}
+  var col=RND()<.5?sc2:[0x6a3a2a,0x2a4a3a,0x5a5a2a][RND()*3|0],m=function(c){return new T.MeshLambertMaterial({color:c})},b=function(w,h,d,x,y,mt){var q=new T.Mesh(new T.BoxGeometry(w,h,d),mt);q.position.set(x,y,0);G.add(q);return q};
+  G.userData.legs=[b(.16,.85,.18,-.1,.43,m(0x22252a)),b(.16,.85,.18,.1,.43,m(0x22252a))];b(.46,.62,.26,0,1.17,m(col));G.userData.head=b(.24,.27,.25,0,1.62,m(0xb89070));G.userData.arms=[b(.11,.66,.13,-.3,1.12,m(col)),b(.11,.66,.13,.3,1.12,m(col))];
+  // the tell: eyes that catch the light
+  var em=new T.MeshBasicMaterial({color:0xfff8e0});G.userData.eyes=[-.05,.05].map(function(x){var q=new T.Mesh(new T.BoxGeometry(.03,.02,.01),em);q.position.set(x,1.65,.13);G.add(q);return q});
+  G.visible=false;scene.add(G);G.userData.col=col;return G};
+ CC.fig=mkFig();
+ var oNoise=noise;noise=function(r){if(LVL==5&&CC.adapt.spr&&r>=18)r*=1.35;if(LVL==5&&CC.st=='listen')r*=1.8;return oNoise.call(this,r)};
+ var ccSay=function(t,s){HU.cap&&HU.cap(t,s||2.5)};
+ var setSt=function(s){if(CC.st==s)return;CC.st=s;CC.t=0};
+ var showFig=function(on){CC.fig.visible=on;lm.visible=!on;if(on){CC.fig.position.set(M.x,0,M.z)}};
+ var goFar=function(){var c=open.filter(function(o){return Math.hypot(cc(o[0])-P.x,cc(o[1])-P.z)>26&&!CL[o[0]*W+o[1]]});var t=c[RND()*c.length|0];if(t)lmGo(t[0],t[1])};
+ var fakeSteps=function(){var a=RND()*6.28,dd=7+RND()*6,x=P.x+Math.cos(a)*dd,z=P.z+Math.sin(a)*dd;snd(function(){var o=P3(x,z,.2,false);for(var i=0;i<4;i++)setTimeout(function(){step(o,.35,false)},i*450)});ccSay('[footsteps in the next corridor]',2)};
+ var fakeBlip=function(){if(!P.scan)return;var a=RND()*6.28,q=6+RND()*10;RB.b.push({x:Math.cos(a)*q,z:Math.sin(a)*q,d:q,u:1});RB.a=1};
+ var oU5=updLM;updLM=function(dt){if(LVL!=5||!lm)return oU5.apply(this,arguments);var d=Math.hypot(P.x-M.x,P.z-M.z),vis=!P.hide&&d<MP[5].sg&&los(M.x,M.z,P.x,P.z),md=HU.mode(),mul=md.spd||1;CC.t+=dt;
+  // learning: what does this player do a lot?
+  var L=CC.L;if(playing()){L.t+=dt;if(K.ShiftLeft&&(P.spd||0)>3.5)L.spr+=dt;if(P.fl&&P.bat>0)L.fl+=dt;if(P.hide)L.hide+=dt;if(P.h<1.35)L.cr+=dt}
+  if(L.t>40){if(!CC.adapt.spr&&L.spr/L.t>.22){CC.adapt.spr=1;HU.toast('The Copycat has learned: it LISTENS for sprinting now.','#d8a0ff')}if(!CC.adapt.fl&&L.fl/L.t>.7){CC.adapt.fl=1;HU.toast('The Copycat has learned: it WATCHES for your flashlight now.','#d8a0ff')}if(!CC.adapt.hide&&L.hide/L.t>.12){CC.adapt.hide=1;HU.toast('The Copycat has learned: it CHECKS hiding spots now.','#d8a0ff')}}
+  MP[5].sg=BASE5.sg*(md.per||1)+(CC.adapt.fl&&P.fl&&P.bat>0?7:0);MP[5].hr=BASE5.hr*(md.per||1);
+  // clue: interference when it is close
+  if(d<18&&RND()<dt*.6&&RB.sd<=0)RB.sd=.35;
+  var custom=['listen','mimic','stalk','attack','retreat'].indexOf(CC.st)>=0;
+  if(!custom){var r=oU5.apply(this,arguments);
+   var b=LM.st;CC.st=b=='hunt'?'chase':b=='invest'||b=='susp'?'investigate':b=='search'||b=='cool'?'search':(LM.path.length?'patrol':'idle');
+   if(P.dead)return r;
+   // the hunt never ends in an instant kill: it always winds up first
+   if(CC.st=='chase'&&d<4.2&&vis){CC.st='attack';CC.wind=md==HU.MODES.casual?1.4:1;CC.t=0;CC.ax=P.x;CC.az=P.z;tn({t:'sawtooth',f:500,f2:1800,d:.9,v:SET.ra?.12:.3,lp:4000});ccSay('[the Copycat SHRIEKS — it is about to lunge]',2);return r}
+   if(CC.st=='chase'&&!vis){CC.lost+=dt;if(CC.lost>3&&RND()<.5){CC.lost=0;setSt('stalk');CC.stalkT=14+RND()*10;LM.st='cool';LM.cool=999}}else CC.lost=0;
+   if(CC.st=='chase'&&d<10&&RND()<dt*.05&&HU.hallucinate)HU.hallucinate(RND()<.5?'flash':'steps');
+   if(CC.adapt.hide&&P.hide&&d<9&&(CC.st=='search'||CC.st=='investigate'))M.knows=true;
+   if(CC.st=='idle'||CC.st=='patrol'){CC.lisT-=dt;CC.mimT-=dt;
+    if(CC.lisT<=0){CC.lisT=25+RND()*20;setSt('listen');LM.path=[];ccSay('[the footsteps stop... it is listening]',3)}
+    else if(CC.mimT<=0&&d>14&&d<40&&!vis){CC.mimT=35+RND()*25;setSt('mimic');CC.fig.remove&&0;scene.remove(CC.fig);CC.fig=mkFig();showFig(true);CC.mim={dur:22,stood:0,lit:0};if(RND()<.6){snd(function(){var o=P3(M.x,M.z,1.4,false);[0,350,800].forEach(function(t){setTimeout(function(){tone({t:'triangle',f:420,f2:300,d:.3,v:.12,lp:1200,out:o})},t)})});ccSay('[someone calls for help nearby]',3);HU.notify&&HU.notify('Wanderer?','help... i\'m on Level 5 too. come find me.')}}}
+   return r}
+  // ---- custom states ----
+  var st=CC.st;
+  if(LM.stun>0){showFig(false);setSt('idle');return oU5.apply(this,arguments)}
+  if(st=='listen'){lm.rotation.y+=Math.sin(CC.t*3)*dt*.6;if(LM.st=='susp'||LM.st=='invest'||LM.st=='hunt'){setSt('investigate');return}if(d<1.6&&!P.hide){CC.st='attack';CC.t=0;CC.wind=1;CC.ax=P.x;CC.az=P.z;tn({t:'sawtooth',f:500,f2:1800,d:.9,v:SET.ra?.12:.3,lp:4000});return}if(CC.t>4){setSt('idle');LM.st='idle'}}
+  else if(st=='mimic'){var m=CC.mim,f=CC.fig;m.dur-=dt;f.position.set(M.x,0,M.z);f.rotation.y=Math.atan2(P.x-M.x,P.z-M.z);
+   // walks closer, then stands perfectly still like a person waiting... without a single footstep
+   if(d>9&&!LM.path.length)lmGo(ce(P.x),ce(P.z));if(d>8){lmWalk(dt,1.5*mul);f.userData.legs.forEach(function(q,i){q.rotation.x=Math.sin(CC.t*7+i*3)*.5})}else{LM.path=[];m.stood+=dt;f.userData.legs.forEach(function(q){q.rotation.x=0})}
+   f.userData.head.rotation.z=Math.sin(CC.t*23)*.12*(RND()<.2?1:0);f.userData.eyes.forEach(function(q){q.visible=RND()<.12||(P.fl&&inView(M.x,M.z,.95))});
+   if(RND()<dt*.4)fakeBlip();if(RND()<dt*.15)fakeSteps();
+   if(P.fl&&P.bat>0&&inView(M.x,M.z,.96)&&d<16)m.lit+=dt;
+   if(d<5||m.lit>1.1){showFig(false);CC.st='attack';CC.t=0;CC.wind=1.1;CC.ax=P.x;CC.az=P.z;tn({t:'sawtooth',f:300,f2:2000,d:1,v:SET.ra?.12:.32,lp:4000});ccSay('[the figure\'s face splits open — it was the Copycat]',3);return}
+   if(m.dur<=0||(d<12&&RND()<dt*.15&&!inView(M.x,M.z))){showFig(false);tele();setSt('retreat');CC.ret=6;goFar();ccSay('[the figure is gone]',2)}}
+  else if(st=='stalk'){CC.stalkT-=dt;var seen=inView(M.x,M.z,.82);
+   if(seen&&d<20){var dx=M.x-P.x,dz=M.z-P.z;var c=open.filter(function(o){var q=Math.hypot(cc(o[0])-P.x,cc(o[1])-P.z);return q>12&&q<18&&!los(P.x,P.z,cc(o[0]),cc(o[1]))&&!CL[o[0]*W+o[1]]})[0];if(c&&!CC.duck){CC.duck=1;lmGo(c[0],c[1])}lmWalk(dt,4.5*mul)}else{CC.duck=0;if(d>14){if(!LM.path.length||RND()<dt)lmGo(ce(P.x),ce(P.z));lmWalk(dt,2.6*mul)}}
+   CC.dst-=dt;if(CC.dst<=0){CC.dst=3+RND()*3;fakeSteps();fakeBlip()}
+   if(d<7&&los(M.x,M.z,P.x,P.z)&&!P.hide||CC.stalkT<=0){if(d<12&&!P.hide){CC.st='attack';CC.t=0;CC.wind=md==HU.MODES.casual?1.4:1;CC.ax=P.x;CC.az=P.z;tn({t:'sawtooth',f:500,f2:1800,d:.9,v:SET.ra?.12:.3,lp:4000});ccSay('[the Copycat SHRIEKS — it is about to lunge]',2)}else{setSt('idle');LM.st='idle'}}}
+  else if(st=='attack'){lm.visible=true;CC.fig.visible=false;if(CC.wind>0){CC.wind-=dt;lm.rotation.y=Math.atan2(P.x-M.x,P.z-M.z);lm.position.y=Math.sin(CC.t*40)*.04;if(CC.wind<=0){CC.lunge=1.1;CC.ax=P.x;CC.az=P.z}}
+   else{CC.lunge-=dt;var dx2=CC.ax-M.x,dz2=CC.az-M.z,L2=Math.hypot(dx2,dz2);if(L2>.3){var sp=7.5*mul*dt;M.x+=dx2/L2*Math.min(sp,L2);M.z+=dz2/L2*Math.min(sp,L2)}lm.position.set(M.x,0,M.z);if(d<1.25&&!P.hide){GR.k=5;GR.m='The Copycat';die();return}
+    if(CC.lunge<=0||L2<=.3){setSt('retreat');CC.ret=7;goFar();ccSay('[it missed — it backs away into the dark]',2.5)}}
+   var U=lm.userData;U.arms.forEach(function(a,i){a.rotation.x=-1.3+Math.sin(CC.t*30+i)*.2})}
+  else if(st=='retreat'){CC.ret-=dt;lmWalk(dt,4*mul);lm.position.set(M.x,0,M.z);if(CC.ret<=0){setSt('idle');LM.st='idle';LM.path=[]}}
+  if(st!='mimic'&&st!='attack'){lm.position.set(M.x,0,M.z);var mv=LM.path.length?1:.2,U2=lm.userData,tt=P.t*4;U2.arms.forEach(function(a,i){a.rotation.x=Math.sin(tt+i*3.14)*.7*mv});U2.legs.forEach(function(a,i){a.rotation.x=Math.sin(tt+i*3.14)*.6*mv})}
+  M.state=st=='attack'?'chase':'patrol';
+};
+ HU.ccState=function(){return CC.st.toUpperCase()}}
+// =====================================================================
+// 6. LOST WANDERERS VHS EXPANSION
+// =====================================================================
+var VT={
+ v0:{lv:0,fixed:1,t:'TAPE 00 — "ORIENTATION"',l:['[A camcorder turns on. Yellow wallpaper. Buzzing lights.]','This is Dana Reyes. Day one. We fell through a wall in a parking garage and woke up here.','There are six of us. Marcus, Theo, June, Sam, Priya and me.','There are cameras in the ceiling. Little red lights. Somebody is watching this place.','If you found this tape: you are not the first. Keep moving. Do not stay in the dark.'],n:'The first tape. Dana\'s group arrives in the Lobby.',c:'"There are cameras in the ceiling." Someone built a camera grid in Level 0.'},
+ v1:{lv:1,t:'TAPE 01 — "WAREHOUSE"',l:['[Dripping water. Concrete.]','Theo found puddles that go much deeper than they look.','Something moved under the water when June laughed. We stopped laughing.','Theo says the yellow crates have supplies. Some of them have names written on them. Ours.'],n:'Level 1. Something lives in the water.',c:'The crates had the wanderers\' names on them before they arrived.'},
+ v2:{lv:2,t:'TAPE 02 — "THE PARTY"',l:['[Muffled music. Balloons squeaking.]','We found a party. Nobody was at the party. Then everybody was.','They do not walk like people. Crouch. Stay low. They only look for standing people.','Sam said "happy birthday" back to one of them. We had to leave Sam there.'],n:'Level 2. The first wanderer is lost.',c:'Sam was left on Level 2.',danger:1},
+ v3:{lv:3,t:'TAPE 03 — "ROOM SERVICE"',l:['[A long hotel corridor. A bell rings.]','Three knocks. Every time. Then the door opens itself.','Priya hid in a wardrobe and it walked right past her. It cannot see in the wardrobes.','The guestbook at the front desk has every one of our names in it. In our handwriting.'],n:'Level 3. The Bellhop and the guestbook.',c:'Their names were already in the guestbook.'},
+ v4:{lv:4,t:'TAPE 04 — "HALL PASS"',l:['[School bells. A PA system hums.]','The PA system called our names. All six, even Sam.','The lockdown lights are a warning. You have a few seconds. Use them.','There is a staff room with a camera monitor. It showed us. Live. From behind.'],n:'Level 4. A monitor that watched them.',c:'Someone else had a live feed of the group.'},
+ v5:{lv:5,t:'TAPE 05 — "THE COPYCAT"',l:['[Static. Then a voice: Dana\'s, but wrong.]','This is Dana. This is Dana. This is Dana.','[The real Dana, whispering:] That was not me. It copied my voice from the last tape.','It copies people. Look at the eyes. If they shine in your light, it is not a person.','It learns. When Theo kept running, it started to listen for running.'],n:'Level 5. The Copycat learns how you move.',c:'The Copycat\'s eyes catch the light. Real people\'s do not.',danger:1},
+ v6:{lv:6,t:'TAPE 06 — "TREELINE"',l:['[Wind through branches. Something cracks.]','A forest. Underground. With a road through it.','If you stand still too long, the trees close in. Keep moving.','June saw a light between the trees. We did not follow it. June did.'],n:'Level 6. June follows a light.',c:'Standing still in the forest is how the Treestalker finds you.'},
+ v7:{lv:7,t:'TAPE 07 — "LAST TRAIN"',l:['[Train brakes. A conductor\'s whistle, underwater.]','The train is flooded but it still runs. Something punches the tickets.','Warning lights flash before it charges. Every time. Count to two and move.','Marcus thinks the Institute is the one leaving these tapes. Not us.'],n:'Level 7. The Drowned Conductor.',c:'"The Institute" is mentioned for the first time.'},
+ v8:{lv:8,t:'TAPE 08 — "NIGHT SHIFT"',l:['[A heart monitor. Flat line, then a beep.]','A hospital. The beds are made. The charts have our blood types.','The nurse sees your flashlight from the other end of the ward. Keep it off when you can.','We found an Aster Institute badge on a chair. Dr. Halloran. Control Zero.'],n:'Level 8. A name: Dr. Halloran.',c:'Dr. Halloran worked at "Control Zero" — Level 0.'},
+ v9:{lv:9,t:'TAPE 09 — "THE NULL"',l:['[Silence. Total silence.]','There is nothing here. Nothing at all. Do not trust the exits.','Two of the doors were paintings. The third one was real.','I can hear Sam. I can hear Sam calling from Level 2. That is not possible.','[Dana, very quietly:] I think the Backrooms remember everyone who has walked through them.'],n:'Level 9. "The Backrooms remember."',c:'The Backrooms remember everyone. A level that remembers?',danger:1}};
+HD.vhs=HD.vhs||{};HD.fut=HD.fut||{};var VS=HD.vhs;
+function vs(id){return VS[id]=VS[id]||{d:0,c:0,p:0}}
+var TAPE=null,TV=null;
+function placeTape(){if(LVL>9)return;var id='v'+LVL,v=VT[id],s=vs(id);if(s.c)return;var c=null;
+ if(v.fixed){c=[3,2];if(g[3]&&g[3][2])c=[2,3]}else{var r=HU.run(),rr=m32(((r&&r.id)||SEED)*17+LVL*911|0),cs=open.filter(function(o){var q=Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1));return q>14&&!CL[o[0]*W+o[1]]&&!(o[0]==EL.i&&o[1]==EL.j)});c=cs[rr()*cs.length|0]}
+ if(!c)return;var G=mkTape();G.position.set(cc(c[0])+.6,.08,cc(c[1])-.4);scene.add(G);var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0x66ccff,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.5}));gl.scale.set(.8,.8,1);gl.position.copy(G.position);gl.position.y=.15;scene.add(gl);TAPE={id:id,g:G,gl:gl,x:G.position.x,z:G.position.z}}
+function placeTV(){if(LVL>9&&LVL!=0)return;var cs=open.filter(function(o){var q=Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1));return q>6&&q<16&&!CL[o[0]*W+o[1]]});if(LVL==0&&HU.room&&HU.cr&&HU.cr.open){}var c=cs[(SEED%Math.max(1,cs.length)+cs.length)%Math.max(1,cs.length)];if(!c)return;
+ var G=new T.Group(),bm=function(c2){return new T.MeshLambertMaterial({color:c2})};var st=new T.Mesh(new T.BoxGeometry(.9,.6,.5),bm(0x3a2a1a));st.position.y=.3;G.add(st);var tv=new T.Mesh(new T.BoxGeometry(.7,.55,.55),bm(0x222222));tv.position.y=.88;G.add(tv);var scr=new T.Mesh(new T.PlaneGeometry(.55,.42),new T.MeshBasicMaterial({color:0x223322}));scr.position.set(0,.88,.28);G.add(scr);var vcr=new T.Mesh(new T.BoxGeometry(.6,.1,.4),bm(0x111111));vcr.position.set(0,.65,.05);G.add(vcr);
+ G.position.set(cc(c[0])+1,0,cc(c[1])+1);if(solid(G.position.x,G.position.z))G.position.set(cc(c[0]),0,cc(c[1]));G.rotation.y=RND()*6.28;scene.add(G);TV={g:G,scr:scr,x:G.position.x,z:G.position.z};try{FURN.push({x:TV.x,z:TV.z,r:.5})}catch(e){}}
+try{placeTape();placeTV()}catch(e){console.error('vhs',e)}
+// the TV: play collected tapes, archive them
+function tvP(msg){started=false;ELP=true;try{document.exitPointerLock()}catch(e){}var ids=Object.keys(VT).filter(function(k){return vs(k).c});
+ pnl('<b>📺 VCR — PLAY A TAPE</b><br><small>Tapes you play here are archived in VHS ARCHIVE on your phone.</small>'+(msg?'<div style="color:#9f9">'+e2(msg)+'</div>':'')+'<div style="text-align:left;margin:8px 0">'+(ids.length?ids.map(function(k){var s=vs(k);return '<div style="margin:5px 0"><span class="ch" data-hu3="play:'+k+'">▶ '+e2(VT[k].t)+'</span> <small>'+(s.p?'<span style="color:#9f9">archived</span>':'<span style="color:#fc6">not played</span>')+(VT[k].danger?' · <span style="color:#f77">disturbing</span>':'')+'</small></div>'}).join(''):'<i>No tapes yet. Find VHS tapes on Levels 0-9 (they glow blue).</i>')+'</div>')}
+var VP=null;
+function playTape(id){ELP=false;closeP();started=false;var v=VT[id];if(!v)return;var fut=null;
+ // a rare future recording follows some tapes
+ if(!HD.fut.used||HD.fut.used<4){var c=Object.keys(VT).filter(function(k){return vs(k).c}).length;if(c>=2&&RND()<.35)fut=pickFuture()}
+ var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer';var cv=document.createElement('canvas');cv.width=640;cv.height=360;cv.style.cssText='width:min(92vw,960px);aspect-ratio:16/9;image-rendering:pixelated;border:2px solid #222';ov.appendChild(cv);var sb=document.createElement('div');sb.style.cssText='color:#fff;font:16px monospace;margin-top:10px;max-width:90vw;text-align:center;min-height:44px';ov.appendChild(sb);var hint=document.createElement('div');hint.style.cssText='color:#777;font:12px monospace;margin-top:6px';hint.textContent='click to skip';ov.appendChild(hint);document.body.appendChild(ov);
+ var x=cv.getContext('2d'),C=LV[v.lv]||CF,lines=v.l.slice(),t0=performance.now(),dur=lines.length*3.2,done=false,shot=null;
+ // the footage: the real level, seen from a camera where the tape was recorded, if you are on that level
+ try{if(v.lv==LVL){var rt=new T.WebGLRenderTarget(320,180),cm2=new T.PerspectiveCamera(65,16/9,.1,80);var tp=TAPE&&TAPE.id==id?TAPE:{x:P.x,z:P.z};cm2.position.set(tp.x,1.5,tp.z);cm2.rotation.order='YXZ';var by=0,bl=0;for(var a=0;a<8;a++){var yy2=a*PI/4,fx2=-Math.sin(yy2),fz2=-Math.cos(yy2),l=0;while(l<24&&!solid(tp.x+fx2*l,tp.z+fz2*l))l+=.5;if(l>bl){bl=l;by=yy2}}cm2.rotation.set(-.06,by,0);var s1=sp.intensity,s2=sp2.intensity;sp.intensity=0;sp2.intensity=0;ren.setRenderTarget(rt);ren.render(scene,cm2);sp.intensity=s1;sp2.intensity=s2;var px=new Uint8Array(320*180*4);ren.readRenderTargetPixels(rt,0,0,320,180,px);ren.setRenderTarget(null);var id2=new ImageData(320,180);for(var yy=0;yy<180;yy++)for(var xx=0;xx<320;xx++){var s0=((179-yy)*320+xx)*4,d0=(yy*320+xx)*4;id2.data[d0]=px[s0];id2.data[d0+1]=px[s0+1];id2.data[d0+2]=px[s0+2];id2.data[d0+3]=255}var oc=document.createElement('canvas');oc.width=320;oc.height=180;oc.getContext('2d').putImageData(id2,0,0);shot=oc;rt.dispose()}}catch(e){try{ren.setRenderTarget(null)}catch(x2){}}
+ var end=function(){if(done)return;done=true;ov.remove();var s=vs(id);s.p=1;hsave();if(v.danger){P.san=Math.max(0,P.san-15);say('That tape was hard to watch. (Sanity −15)',3)}else say('Tape archived: '+v.t,3);try{HU.encDoc('tape_'+id)}catch(e){}if(fut){setTimeout(function(){playFuture(fut)},400)}else{started=true;try{ren.domElement.requestPointerLock()}catch(e){}}};
+ ov.onclick=end;snd(function(){burst({f:3000,q:.3,d:dur,v:.025,a:.3})});
+ (function fr(){if(done)return;requestAnimationFrame(fr);var t=(performance.now()-t0)/1000;if(t>dur+.6){end();return}
+  if(shot){x.drawImage(shot,0,0,640,360)}else{var gr=x.createLinearGradient(0,0,0,360);gr.addColorStop(0,C.w);gr.addColorStop(1,'#050505');x.fillStyle=gr;x.fillRect(0,0,640,360);x.fillStyle=C.c;x.beginPath();x.moveTo(0,360);x.lineTo(250,200);x.lineTo(390,200);x.lineTo(640,360);x.fill();x.fillStyle='rgba(0,0,0,.5)';x.fillRect(0,0,250,360);x.fillRect(390,0,250,360);x.fillStyle='rgba(255,250,210,.4)';x.fillRect(280,30,80,10)}
+  x.fillStyle='rgba(0,0,0,'+(.15+Math.sin(t*3)*.05)+')';x.fillRect(0,0,640,360);for(var i=0;i<900;i++){x.fillStyle='rgba(255,255,255,'+Math.random()*.22+')';x.fillRect(Math.random()*640,Math.random()*360,2,1)}
+  var by=(t*90)%400-20;x.fillStyle='rgba(255,255,255,.07)';x.fillRect(0,by,640,14);x.fillStyle='#fff';x.font='bold 18px monospace';x.fillText('▶ PLAY',18,30);x.fillText('SP',590,30);var d=new Date(1994,9,(v.lv|0)+3,2,13,Math.floor(t));x.fillText(d.toLocaleDateString()+' '+d.toTimeString().slice(0,8),18,340);
+  var li=Math.min(lines.length-1,Math.floor(t/3.2));sb.textContent=lines[li]})()}
+// future recordings, generated from the real game state
+function pickFuture(){var opts=[];if(HU.LO&&HU.LO.ph==0&&HU.LO.cd>12&&HU.LO.cd<300&&[6,9,19].indexOf(LVL)<0)opts.push('count');var und=open.filter(function(o){return !MX[o[0]*W+o[1]]&&Math.hypot(cc(o[0])-P.x,cc(o[1])-P.z)>20});if(und.length)opts.push('room');opts.push('elev');var k=opts[RND()*opts.length|0];
+ if(k=='room'){var c=und[RND()*und.length|0];return {k:'room',i:c[0],j:c[1]}}return {k:k}}
+function playFuture(f){HD.fut.used=(HD.fut.used||0)+1;hsave();var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer';var cv=document.createElement('canvas');cv.width=640;cv.height=360;cv.style.cssText='width:min(92vw,960px);aspect-ratio:16/9;border:2px solid #300';ov.appendChild(cv);var sb=document.createElement('div');sb.style.cssText='color:#f88;font:16px monospace;margin-top:10px;max-width:90vw;text-align:center;min-height:44px';ov.appendChild(sb);document.body.appendChild(ov);var x=cv.getContext('2d'),t0=performance.now(),done=false,shot=null,cd0=HU.LO?HU.LO.cd:0;
+ if(f.k=='room'){try{var fig=HU.silMesh?HU.silMesh(0x1a2030,false):null;if(fig){try{var s=SUITS.find(function(q){return q.id==SUIT});if(s)fig.children.forEach(function(m){m.material.color.set(s.c).multiplyScalar(.5)})}catch(e){}fig.position.set(cc(f.i),0,cc(f.j));fig.visible=true}
+  var rt=new T.WebGLRenderTarget(320,180),cm2=new T.PerspectiveCamera(65,16/9,.1,80);cm2.rotation.order='YXZ';var a=RND()*6.28;cm2.position.set(cc(f.i)+Math.sin(a)*3.2,1.6,cc(f.j)+Math.cos(a)*3.2);if(solid(cm2.position.x,cm2.position.z))cm2.position.set(cc(f.i)+.3,2.6,cc(f.j)+.3);cm2.lookAt(cc(f.i),1.2,cc(f.j));var sv1=sp.intensity;sp.intensity=0;ren.setRenderTarget(rt);ren.render(scene,cm2);var px=new Uint8Array(320*180*4);ren.readRenderTargetPixels(rt,0,0,320,180,px);ren.setRenderTarget(null);sp.intensity=sv1;if(fig)fig.visible=false;var id2=new ImageData(320,180);for(var yy=0;yy<180;yy++)for(var xx=0;xx<320;xx++){var s0=((179-yy)*320+xx)*4,d0=(yy*320+xx)*4;id2.data[d0]=px[s0];id2.data[d0+1]=px[s0+1];id2.data[d0+2]=px[s0+2];id2.data[d0+3]=255}var oc=document.createElement('canvas');oc.width=320;oc.height=180;oc.getContext('2d').putImageData(id2,0,0);shot=oc;rt.dispose()}catch(e){try{ren.setRenderTarget(null)}catch(x2){}}
+  HD.fut.room={lv:LVL,i:f.i,j:f.j,seed:SEED};hsave()}
+ if(f.k=='elev'){HU.forceEA=1;HU.forceEAk='panel';HU.forceCode='20'}
+ var L={room:['[UNLABELED TAPE]','The timestamp is from later today.','Someone in your clothes stands in a room you have never been to.','They are looking straight at the camera. At you.'],count:['[UNLABELED TAPE]','A black screen with white numbers, counting down.','When it reaches zero, every light on the tape goes out.'],elev:['[UNLABELED TAPE]','An elevator. The doors are closed. The display flickers.','It stops on a floor that should not exist: 20.']}[f.k];
+ var end=function(){if(done)return;done=true;ov.remove();say(f.k=='count'?'The countdown on that tape... it matches something.':f.k=='room'?'You have never seen that room. Yet.':'That elevator display read 20.',4);started=true;try{ren.domElement.requestPointerLock()}catch(e){}};ov.onclick=end;
+ (function fr(){if(done)return;requestAnimationFrame(fr);var t=(performance.now()-t0)/1000;if(t>11){end();return}
+  if(f.k=='room'&&shot)x.drawImage(shot,0,0,640,360);else{x.fillStyle='#030303';x.fillRect(0,0,640,360)}
+  if(f.k=='count'){var left=Math.max(0,Math.ceil((HU.LO?HU.LO.cd:cd0)));x.fillStyle='#fff';x.font='bold 120px monospace';x.textAlign='center';x.fillText(Math.floor(left/60)+':'+String(left%60).padStart(2,'0'),320,220);x.textAlign='left'}
+  if(f.k=='elev'){x.fillStyle='#777';x.fillRect(180,60,280,260);x.fillStyle='#555';x.fillRect(200,110,118,210);x.fillRect(322,110,118,210);x.fillStyle='#000';x.fillRect(270,70,100,34);x.fillStyle=Math.sin(t*6)>0?'#9cf':'#357';x.font='bold 28px monospace';x.fillText('20',300,97)}
+  for(var i=0;i<1200;i++){x.fillStyle='rgba(255,255,255,'+Math.random()*.25+')';x.fillRect(Math.random()*640,Math.random()*360,2,1)}x.fillStyle='#f44';x.font='bold 18px monospace';x.fillText('● REC',18,30);var d=new Date(Date.now()+(f.k=='room'?47:0)*60000);x.fillText(d.toLocaleDateString()+' '+d.toTimeString().slice(0,8),18,340);sb.textContent=L[Math.min(L.length-1,Math.floor(t/2.6))]})()}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu3]');if(!el)return;e.stopPropagation();var a=el.dataset.hu3,i=a.indexOf(':'),k=a.slice(0,i),v=a.slice(i+1);if(k=='play')playTape(v);if(k=='enc'){HU.encView=v;phScr()}if(k=='encb'){HU.encView=null;phScr()}if(k=='vhs'){HU.vhsView=v;phScr()}if(k=='vhsb'){HU.vhsView=null;phScr()}},true);
+// VHS archive + encyclopedia phone apps
+APPS.push(['📼 VHS ARCHIVE','huvhs'],['📖 ENCYCLOPEDIA','huenc']);
+function allTapes(){var a=[];Object.keys(VT).forEach(function(k){var s=vs(k),v=VT[k];a.push({id:k,t:v.t,lv:v.lv,d:s.d||s.c,c:s.c,p:s.p,n:v.n,cl:v.c,l:v.l})});
+ try{for(var k2=10;k2<=19;k2++){var T2=LVX.TAPES[k2],got=ARC.tapes.indexOf(k2)>=0,pl=!!(HD.vhsP&&HD.vhsP[k2]);a.push({id:'t'+k2,t:T2.t,lv:k2,d:got,c:got,p:pl,n:'A Wanderer tape from Level '+k2+'. Watch it in FOUND TAPES.',cl:T2.l[T2.l.length-1],l:T2.l})}}catch(e){}
+ if(HD.fut.used)a.push({id:'fut',t:'UNLABELED TAPES (future recordings)',lv:'?',d:1,c:1,p:1,n:'Tapes that show things that have not happened yet. '+HD.fut.used+' watched.',cl:HD.fut.room?'One showed a room on Level '+HD.fut.room.lv+(HD.fut.roomDone?' — you have been there since.':' you have not found yet.'):'They seem to come from the Institute\'s cameras... in the future.',l:[]});return a}
+// mark 10-19 tapes as played when watched in FOUND TAPES
+try{var oUI=LVX.ui;LVX.ui=function(v){if(v&&v[0]=='tape'){HD.vhsP=HD.vhsP||{};HD.vhsP[+v[1]]=1;hsave()}return oUI.apply(this,arguments)}}catch(e){}
+// --- encyclopedia data: appearance / behaviour / detection / weakness / lore ---
+var EN={boiled:['A tall shape of television static with a black, featureless head.','Drifts toward you. Stays still while you look at it. Speaks a language that fills your head with the IMPRINT.','Static on screen, crackling in the dark, the imprint meter rising.','Breaking line of sight. Lockers. Crouching.','The first thing every wanderer meets. The Institute calls it E-001.'],
+ grin:['A floating, impossibly wide grin with two glowing eyes.','Only exists during blackouts. Floats straight at you through the dark.','The lights die. A low, falling tone.','Light. It vanishes when the power returns. Restart a generator.','It has never been seen while the lights are on.'],
+ water:['Something long and pale under the pool water.','Surfaces when you are loud near the water.','Your noise meter. Ripples.','Silence. Walk, never sprint.','Theo was nearly taken by it on day two.'],
+ party:['Smiling yellow figures with party hats.','Roam the party rooms and charge anyone standing up.','Party music getting louder. Balloons squeaking.','Crouching makes you invisible to them.','"Happy birthday." Sam said it back.'],
+ m5:['Tall, thin, grey. Sometimes it looks exactly like a person — maybe even you.','Ten moods: idle, patrol, listen, investigate, mimic, stalk, chase, attack, search, retreat. It learns your habits during a run.','Scanner interference, footsteps that stop, a voice asking for help, eyes that shine in your flashlight.','Its copies are not perfect: no footsteps, twitching head, glowing eyes. A missed lunge makes it retreat.','Dana: "It copied my voice from the last tape."'],
+ m17:['A diver-shaped shadow beneath the dark water.','Swims under deep water. Hears splashing. Can vanish into dark water.','A shadow under the surface, splashing from the wrong direction, a low rumble before it strikes.','Shallow water and safe platforms. Walk, do not run, through water.','Level 17\'s city flooded when the floodgates were left open.'],
+ m19:['A towering figure that never moves while you watch it.','Advances only when you look away. Faster the longer it hunts.','The feeling of something behind you. Breathing.','Keep it in sight. A flashlight flash freezes it for a moment.','The Institute\'s corridor W-7 was built to study it. It did not stay in the corridor.']};
+function encEntry(m){var e=enc(m.id),seen=(typeof MOND!='undefined'&&MOND.indexOf(m.id)>=0)||e.n>0,tier=!seen?0:(e.n>=3||e.e>=1)?(e.e>=2||HD.encDocs['tape_v'+(+m.id.slice(1)||0)]||(m.id=='m5'&&vs('v5').p)?3:2):1;return {e:e,tier:tier}}
+function relTape(m){var lv=m.id[0]=='m'?+m.id.slice(1):m.id=='boiled'?0:m.id=='water'?1:m.id=='party'?2:-1;if(lv<0)return null;return lv<=9?VT['v'+lv]:(LVX.TAPES&&LVX.TAPES[lv])}
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);var r=MB.querySelector('.ph');if(!r||!r.children[1])return r0;var body=r.children[1],ttl=function(t){try{r.children[0].querySelector('span:nth-child(2)').textContent=t}catch(e){}};
+ if(PHN.scr=='huvhs'){ttl('VHS ARCHIVE');var a=allTapes(),tot=a.filter(function(q){return q.id!='fut'}),got=tot.filter(function(q){return q.c}).length,pl=tot.filter(function(q){return q.p}).length,pct=Math.round((got+pl)/(tot.length*2)*100);
+  if(HU.vhsView){var q=a.find(function(x){return x.id==HU.vhsView});body.innerHTML='<span class="ch" data-hu3="vhsb:">◀ back</span><br><b>'+e2(q.t)+'</b><br><small>Found on: Level '+q.lv+' · '+(q.c?'collected':q.d?'discovered':'not found')+' · '+(q.p?'played & archived':'not played')+'</small><br><br><small><b>Story notes:</b> '+e2(q.n)+'</small><br><br><small><b>Secret clue:</b> '+(q.p?e2(q.cl):'<i>play the tape to reveal it</i>')+'</small>'+(q.p&&q.l.length?'<br><br><small style="opacity:.8">'+q.l.map(e2).join('<br>')+'</small>':'')}
+  else body.innerHTML='<small>Completion: <b>'+pct+'%</b> · collected '+got+'/'+tot.length+' · archived '+pl+'/'+tot.length+'<br>Tapes on Levels 0-9 are played at a TV (📺). Levels 10-19 play in FOUND TAPES.</small>'+a.map(function(q){return '<div class="ch" data-hu3="vhs:'+q.id+'" style="margin:6px 0;'+(q.c?'':'opacity:.45')+'">'+(q.c?'📼':'▫')+' '+(q.d?e2(q.t):'??? (Level '+q.lv+')')+'<br><small>'+(q.p?'<span style="color:#9f9">archived</span>':q.c?'<span style="color:#fc6">collected — not played</span>':q.d?'discovered':'undiscovered')+'</small></div>'}).join('')}
+ if(PHN.scr=='huenc'){ttl('ENCYCLOPEDIA');var list=(typeof MONS!='undefined'?MONS:[]);
+  if(HU.encView){var m=list.find(function(x){return x.id==HU.encView}),en=encEntry(m),E=EN[m.id]||[m.d,m.d,'Watch, listen, and use your scanner.',m.t,''],tp=relTape(m),L3=function(t,n,v){return '<div style="margin:5px 0"><b>'+n+':</b> '+(en.tier>=t?e2(v):'<span style="opacity:.5">🔒 '+(t==1?'encounter it first':t==2?'encounter it 3 times or escape it once':'escape it twice or play its tape')+'</span>')+'</div>'};
+   body.innerHTML='<span class="ch" data-hu3="encb:">◀ back</span><br><b>'+(en.tier?e2(m.n):'???')+'</b><br><small>'+L3(1,'First known location',m.lv)+L3(1,'Appearance',E[0])+L3(2,'Behavior',E[1])+L3(2,'Detection',E[2])+L3(3,'Known weaknesses',E[3])+L3(3,'Survival tips',m.t)+L3(3,'Discovered lore',E[4]||m.d)+'<div><b>Encounters:</b> '+en.e.n+' · <b>Escapes:</b> '+en.e.e+'</div>'+(en.tier>=3&&tp?'<div><b>Related tape:</b> '+e2(tp.t)+'</div>':'')+'</small>'}
+  else{var n=list.filter(function(m){return encEntry(m).tier>0}).length;body.innerHTML='<small>'+n+'/'+list.length+' entries unlocked. Entries fill in as you encounter monsters, escape them, and find tapes.</small>'+list.map(function(m){var en=encEntry(m);return '<div class="ch" data-hu3="enc:'+m.id+'" style="margin:5px 0;'+(en.tier?'':'opacity:.45')+'">'+(en.tier?e2(m.n):'??? <small>('+e2(m.lv)+')</small>')+' <small>'+'★'.repeat(en.tier)+'</small></div>'}).join('')}}
+ return r0};
+// =====================================================================
+// 8. THE CREATURE BENEATH THE WATER (Level 17)
+// =====================================================================
+var AQ=null;
+if(LVL==17&&window.LVX&&LVX.deep){AQ={sh:null,rings:[],spl:0,rum:0,gate:0,pow:0,plat:[]};
+ var shm=new T.Mesh(new T.PlaneGeometry(2.6,1.2),new T.MeshBasicMaterial({map:cvTex(128,64,function(x,w,h){var gr=x.createRadialGradient(w/2,h/2,2,w/2,h/2,w/2);gr.addColorStop(0,'rgba(0,0,0,.85)');gr.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=gr;x.fillRect(0,0,w,h)}),transparent:true,depthWrite:false}));shm.rotation.x=-PI/2;shm.position.y=.36;shm.visible=false;scene.add(shm);AQ.sh=shm;
+ // safe platforms in the deep water
+ var dc=open.filter(function(o){return LVX.deep[o[0]*W+o[1]]&&!LVX.air.some(function(a){return Math.hypot(a.x-cc(o[0]),a.z-cc(o[1]))<4})});var rr2=m32(SEED*5+17|0);for(var k=0;k<3&&dc.length;k++){var c=dc.splice(rr2()*dc.length|0,1)[0];var pl=new T.Mesh(new T.BoxGeometry(2.2,.5,2.2),new T.MeshLambertMaterial({color:0x5a4a3a}));pl.position.set(cc(c[0]),.3,cc(c[1]));scene.add(pl);AQ.plat.push({x:cc(c[0]),z:cc(c[1])});LVX.air.push({x:cc(c[0]),z:cc(c[1])})}
+ // optional objectives: reroute power and open the floodgate (drains part of the water)
+ var mkSt=function(lab,col){var c=open.filter(function(o){return !LVX.deep[o[0]*W+o[1]]&&Math.hypot(cc(o[0])-cc(1),cc(o[1])-cc(1))>16&&!CL[o[0]*W+o[1]]});var s=c[rr2()*c.length|0];var G=new T.Group(),b=new T.Mesh(new T.BoxGeometry(.8,1.3,.4),new T.MeshLambertMaterial({color:col}));b.position.y=.65;G.add(b);var gl=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:col,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.7}));gl.position.y=1.4;G.add(gl);G.position.set(cc(s[0])+1,0,cc(s[1])+1);if(solid(G.position.x,G.position.z))G.position.set(cc(s[0]),0,cc(s[1]));scene.add(G);return {x:G.position.x,z:G.position.z,lab:lab,g:G}};
+ AQ.st=[mkSt('Reroute power to the subway lights (optional)',0xffcc40),mkSt('Open the floodgate (optional — drains part of the flood)',0x40c0ff)]}
+function aqTick(dt){if(!AQ||!playing())return;var ci=ce(M.x),cj=ce(M.z),deepM=LVX.deep[ci*W+cj],sub=lm&&lm.position.y<-.2,d=Math.hypot(M.x-P.x,M.z-P.z);
+ AQ.sh.visible=!!(deepM&&sub);if(AQ.sh.visible){AQ.sh.position.x+=(M.x-AQ.sh.position.x)*Math.min(1,dt*6);AQ.sh.position.z+=(M.z-AQ.sh.position.z)*Math.min(1,dt*6);AQ.sh.rotation.z=-(lm.rotation.y);AQ.sh.material.opacity=.5+.3*Math.sin(P.t*2)}
+ var pDeep=LVX.deep[ce(P.x)*W+ce(P.z)],onPlat=AQ.plat.some(function(p){return Math.abs(p.x-P.x)<1.2&&Math.abs(p.z-P.z)<1.2});
+ // running through water draws it in
+ if(pDeep&&(P.spd||0)>3.6){AQ.spl-=dt;if(AQ.spl<=0){AQ.spl=.5;noise(26);bs({f:900,q:.6,d:.3,v:.25});if(RND()<.3)HU.cap&&HU.cap('[your splashing echoes across the water]',1.5)}}
+ // warnings before it strikes: rings, splashes, a low rumble
+ if(sub&&deepM&&d<9){AQ.rum-=dt;if(AQ.rum<=0){AQ.rum=1.2;tn({f:32,f2:26,d:1.1,v:SET.ra?.2:.45,lp:120});var r=new T.Mesh(new T.RingGeometry(.4,.55,24),new T.MeshBasicMaterial({color:0x9adfff,transparent:true,opacity:.6,side:T.DoubleSide}));r.rotation.x=-PI/2;r.position.set(M.x,.38,M.z);scene.add(r);AQ.rings.push({m:r,t:0});HU.cap&&HU.cap('[a low rumble beneath the water — it is close]',1.5)}}
+ AQ.rings=AQ.rings.filter(function(q){q.t+=dt;q.m.scale.setScalar(1+q.t*2.5);q.m.material.opacity=Math.max(0,.6-q.t*.4);if(q.t>1.5){scene.remove(q.m);return false}return true});
+ // safe platforms: it cannot reach you there
+ if(onPlat&&lm&&d<3&&LM.st=='hunt'){LM.st='search';LM.srch=5;LM.lost=9;if(window.LVX&&LVX.AT){LVX.AT.t=0;LVX.AT.cd=3}if(!AQ.pw){AQ.pw=1;say('You are on a safe platform. It circles below, but cannot reach you.',3)}}
+ if(AQ.st&&msgT<=0)AQ.st.forEach(function(s){if(!s.done&&Math.hypot(s.x-P.x,s.z-P.z)<2)say('[F] '+s.lab,.1)})}
+addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat)return;var tg=e.target;if(tg&&(tg.tagName=='INPUT'||tg.tagName=='TEXTAREA'))return;var hit=false;
+ if(TV&&Math.hypot(TV.x-P.x,TV.z-P.z)<2.1){hit=true;tvP()}
+ else if(AQ&&AQ.st){var s=AQ.st.find(function(q){return !q.done&&Math.hypot(q.x-P.x,q.z-P.z)<2});if(s){hit=true;s.done=1;s.g.children[1].visible=false;if(s.lab.indexOf('power')>=0){AQ.pow=1;for(var k=0;k<10;k++){var o=open[(k*53)%open.length];if(!LVX.deep[o[0]*W+o[1]])continue;var gw=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xffe0a0,blending:T.AdditiveBlending,depthWrite:false,transparent:true,opacity:.8}));gw.scale.set(2.2,2.2,1);gw.position.set(cc(o[0]),2.6,cc(o[1]));scene.add(gw)}say('Power rerouted. Emergency lights flicker on over the flooded subway.',4);HU.raw=1;try{addCash(40,'Rerouted power on Level 17')}finally{HU.raw=0}}
+  else{var n=0;for(var i=0;i<W*W;i++)if(LVX.deep[i]){var ii=i/W|0,jj=i%W,cd=Math.max(Math.abs(ii-EL.i),Math.abs(jj-EL.j));if(cd>=4){LVX.deep[i]=0;n++}}scene.traverse(function(m){if(m.isMesh&&m.geometry&&m.geometry.type=='PlaneGeometry'&&Math.abs(m.position.y-.37)<.01){var c2=Math.max(Math.abs(ce(m.position.x)-EL.i),Math.abs(ce(m.position.z)-EL.j));if(c2>=4)m.visible=false}});bs({f:150,t:'lowpass',d:3,v:.8,a:.4});say('The floodgate opens. The outer ring of water drains away ('+n+' cells). The deep part is smaller now.',5);HU.raw=1;try{addCash(60,'Opened the floodgate on Level 17')}finally{HU.raw=0}}}}
+ if(hit){e.stopImmediatePropagation();e.preventDefault()}},true);
+// =====================================================================
+// per frame: tapes, future rooms, encounter tracking, Level 17
+// =====================================================================
+var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{
+ encTick(dt);aqTick(dt);
+ if(TAPE&&TAPE.g.visible&&playing()){TAPE.g.rotation.y+=dt;var d=Math.hypot(TAPE.x-P.x,TAPE.z-P.z),s=vs(TAPE.id);if(!s.d&&d<10&&los(P.x,P.z,TAPE.x,TAPE.z)){s.d=1;hsave();say('A VHS tape glows on the floor nearby.',3)}if(d<1.2){TAPE.g.visible=false;TAPE.gl.visible=false;s.c=1;s.d=1;s.lv=LVL;hsave();say('Found: '+VT[TAPE.id].t+'. Play it at a TV (📺) to archive it.',5);tn({f:900,f2:1300,d:.25,v:.18});HU.toast('📼 '+VT[TAPE.id].t,'#9ad0ff');HU.ev&&HU.ev('tape')}}
+ if(TV&&playing()&&msgT<=0&&Math.hypot(TV.x-P.x,TV.z-P.z)<2.1)say('[F] TV + VCR — play a tape',.1);if(TV)TV.scr.material.color.setHex(RND()<.5?0x2a3a2a:0x1a2a1a);
+ var fr=HD.fut.room;if(fr&&!fr.done&&fr.lv==LVL&&playing()&&Math.hypot(cc(fr.i)-P.x,cc(fr.j)-P.z)<3){fr.done=1;HD.fut.roomDone=1;hsave();P.san=Math.max(0,P.san-5);say('You have seen this room before. On a tape. You were standing right here.',5);HU.raw=1;try{addCash(40,'A future recording came true')}finally{HU.raw=0}}
+ }catch(e){if(!tick.e){tick.e=1;console.error('HU2b tick',e)}}})();
+// scanner and map markers for tapes (drawn right before each frame)
+var oP=window.PFX;window.PFX=function(s,c){try{if(TAPE&&TAPE.g.visible&&typeof started!='undefined'&&started){var st=vs(TAPE.id),ax=TAPE.x-P.x,az=TAPE.z-P.z,dd=Math.hypot(ax,az);
+ if(P.scan&&P.bat>0&&dd<22&&!(RB.sd>0)){var fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),rx=Math.cos(P.yaw),rz=-Math.sin(P.yaw),sx=ax*rx+az*rz,sy=-(ax*fx+az*fz),k=72/30;rc.globalAlpha=.6+.4*Math.sin(P.t*5);rc.fillStyle='#66ccff';rc.fillRect(75+sx*k-4,75+sy*k-3,8,6);rc.globalAlpha=1;rc.font='11px monospace';rc.fillText('VHS '+Math.round(dd)+'m',92,14)}
+ if(st.d&&MAPON){mc.fillStyle=Math.sin(P.t*4)>0?'#66ccff':'#2a6a8a';mc.fillRect(ce(TAPE.x)*4,ce(TAPE.z)*4,4,4)}}
+ if(TV&&MAPON&&typeof started!='undefined'&&started&&MX[ce(TV.x)*W+ce(TV.z)]){mc.fillStyle='#ccc';mc.fillRect(ce(TV.x)*4+1,ce(TV.z)*4+1,3,3)}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+HU.vhsGive=function(){Object.keys(VT).forEach(function(k){var s=vs(k);s.c=1;s.d=1});hsave();if(TAPE){TAPE.g.visible=false;TAPE.gl.visible=false}return 'All ten Level 0-9 tapes added. Play them at a TV.'};
+HU.tvHere=function(){if(!TV)return 'There is no TV on this level.';P.x=TV.x+1;P.z=TV.z;if(solid(P.x,P.z)){P.x=TV.x;P.z=TV.z+1}return 'Moved next to the TV.'};
+})();
+</script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
@@ -3671,7 +4211,7 @@ function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
   '<h4>ACTIONS ON '+esc2(nm.toUpperCase())+'</h4>'+btn('revive','REVIVE PLAYER','',ig?'':'Start a level first')+btn('heal','RESTORE HEALTH','',ig?'':'Start a level first')+btn('resetpos','RESET PLAYER POSITION','dg',ig?'':'Start a level first')+btn('allsuits','GIVE ALL SUITS')+
   '<div class="row">Cash amount <input id="acash" type="number" min="1" max="100000" value="500" style="width:110px">'+btn('cash+','GIVE BACKROOMS CASH')+btn('cash-','REMOVE BACKROOMS CASH','dg')+'</div>'+
   '<div class="row">'+btn('tpto','TELEPORT TO PLAYER','',NOPLAY)+btn('bring','BRING PLAYER TO ME','',NOPLAY)+btn('kick','KICK FROM LOBBY','dg',NOPLAY)+'<br><span class="dim">'+NOPLAY+' These buttons switch on when lobbies exist.</span></div>'}
- if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+'<h4>HORROR UPDATE</h4>'+btn('hu:lo','START LIGHTS-OUT EVENT')+btn('hu:lon','END BLACKOUT')+btn('hu:san','SET SANITY TO 20%')+btn('hu:hall','FORCE A HALLUCINATION')+btn('hu:ea','NEXT ELEVATOR RIDE: ANOMALY')+
+ if(T=='WORLD'){if(!ig)return '<div class="er">Start a level to use the world controls.</div>';return '<div class="dim">This build is single-player, so world changes only affect your own game.</div><h4>LIGHTS</h4>'+btn('lightsoff','LIGHTS OFF')+btn('lightson','LIGHTS ON')+btn('outage','POWER OUTAGE (15 s)')+btn('emerg',ADM.emerg?'EMERGENCY LIGHTING: ON':'EMERGENCY LIGHTING: OFF')+'<h4>HORROR UPDATE</h4>'+btn('hu:lo','START LIGHTS-OUT EVENT')+btn('hu:lon','END BLACKOUT')+btn('hu:san','SET SANITY TO 20%')+btn('hu:hall','FORCE A HALLUCINATION')+btn('hu:ea','NEXT ELEVATOR RIDE: ANOMALY')+btn('hu:dlbc',"DON'T LOOK BACK CHALLENGE")+btn('hu:fake','ENTER A FAKE EXIT')+btn('hu:keys','GIVE CONTROL-ROOM KEYCARDS')+btn('hu:vhs','GIVE ALL LEVEL 0-9 TAPES')+btn('hu:tv','TELEPORT TO THE TV')+
   '<div class="row">Lighting intensity <input type="range" id="alight" min="20" max="300" value="'+Math.round(ADM.light*100)+'"> '+Math.round(ADM.light*100)+'%</div><div class="row">Fog density <input type="range" id="afog" min="0" max="250" value="'+Math.round((ADM.fog==null?scene.fog.density:ADM.fog)*1000)+'"> '+(ADM.fog==null?'level default':ADM.fog.toFixed(3))+' '+btn('fogreset','RESET FOG')+'</div>'+
   '<h4>ENVIRONMENT</h4>'+btn('quake','TREMOR (shake)')+btn('static','STATIC STORM (sanity drain)')+btn('calm','CALM (restore sanity drain)')+
   '<h4>MOVEMENT</h4>'+btn('tp:start','TELEPORT: START')+btn('tp:elev','TELEPORT: ELEVATOR')+btn('tp:rand','TELEPORT: RANDOM VALID SPOT')+btn('god',ADM.god?'GOD MODE: ON':'GOD MODE: OFF')+btn('free',ADM.free?'FREE CAMERA: ON':'FREE CAMERA: OFF')+'<br><span class="dim">Free camera: WASD fly, mouse look, Space up, C down, Shift fast. Monsters cannot catch you while it is on.</span>'+
@@ -3710,7 +4250,7 @@ function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a
  if(k=='cash+'||k=='cash-'){var amt=cashAmt();if(!(amt>=1&&amt<=100000)){msg('Amount must be a whole number from 1 to 100000.',false);audit(k=='cash+'?'give cash':'remove cash',nm,false,'bad amount');return}
   if(k=='cash+')return guard('give cash',nm+' $'+amt,function(){addCash(amt,'Admin gift');return {msg:'+$'+amt+' → '+nm+' (now $'+CASH.bal+')'}});
   return guard('remove cash',nm+' $'+amt,function(){var t=Math.min(amt,CASH.bal);addCash(-t,'Admin removal');return {msg:'-$'+t+' from '+nm+' (now $'+CASH.bal+')'}},{confirm:'Remove $'+amt+' from '+esc2(nm)+'?'})}
- if(k=='hu')return guard('horror: '+v,'level '+SV.lv,function(){var H=window.HU;if(!H)return {err:'Horror update not loaded.'};if(v=='ea')return {msg:H.elevatorTest()};if(!ig)return {err:'Start a level first.'};if(v=='lo')return {msg:H.lightsOut()};if(v=='lon'){H.lightsOn();return {msg:'Blackout ended.'}}if(v=='san'){P.san=20;return {msg:'Sanity set to 20%. Hallucinations start below 60%.'}}if(v=='hall'){var r=H.hallucinate();return r?{msg:'Hallucination: '+r}:{err:'Nothing could be placed here. Face a long corridor and try again.'}}return {err:'Unknown action.'}});
+ if(k=='hu')return guard('horror: '+v,'level '+SV.lv,function(){var H=window.HU;if(!H)return {err:'Horror update not loaded.'};if(v=='ea')return {msg:H.elevatorTest()};if(!ig)return {err:'Start a level first.'};if(v=='lo')return {msg:H.lightsOut()};if(v=='lon'){H.lightsOn();return {msg:'Blackout ended.'}}if(v=='san'){P.san=20;return {msg:'Sanity set to 20%. Hallucinations start below 60%.'}}if(v=='dlbc')return {msg:H.dlbChallenge()};if(v=='vhs')return {msg:H.vhsGive?H.vhsGive():'Not available.'};if(v=='tv')return {msg:H.tvHere?H.tvHere():'Not available.'};if(v=='fake')return {msg:H.fakeExit()};if(v=='keys')return {msg:H.crGive?H.crGive():'Not available.'};if(v=='hall'){var r=H.hallucinate();return r?{msg:'Hallucination: '+r}:{err:'Nothing could be placed here. Face a long corridor and try again.'}}return {err:'Unknown action.'}});
  if(k=='tpto'||k=='bring'||k=='kick'||k=='kick2'){msg(NOPLAY,false);audit(k,'',false,'no multiplayer');return}
  if(!ig&&['lightsoff','lightson','outage','emerg','quake','static','calm','tp','god','free','ms','mtp','mremove','mback','ai','follow','spawn','clearall','fix'].indexOf(k)>=0&&!(k=='fix'&&v=='gun')){msg('Start a level first.',false);return}
  if(k=='lightsoff')return guard('lights off','level '+SV.lv,function(){L.black=1e6;return {msg:'All lights off.'}});
