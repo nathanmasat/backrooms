@@ -1,7 +1,7 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"><script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
-var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach'];
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx'];
 var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
 try{LS=window.localStorage}catch(e){return}
 function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
@@ -3145,6 +3145,76 @@ J.step=function(t){if(S)frame(t)};J.stop=stop;
 jumpscare=function(g){try{J.play(g|0)}catch(e){try{stop()}catch(e2){}old2d(g)}};
 })();
 </script>
+<!-- ===== GADGETS: lighter, tactical flashlight, night vision, glow sticks and more ===== -->
+<script>
+(function(){
+if(typeof SHOP=='undefined'||typeof THREE=='undefined')return;
+var T=THREE;
+// id, name, rarity (sets the price), permanent?, colour, description, key
+var GL=[
+ ['gx_lighter','Zippo Lighter','uncommon',1,'#ffa040','A warm flame that never runs out. Lights a small circle around you without using the battery and keeps the dark from eating your sanity. It does not count as a flashlight, so light-hunting monsters ignore it.','L'],
+ ['gx_tflash','Tactical Flashlight','rare',1,'#e8f0ff','Upgrades your flashlight: 60% brighter, a wider and much longer beam, and it uses battery half as fast.','T'],
+ ['gx_nvg','Night-Vision Goggles','legendary',1,'#50ff70','See in the dark, even in blackouts. Green, grainy and bright. Uses 0.5% battery per second while on.','N'],
+ ['gx_glow','Glow Sticks (pack of 3)','basic',0,'#60ff90','Drop a green glow stick at your feet. It lights the area for 2 minutes and marks where you have been.','G'],
+ ['gx_drink','Energy Drink','basic',0,'#ffe040','Full stamina at once, then 25 seconds of sprinting that never tires you.','1'],
+ ['gx_med','First-Aid Kit','common',0,'#ff6060','Restores sanity to 100%, clears the Boiled One\'s imprint and refills your oxygen.','2'],
+ ['gx_noise','Noise Maker','common',0,'#a0c0ff','Throw a ringing alarm clock 10 m ahead. Monsters go to check it out, so you can slip away.','3'],
+ ['gx_smoke','Smoke Bomb','uncommon',0,'#b0b0b0','A thick cloud of smoke. A monster that is chasing you loses track of you.','4'],
+ ['gx_batt','Battery Pack','basic',0,'#33aaff','Instantly refills your flashlight battery by 60%.','5']];
+var GX=window.GX={}; var ST={};try{ST=JSON.parse(localStorage.getItem('brgx'))||{}}catch(e){}
+function save(){try{localStorage.setItem('brgx',JSON.stringify(ST))}catch(e){}}
+GX.list=GL;GX.st=ST;GX.has=function(id){return (ST[id]|0)>0};
+GX.give=function(id,n){var g=GL.find(function(q){return q[0]==id});if(!g)return false;if(g[3]){ST[id]=1}else{ST[id]=(ST[id]|0)+(n||(id=='gx_glow'?3:1))}save();if(id=='gx_lighter'||id=='gx_glow')ensureLights();return true};
+GL.forEach(function(g){if(!SHOP.find(function(s){return s.id==g[0]}))SHOP.push({id:g[0],cat:'GADGETS',n:g[1],r:g[2],c:g[5]==null?'#ccc':g[4],d:g[5]+' [key '+g[6]+']',gx:1})});
+// ---------- buying (does not touch the drone or cosmetics) ----------
+var oAct=phAct;phAct=function(a){if(/^buy:gx_/.test(a)){var id=a.slice(4),g=GL.find(function(q){return q[0]==id}),s=SHOP.find(function(q){return q.id==id}),pr=PRICE[s.r];
+  if(g[3]&&GX.has(id)){say('You already own the '+g[1]+'.',2);return phScr()}if(CASH.bal<pr){say('Not enough Backrooms Cash.',2);return phScr()}
+  addCash(-pr,'Bought '+g[1]);GX.give(id);say('Bought: '+g[1]+'.'+(g[3]?'':' You have '+ST[id]+'.')+' Press '+g[6]+' to use it'+(g[3]?'':', or open GADGETS on your phone')+'.',5);if(AC)tone({f:660,f2:990,d:.25,v:.2});return phScr()}
+ if(/^gxuse:/.test(a)){var id2=a.slice(6);closeP();setTimeout(function(){use(id2)},60);return}
+ return oAct.apply(this,arguments)};
+var oScr=phScr;phScr=function(){GL.forEach(function(g){var s=SHOP.find(function(q){return q.id==g[0]});if(s)s.d=g[5]+' [key '+g[6]+']'+(g[3]?'':' You have '+(ST[g[0]]|0)+'.')});oScr.apply(this,arguments);
+ if(PHN.scr=='shop'&&(PHN.tab||'SUITS')=='GADGETS')GL.forEach(function(g){if(g[3]&&GX.has(g[0])){var e=mp.querySelector("[data-p='buy:"+g[0]+"']");if(e)e.outerHTML='<span style="color:#9f9">OWNED ✓</span>';else{var all=[].slice.call(mp.querySelectorAll('b'));var b=all.find(function(x){return x.textContent==g[1]});if(b){var row=b.parentElement;row.innerHTML=row.innerHTML.replace(/NOT ENOUGH MONEY \(\$\d+\)/,'<span style="color:#9f9">OWNED ✓</span>')}}}});
+ if(PHN.scr=='gx'){var r=mp.querySelector('.ph');if(r&&r.children[1]){try{r.children[0].querySelector('span:nth-child(2)').textContent='GADGETS'}catch(e){}r.children[1].innerHTML='<small>Your gadgets. Buy more in the SHOP (GADGETS tab).</small><br>'+GL.map(function(g){var n=ST[g[0]]|0;return '<div style="margin:8px 0;border-bottom:1px solid #444;padding-bottom:6px;'+(n?'':'opacity:.4')+'"><span style="color:'+g[4]+'">■</span> <b>'+g[1]+'</b> '+(g[3]?(n?'(owned)':''):'×'+n)+'<br><small>key '+g[6]+'</small>'+(n?' · <span class="ch" data-p="gxuse:'+g[0]+'">'+(g[3]?(on(g[0])?'TURN OFF':'TURN ON'):'USE')+'</span>':'')+'</div>'}).join('')}}};
+APPS.push(['🎒 GADGETS','gx']);
+// ---------- effects ----------
+var S2={lighter:false,nvg:false,drink:0,smoke:0},lt=null,flame=null,glows=[],pool=[];
+function on(id){return id=='gx_lighter'?S2.lighter:id=='gx_nvg'?S2.nvg:id=='gx_tflash'?(typeof P!='undefined'&&P.fl):false}
+function ensureLights(){if(typeof cam=='undefined')return;if(!lt&&GX.has('gx_lighter')){lt=new T.PointLight(0xff9a40,0,7);lt.position.set(.25,-.2,-.4);cam.add(lt);flame=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xffa040,blending:T.AdditiveBlending,depthWrite:false,transparent:true,depthTest:false}));flame.scale.set(.06,.1,1);flame.position.set(.22,-.18,-.45);flame.visible=false;cam.add(flame)}
+ if(!pool.length&&(ST.gx_glow|0)>0)for(var i=0;i<3;i++){var l=new T.PointLight(0x40ff70,0,9);scene.add(l);pool.push(l)}}
+ensureLights();
+function playing(){return typeof started!='undefined'&&started&&typeof P!='undefined'&&!P.dead&&!P.hide}
+function use(id){var g=GL.find(function(q){return q[0]==id});if(!g)return;if(!GX.has(id)){say('You do not have: '+g[1]+'. Buy it in the phone SHOP.',3);return}if(typeof MENU!='undefined'&&MENU){say('Use gadgets during a level.',2);return}
+ var take=function(){if(!g[3]){ST[id]--;save()}};
+ if(id=='gx_lighter'){S2.lighter=!S2.lighter;ensureLights();if(AC)burst({f:S2.lighter?3000:600,q:3,d:.12,v:.4});say(S2.lighter?'You flick the lighter on.':'You snap the lighter shut.',2);return}
+ if(id=='gx_tflash'){say('The tactical flashlight upgrade is always on. Press T to switch the flashlight on or off.',3);return}
+ if(id=='gx_nvg'){if(!S2.nvg&&P.bat<=0){say('The goggles need battery.',2);return}S2.nvg=!S2.nvg;if(AC)tone({f:S2.nvg?1800:900,f2:S2.nvg?2600:400,d:.3,v:.15});say(S2.nvg?'Night vision on.':'Night vision off.',2);return}
+ if(id=='gx_glow'){ensureLights();var x=P.x,z=P.z,m=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0x40ff70,blending:T.AdditiveBlending,depthWrite:false,transparent:true}));m.scale.set(1.2,1.2,1);m.position.set(x,.12,z);scene.add(m);var st=new T.Mesh(new T.CylinderGeometry(.015,.015,.18,6),new T.MeshBasicMaterial({color:0x60ff90}));st.rotation.z=Math.PI/2;st.position.set(x,.03,z);scene.add(st);
+  var l=pool.find(function(q){return !q.userData.busy})||(glows.length?glows[0].l:null);if(l){if(glows.length&&glows[0].l===l&&l.userData.busy){var o=glows.shift();scene.remove(o.m)}l.userData.busy=1;l.position.set(x,.6,z);l.intensity=1.4}glows.push({m:m,s:st,l:l,t:120});take();if(AC)burst({f:2500,q:4,d:.15,v:.3});say('Glow stick dropped. ('+ST[id]+' left)',2);return}
+ if(id=='gx_drink'){P.st=100;P.tired=false;S2.drink=25;take();if(AC)burst({f:1200,q:2,d:.4,v:.35});say('Energy drink! Unlimited sprint for 25 seconds.',3);return}
+ if(id=='gx_med'){P.san=100;P.imp=0;P.sz=0;if(window.LVX&&LVX.o2!=null)LVX.o2=100;take();if(AC)tone({f:520,f2:880,d:.4,v:.2});say('First-aid kit used. You feel steady again.',3);return}
+ if(id=='gx_noise'){var d=clearDist(),k=Math.max(2,Math.min(10,d-1)),nx=P.x-Math.sin(P.yaw)*k,nz=P.z-Math.cos(P.yaw)*k,ck=new T.Mesh(new T.BoxGeometry(.18,.14,.1),new T.MeshLambertMaterial({color:0xa0c0ff}));ck.position.set(nx,.07,nz);scene.add(ck);take();say('You throw the noise maker... it starts ringing.',3);
+  setTimeout(function(){if(AC){var p=P3(nx,nz,.3,false);for(var i=0;i<14;i++)setTimeout(function(){tone({t:'square',f:2200,d:.12,v:.35,lp:5000,out:p})},i*280)}lure(nx,nz)},900);setTimeout(function(){scene.remove(ck)},20000);return}
+ if(id=='gx_smoke'){take();S2.smoke=9;var c=[];for(var i=0;i<26;i++){var s=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0x9a9a9a,transparent:true,opacity:.5,depthWrite:false}));s.scale.set(2.5,2.5,1);s.position.set(P.x+(Math.random()-.5)*3,.4+Math.random()*2.2,P.z+(Math.random()-.5)*3);scene.add(s);c.push(s)}S2.cloud=c;if(AC)burst({f:900,q:.3,d:1.4,v:.5});lose();say('Smoke bomb! It lost track of you.',3);return}
+ if(id=='gx_batt'){P.bat=Math.min(100,P.bat+60);take();if(AC)tone({f:520,f2:780,d:.25,v:.2});say('Battery +60%.',2);return}}
+GX.use=use;
+function lure(x,z){var i=ce(x),j=ce(z);try{if(lm){if(LM.st!='hunt'){LM.st='invest';LM.tx=i;LM.tz=j;LM.knock=null;lmGo(i,j)}}else if(CF.bal){PG.forEach(function(p){if(p.st!='chase'&&Math.hypot(p.x-x,p.z-z)<40){p.st='search';p.sr=8;p.path=bfs(ce(p.x),ce(p.z),i,j)}})}else if(!CF.tile&&M.state!='chase'){M.state='investigate';M.tx=i;M.tz=j;M.path=bfs(ce(M.x),ce(M.z),i,j);M.search=0}}catch(e){}}
+function lose(){try{var c=open.filter(function(o){return Math.hypot(cc(o[0])-P.x,cc(o[1])-P.z)>20})[Math.random()*99|0]||open[0];if(lm){if(LM.st=='hunt'||LM.st=='warn'){LM.st='search';LM.srch=6;LM.lost=99}LM.tx=c[0];LM.tz=c[1];lmGo(c[0],c[1]);if(window.LVX&&LVX.AT){LVX.AT.t=0;LVX.AT.cd=2}}else if(CF.bal){PG.forEach(function(p){if(p.st=='chase'){p.st='search';p.sr=6;p.path=[]}})}else if(!CF.tile){if(M.state=='chase'){M.state='search';M.search=6}M.knows=false;M.path=bfs(ce(M.x),ce(M.z),c[0],c[1])}}catch(e){}}
+// keys (only during play, never while typing)
+addEventListener('keydown',function(e){if(!playing()||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;var m={KeyL:'gx_lighter',KeyN:'gx_nvg',KeyG:'gx_glow',Digit1:'gx_drink',Digit2:'gx_med',Digit3:'gx_noise',Digit4:'gx_smoke',Digit5:'gx_batt'}[e.code];if(m)use(m)});
+var last=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-last)/1000);last=n;if(typeof P=='undefined')return;var go=typeof started!='undefined'&&started;
+ if(lt){var f=S2.lighter&&!P.hide;lt.intensity=f?1.1+Math.random()*.35:0;flame.visible=f;if(f)flame.scale.set(.05+Math.random()*.015,.09+Math.random()*.03,1);if(f&&go&&typeof L!='undefined'&&L.lvl<.3&&!(P.fl&&P.bat>0))P.san=Math.min(100,P.san+4.6*dt)}
+ if(go&&GX.has('gx_tflash')&&P.fl&&P.bat>0)P.bat=Math.min(100,P.bat+.15*dt);
+ if(S2.nvg){if(go)P.bat=Math.max(0,P.bat-.5*dt);if(P.bat<=0){S2.nvg=false;say('The night-vision goggles die.',2)}}
+ if(S2.drink>0){S2.drink-=dt;P.st=100;P.tired=false}
+ if(S2.smoke>0){S2.smoke-=dt;(S2.cloud||[]).forEach(function(s){s.material.opacity=Math.max(0,.5*Math.min(1,S2.smoke/3));s.position.y+=dt*.1});if(S2.smoke<=0){(S2.cloud||[]).forEach(function(s){scene.remove(s)});S2.cloud=null}}
+ glows=glows.filter(function(gw){gw.t-=dt;if(gw.l&&gw.l.userData.busy)gw.l.intensity=1.4*Math.min(1,gw.t/10);if(gw.t<=0){scene.remove(gw.m);scene.remove(gw.s);if(gw.l){gw.l.intensity=0;gw.l.userData.busy=0}return false}return true})})();
+// brighter beam + night vision, applied right before each frame is drawn
+var oP=window.PFX,D0=null;window.PFX=function(s,c){try{if(typeof sp!='undefined'){if(!D0)D0={d:sp.distance,a:sp.angle,d2:sp2.distance,a2:sp2.angle};var up=GX.has('gx_tflash');sp.distance=up?70:D0.d;sp.angle=up?.78:D0.a;sp2.distance=up?90:D0.d2;sp2.angle=up?.22:D0.a2;if(up){sp.intensity*=1.6;sp2.intensity*=1.6}}
+ if(S2.nvg){amb.intensity+=.45;ren.domElement.style.filter='brightness(1.9) contrast(1.15) sepia(1) hue-rotate(55deg) saturate(3)'}else if(GX._nv){ren.domElement.style.filter=''}GX._nv=S2.nvg;
+ if(S2.smoke>0&&scene.fog)scene.fog.density=Math.max(scene.fog.density,.14)}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+})();
+</script>
+
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
@@ -3283,6 +3353,7 @@ function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
  if(T=='ITEMS'){var tapes=(window.LVX&&LVX.TAPES)?Object.keys(LVX.TAPES):[];return '<h4>ADMIN TEST MODE</h4>'+btn('test',ADM.test?'TEST MODE: ON':'TEST MODE: OFF')+'<span class="dim"> While on, test copies of monsters can spawn, given tapes are only previewed (not saved), and the run is not sent to the leaderboard.</span>'+
   '<h4>GIVE '+esc2((profileName()||'GUEST').toUpperCase())+'</h4>'+btn('g:flash','FLASHLIGHT (full battery)','',ig?'':'Start a level first')+btn('g:gun','STUN GUN')+btn('g:ammo','+6 STUN AMMO')+btn('g:bat','BATTERIES','',ig?'':'In game only')+btn('g:water','ALMOND WATER','',ig?'':'In game only')+btn('g:stam','FULL STAMINA','',ig?'':'In game only')+btn('g:quest','ALL QUEST ITEMS','',ig?'':'In game only')+
   '<div class="row">VHS tape <select id="atape">'+tapes.map(function(t){return '<option value="'+t+'">'+esc2(LVX.TAPES[t].t)+'</option>'}).join('')+'</select>'+btn('g:tape','GIVE TAPE')+'</div>'+
+  '<h4>GADGETS</h4>'+(window.GX?GX.list.map(function(g){var n=GX.st[g[0]]|0;return btn('gx:'+g[0],(g[3]?(n?'✓ ':''):'+')+g[1]+(g[3]?'':' ('+n+')'))}).join('')+btn('gx:all','GIVE ALL GADGETS'):'')+'<br><span class="dim">Keys in game: L lighter · N night vision · G glow stick · 1 drink · 2 first aid · 3 noise maker · 4 smoke · 5 battery. Or use the 🎒 GADGETS phone app.</span>'+
   '<h4>INVENTORY</h4><div class="card">'+(ig?'Carried ('+INV.length+'/5): '+(INV.length?INV.map(function(t){return IN[t]}).join(', '):'empty')+'<br>Quest items: '+items.filter(function(i){return i.type=='card'&&i.got}).length+'/'+(window.LVX&&LVX.on?LVX.nItems:CF.k)+'<br>':'')+'Stun gun: '+(GUN.o?'yes ('+GUN.l+' loaded, '+GUN.r+' spare)':'no')+'<br>Suits owned: '+OWN.length+'/'+SUITS.length+'<br>Cash: $'+CASH.bal+'<br>Tapes: '+((window.LVX&&ls('brarc'))?((ls('brarc')||{}).tapes||[]).length:0)+'/10</div>'+
   btn('fix:quest','RESET BUGGED QUEST ITEM (move to me)','',ig?'':'In game only')+btn('fix:gun','RESET STUN GUN STATE')+btn('fix:inv','CLEAR CARRIED ITEMS','dg',ig?'':'In game only')}
  if(T=='LEVELS'){var done=SV.done||[];return '<h4>LEVEL SELECT (0–19)</h4><select id="alv">'+LV.map(function(l,i){return '<option value="'+i+'"'+(i==SV.lv?' selected':'')+'>'+i+' — '+esc2(l.n.split('— ')[1])+(i>SV.max?' (locked)':'')+(done.indexOf(i)>=0?' ✔':'')+'</option>'}).join('')+'</select>'+btn('lv:go','TELEPORT TO LEVEL')+btn('lv:unlock','UNLOCK FOR TESTING')+btn('lv:bring','BRING PLAYERS','',NOPLAY)+
@@ -3331,6 +3402,7 @@ function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a
  if(k=='clearall')return guard('remove all monsters','level '+SV.lv,function(){removeLevelMon();ADM.dum.forEach(function(d){scene.remove(d.g)});var n=ADM.dum.length;ADM.dum=[];GR.on=false;grin.visible=false;return {msg:'Removed the level monster and '+n+' test copies.'}},{confirm:'Remove ALL monsters from this level?'});
  if(k=='test')return guard('test mode',ADM.test?'off':'on',function(){ADM.test=!ADM.test;try{sessionStorage.setItem('bradmT',ADM.test?'1':'0')}catch(e){}$a('admtest').style.display=ADM.test?'block':'none';if(!ADM.test){ADM.dum.forEach(function(d){scene.remove(d.g)});ADM.dum=[]}return {msg:'Admin test mode '+(ADM.test?'ON.':'OFF. Test copies removed.')}});
  if(k=='g')return give(v);
+ if(k=='gx')return guard('give gadget',v,function(){if(!window.GX)return {err:'Gadgets are not loaded.'};if(v=='all'){GX.list.forEach(function(g){GX.give(g[0],g[3]?1:5)});return {msg:'Gave every gadget (5 of each item).'}}var g=GX.list.find(function(q){return q[0]==v});if(!g)return {err:'Unknown gadget.'};if(g[3]&&GX.has(v))return {msg:'Already owns the '+g[1]+'.'};GX.give(v);return {msg:'Gave '+g[1]+(g[3]?'.':' (now '+GX.st[v]+').')}});
  if(k=='fix')return guard('reset item',v,function(){if(v=='quest'){var it=items.find(function(q){return q.type=='card'&&!q.got});if(!it)return {msg:'No missing quest items: nothing to fix.'};it.x=P.x+.8;it.z=P.z;it.m.position.x=it.x;it.m.position.z=it.z;if(it.p){it.p.position.x=it.x;it.p.position.z=it.z}return {msg:'Moved the next quest item ('+(it.nm||CF.kn)+') next to you.'}}if(v=='gun'){GUN.rl=0;GUN.cd=0;GUN.l=Math.max(0,Math.min(GUN.mg,GUN.l|0));GUN.r=Math.max(0,GUN.r|0);gsave();return {msg:'Stun gun state repaired.'}}if(v=='inv'){INV.length=0;return {msg:'Carried items cleared.'}}},v=='inv'?{confirm:'Clear all carried items?'}:null);
  if(k=='lv'){var n=+(($a('alv')||{}).value);if(!(n>=0&&n<LV.length)){msg('Pick a level 0–19.',false);return}
   if(v=='go')return guard('teleport to level','level '+n,function(){SV.lv=n;SV.cont=0;save();setTimeout(function(){location.reload()},300);return {msg:'Going to level '+n+'... (progress kept)'}},n>SV.max?{confirm:'Level '+n+' is still locked. Go there for testing anyway? It stays locked in normal play.'}:null);
