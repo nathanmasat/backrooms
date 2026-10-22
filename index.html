@@ -3292,7 +3292,7 @@ function applyRun(){if(applied)return;var r=run();if(!r)return;applied=true;var 
 HU.applyRun=applyRun;
 if(run())applyRun();else SET.diff=1;
 // ================= monsters: speed by difficulty, mutation and blackout =================
-function spdF(){if(HU.boQuiet>0)return 0;var f=1,r=run();if(r&&LVL<10)f*=mode().spd;if(has('fast'))f*=1.15;if(LO.ph==2)f*=1.2;return Math.min(f,1.35)}
+function spdF(){if(HU.boQuiet>0)return 0;var f=1,r=run();if(r&&LVL<10)f*=mode().spd;if(has('fast'))f*=1.15;if(LO.ph==2)f*=1.2;f*=(HU.endMul||1);return Math.min(f,HU.endMul?1.7:1.35)}
 function wrapMove(name){var o=window[name];if(typeof o!='function')return;window[name]=function(dt){var sx=M.x,sz=M.z,r=o.apply(this,arguments);try{var f=spdF(),dx=M.x-sx,dz=M.z-sz;if(f!=1&&!P.dead&&Math.hypot(dx,dz)<1.5){M.x=sx+dx*f;M.z=sz+dz*f}}catch(e){}return r}}
 wrapMove('updMon');wrapMove('updLM');
 // Double Threat: The Grin also hunts during lights-out events on every level
@@ -3989,6 +3989,7 @@ function placeTV(){if(LVL>9&&LVL!=0)return;var cs=open.filter(function(o){var q=
  var G=new T.Group(),bm=function(c2){return new T.MeshLambertMaterial({color:c2})};var st=new T.Mesh(new T.BoxGeometry(.9,.6,.5),bm(0x3a2a1a));st.position.y=.3;G.add(st);var tv=new T.Mesh(new T.BoxGeometry(.7,.55,.55),bm(0x222222));tv.position.y=.88;G.add(tv);var scr=new T.Mesh(new T.PlaneGeometry(.55,.42),new T.MeshBasicMaterial({color:0x223322}));scr.position.set(0,.88,.28);G.add(scr);var vcr=new T.Mesh(new T.BoxGeometry(.6,.1,.4),bm(0x111111));vcr.position.set(0,.65,.05);G.add(vcr);
  G.position.set(cc(c[0])+1,0,cc(c[1])+1);if(solid(G.position.x,G.position.z))G.position.set(cc(c[0]),0,cc(c[1]));G.rotation.y=RND()*6.28;scene.add(G);TV={g:G,scr:scr,x:G.position.x,z:G.position.z};try{FURN.push({x:TV.x,z:TV.z,r:.5})}catch(e){}}
 try{placeTape();placeTV()}catch(e){console.error('vhs',e)}
+HU.tapeObj=function(){return TAPE};
 // the TV: play collected tapes, archive them
 function tvP(msg){started=false;ELP=true;try{document.exitPointerLock()}catch(e){}var ids=Object.keys(VT).filter(function(k){return vs(k).c});
  pnl('<b>📺 VCR — PLAY A TAPE</b><br><small>Tapes you play here are archived in VHS ARCHIVE on your phone.</small>'+(msg?'<div style="color:#9f9">'+e2(msg)+'</div>':'')+'<div style="text-align:left;margin:8px 0">'+(ids.length?ids.map(function(k){var s=vs(k);return '<div style="margin:5px 0"><span class="ch" data-hu3="play:'+k+'">▶ '+e2(VT[k].t)+'</span> <small>'+(s.p?'<span style="color:#9f9">archived</span>':'<span style="color:#fc6">not played</span>')+(VT[k].danger?' · <span style="color:#f77">disturbing</span>':'')+'</small></div>'}).join(''):'<i>No tapes yet. Find VHS tapes on Levels 0-9 (they glow blue).</i>')+'</div>')}
@@ -4778,7 +4779,116 @@ var lt=performance.now(),echoT=0;(function tick(){requestAnimationFrame(tick);va
 // admin helpers
 HU.loreAll=function(){L.forEach(function(q){LO2.got[q.id]=LO2.got[q.id]||Date.now()});hsave();PL.forEach(function(p){p.g.visible=false});return 'All '+L.length+' lore items added to the archive.'};
 HU.boNow=function(){BO_ON=true;BO.done=false;BO.t=0;return 'The Boiled One will appear as soon as it can (needs a long clear view, or a safe room).'};
-HU.LORE=L;
+HU.LORE=L;HU.lorePL=PL;
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 5: compass & objective markers, holding your breath, ENDLESS mode, trophies, wall writing ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function m32(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead&&!(HU.PK&&HU.PK.cur)}
+function un(){return (typeof UN!='undefined'&&UN)?UN:'WANDERER'}
+HD.cnt=HD.cnt||{};HD.tro=HD.tro||{};
+function cnt(k,n){HD.cnt[k]=(HD.cnt[k]||0)+(n||1);hsave()}
+var oEv=HU.ev;HU.ev=function(id){if(id=='black'||id=='gen'||id=='tape'||id=='rescue')cnt(id);return oEv?oEv.apply(this,arguments):null};
+// =====================================================================
+// 1. COMPASS & OBJECTIVE MARKERS (O to toggle)
+// =====================================================================
+if(SET.cmp==null)SET.cmp=1;
+var CV=document.createElement('canvas');CV.width=420;CV.height=40;CV.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:6;pointer-events:none;width:min(420px,80vw);height:auto;display:none';document.body.appendChild(CV);var CX=CV.getContext('2d');
+addEventListener('keydown',function(e){if(e.code!='KeyO'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(typeof started=='undefined'||!started)return;SET.cmp=SET.cmp?0:1;try{localStorage.setItem('brs',JSON.stringify(SET))}catch(x){}say('Compass '+(SET.cmp?'on':'off')+' (O)',1.5)});
+function markers(){var m=[];try{var ok=P.cards>=CF.k&&(!HU.fuse||HU.fuse());m.push({x:EL.x||cc(EL.i),z:EL.z||cc(EL.j),c:ok?'#3f8':'#f55',s:'▣',l:ok?'EXIT':'EXIT 🔒'});
+ var best=null,bd=1e9;items.forEach(function(it){if(it.got||it.type!='card')return;var d=Math.hypot(it.x-P.x,it.z-P.z);if(d<bd){bd=d;best=it}});if(best&&bd<45)m.push({x:best.x,z:best.z,c:'#ffe033',s:'◆',l:(CF.kn||'item').split(' ').pop()});
+ (HU.lorePL||[]).forEach(function(p){if(p.g.visible&&p.q.req&&Math.hypot(p.x-P.x,p.z-P.z)<40)m.push({x:p.x,z:p.z,c:'#ffd8a0',s:'✦',l:'story'})});
+ var tp=HU.tapeObj&&HU.tapeObj();if(tp&&tp.g.visible&&HD.vhs&&HD.vhs[tp.id]&&HD.vhs[tp.id].d)m.push({x:tp.x,z:tp.z,c:'#6cf',s:'▭',l:'VHS'});
+ if(HU.LO&&HU.LO.gen)m.push({x:HU.LO.gen.x,z:HU.LO.gen.z,c:'#ff8a3a',s:'⚡',l:'generator'});
+ if(HU.SK)HU.SK.gens.forEach(function(g2){if(!g2.on)m.push({x:g2.x,z:g2.z,c:'#ff8a3a',s:'⚡',l:'generator'})});
+ var rm=HU.room;if(rm&&HD.cr&&HD.cr.found)m.push({x:rm.cx,z:rm.cz,c:'#9cf',s:'◈',l:'control room'})}catch(e){}return m}
+function drawCompass(){var on=SET.cmp&&playing();CV.style.display=on?'block':'none';if(!on)return;var x=CX,w=420,h=40;x.clearRect(0,0,w,h);x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,w,26);x.strokeStyle='rgba(228,213,106,.5)';x.strokeRect(.5,.5,w-1,25);
+ var fov=PI*.9,ang=function(a){return Math.atan2(Math.sin(a),Math.cos(a))};x.fillStyle='rgba(228,213,106,.5)';x.font='10px monospace';x.textAlign='center';
+ for(var k=0;k<24;k++){var a=k/24*PI*2,d=ang(a-(-P.yaw)),px=w/2+d/fov*w;if(px<0||px>w)continue;x.fillRect(px,k%6?18:14,1,k%6?6:10);if(k%6==0)x.fillText(['N','W','S','E'][k/6],px,11)}
+ markers().forEach(function(m){var dx=m.x-P.x,dz=m.z-P.z,a=Math.atan2(-dx,-dz),d=ang(a-P.yaw),dist=Math.hypot(dx,dz),px=w/2-d/fov*w;var edge=px<8||px>w-8;px=Math.max(8,Math.min(w-8,px));x.fillStyle=m.c;x.font='bold 15px sans-serif';x.fillText(edge?(px<w/2?'◀':'▶'):m.s,px,20);x.font='9px monospace';x.fillText(Math.round(dist)+'m',px,36)});
+ x.fillStyle='#fff';x.fillRect(w/2-1,0,2,5)}
+// =====================================================================
+// 2. HOLD YOUR BREATH (SPACE while hiding)
+// =====================================================================
+var BR={v:100,hold:false,cd:0,saw:false};
+var bar=document.createElement('div');bar.style.cssText='position:fixed;left:50%;bottom:22%;transform:translateX(-50%);z-index:7;width:220px;font:12px monospace;color:#cde;text-align:center;pointer-events:none;display:none';bar.innerHTML='<div id="br-t">HOLD SPACE: hold your breath</div><div style="height:8px;border:1px solid #9cf;margin-top:3px"><div id="br-f" style="height:100%;background:#9cf;width:100%"></div></div>';document.body.appendChild(bar);
+var spaceDown=false;addEventListener('keydown',function(e){if(e.code=='Space'&&typeof started!='undefined'&&started){spaceDown=true;if(P.hide)e.preventDefault()}});addEventListener('keyup',function(e){if(e.code=='Space')spaceDown=false});
+function wrapSus(name){var o=window[name];if(typeof o!='function')return;window[name]=function(dt){var useLM=name=='updLM',s0=useLM?LM.sus:M.sus,r=o.apply(this,arguments);if(BR.hold&&P.hide){var s1=useLM?LM.sus:M.sus;if(s1>s0){var s2=s0+(s1-s0)*.2;if(useLM)LM.sus=s2;else M.sus=s2}}return r}}
+wrapSus('updMon');wrapSus('updLM');
+function breathTick(dt){var show=playing()&&P.hide;bar.style.display=show?'block':'none';if(!show){BR.hold=false;BR.saw=false;BR.v=Math.min(100,BR.v+25*dt);return}
+ BR.cd-=dt;BR.hold=spaceDown&&BR.cd<=0&&BR.v>0;if(BR.hold){BR.v-=12.5*dt;if(RND()<dt*1.5)tn({f:55,d:.18,v:.12,lp:150});var d=Math.hypot(M.x-P.x,M.z-P.z),hunting=M.state=='chase'||(typeof LM!='undefined'&&(LM.st=='search'||LM.st=='hunt'||LM.st=='invest'));if(d<4.5&&hunting&&!BR.saw){BR.saw=true;cnt('breath')}
+  if(BR.v<=0){BR.v=0;BR.cd=3;BR.hold=false;say('You gasp for air!',2);bs({f:600,q:.5,d:.5,v:.5});noise(18);if(lm)LM.sus+=.45;else M.sus+=.45}}else BR.v=Math.min(100,BR.v+18*dt);
+ document.getElementById('br-f').style.width=BR.v+'%';document.getElementById('br-f').style.background=BR.hold?'#6cf':BR.cd>0?'#f66':'#9cf';document.getElementById('br-t').textContent=BR.cd>0?'catching your breath...':BR.hold?'holding your breath — monsters can barely hear you':'HOLD SPACE: hold your breath'}
+// =====================================================================
+// 3. ENDLESS MODE: escape, drop into a random level, every wave is harder
+// =====================================================================
+HD.endless=HD.endless||{on:0,wave:1,score:0,best:0,bestWave:0};var EN=HD.endless;
+function pickLv(not){var c=[];for(var i=0;i<=Math.min(18,SV.max|0);i++)if(i!=not)c.push(i);if(!c.length)c=[0];return c[RND()*c.length|0]}
+function endStart(){EN.on=1;EN.wave=1;EN.score=0;EN.prev=SV.lv;EN.t0=Date.now();hsave();SV.lv=pickLv(-1);SV.cont=0;save();location.reload()}
+function endP(){pnl('<b>♾ ENDLESS MODE</b><div style="text-align:left;font-size:13px;line-height:1.6;margin:8px 0">• Every time you escape a level you drop straight into a random level you have discovered.<br>• Each wave the monsters get faster and the lights fail more often.<br>• One life. Dying ends the run. Score = waves × 100 + time bonus.</div><small>Best: wave '+(EN.bestWave||0)+' · '+(EN.best||0)+' points</small><div class="bt pl" data-hu10="go">START ENDLESS</div>')}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hu10]');if(!el)return;e.stopPropagation();var k=el.dataset.hu10;if(k=='go')endStart();if(k=='again'){EN.on=0;hsave();endStart()}if(k=='quit'){EN.on=0;hsave();SV.lv=EN.prev==null?0:EN.prev;SV.cont=0;save();location.reload()}},true);
+try{var bd=document.getElementById('b-dc'),be=document.createElement('div');be.className='bt';be.id='b-end';be.textContent='♾ ENDLESS';bd.after(be);be.onclick=endP}catch(e){}
+var EHUD=null;
+if(EN.on&&!HU.SK){HU.endMul=1+(EN.wave-1)*.06;try{if(HU.LO)HU.LO.cd=Math.min(HU.LO.cd,(60+RND()*40)/(1+EN.wave*.15))}catch(e){}
+ EHUD=document.createElement('div');EHUD.style.cssText='position:fixed;right:16px;top:44px;z-index:6;font:bold 14px monospace;color:#c9a0ff;text-shadow:0 0 6px #000;pointer-events:none;text-align:right';document.body.appendChild(EHUD);
+ var oNx=nextLv;nextLv=function(n){if(EN.on){EN.wave++;EN.score+=100;hsave();var to=pickLv(SV.lv);HU.toast('♾ WAVE '+EN.wave+' — next: '+(LV[to].n.split('— ')[1]||('Level '+to)),'#c9a0ff');return oNx.call(this,to)}return oNx.apply(this,arguments)};
+ var oDie=die;die=function(){var was=P.dead,r=oDie.apply(this,arguments);if(!was&&P.dead&&EN.on){var tb=Math.round((Date.now()-(EN.t0||Date.now()))/1000/6),pts=EN.wave*100+EN.score+tb,nb=pts>(EN.best||0);EN.best=Math.max(EN.best||0,pts);EN.bestWave=Math.max(EN.bestWave||0,EN.wave);EN.last=pts;EN.on=0;hsave();
+  setTimeout(function(){var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.9);display:flex;align-items:center;justify-content:center;color:#e4d56a;font:15px monospace;text-align:center';ov.innerHTML='<div class="pn"><h2 style="color:#c9a0ff">♾ ENDLESS — RUN OVER</h2>You reached wave <b>'+EN.wave+'</b><br>Score: <b>'+pts+'</b>'+(nb?' <span style="color:#9f9">NEW BEST!</span>':'')+'<br><small>Best: '+EN.best+' · best wave '+EN.bestWave+'</small><br><br><div class="bt pl" data-hu10="again">TRY AGAIN</div><div class="bt" data-hu10="quit">BACK TO THE STORY</div></div>';ov.addEventListener('click',function(ev){var k=ev.target.dataset&&ev.target.dataset.hu10;if(!k)return;if(k=='again'){endStart()}if(k=='quit'){SV.lv=EN.prev==null?0:EN.prev;SV.cont=0;save();location.reload()}});document.body.appendChild(ov)},4500)}return r};
+ // ENDLESS never shows story endings on Level 19
+ setTimeout(function(){say('♾ ENDLESS — WAVE '+EN.wave+'. Escape to go deeper.',5)},1500)}
+// =====================================================================
+// 4. TROPHIES
+// =====================================================================
+function lore(){var g=HD.lore&&HD.lore.got||{};return Object.keys(g).length}
+function plays(){var n=0,v=HD.vhs||{};for(var k in v)if(v[k].p)n++;n+=Object.keys(HD.vhsP||{}).length;n+=Object.keys((HD.lore&&HD.lore.play)||{}).length;return n}
+function chases(){var e=HD.enc||{},n=0;for(var k in e)n+=e[k].e|0;return n}
+function metN(){var e=HD.enc||{},n=0;for(var k in e)if(e[k].n)n++;return n}
+function syms(){var s=HD.sym||{},n=0;for(var k in s)if(s[k])n++;return n}
+function saved(){var r=HD.res||{};return Object.keys(r).filter(function(k){return r[k]=='saved'}).length}
+var TR=[['first','First Steps','Escape Level 0',function(){return (SV.done||[]).indexOf(0)>=0?1:0},1,25],
+ ['deep','Deep Diver','Reach Level 10',function(){return Math.min(10,SV.max|0)},10,100],
+ ['bottom','The Bottom','Reach Level 19',function(){return Math.min(19,SV.max|0)},19,200],
+ ['col','Collector','Find 10 pieces of lore',lore,10,75],
+ ['arch','Archivist','Find 30 pieces of lore',lore,30,150],
+ ['tape','Tape Head','Play 10 tapes or recordings',plays,10,100],
+ ['dark','Afraid of the Dark','Survive 5 lights-out events',function(){return HD.cnt.black|0},5,75],
+ ['gen','Generator Tech','Restart 3 emergency generators',function(){return HD.cnt.gen|0},3,75],
+ ['run','Escape Artist','Survive 10 monster chases',chases,10,100],
+ ['zoo','Monster Expert','Encounter 10 different monsters',metN,10,100],
+ ['hero','Hero','Rescue 3 lost wanderers',saved,3,150],
+ ['room','Hidden Room','Find the Level 0 control room',function(){return HD.cr&&HD.cr.found?1:0},1,75],
+ ['dlb',"Didn't Look Back",'Survive the Watcher corridor',function(){return HD.dlbc&&HD.dlbc.done?1:0},1,150],
+ ['cont','Breakout','Escape Sub-Level C',function(){return HD.cb&&HD.cb.done?1:0},1,150],
+ ['sym','Symbol Hunter','Find 10 hidden symbols',syms,10,100],
+ ['l20','Remembered','Complete Level 20',function(){return HD.l20?1:0},1,250],
+ ['ends','Many Endings','Reach 3 different endings',function(){return Object.keys(HD.end||{}).length},3,250],
+ ['nm','Nightmare Survivor','Escape a level on NIGHTMARE or harder',function(){return HD.meta&&HD.meta.flags&&HD.meta.flags.hardEsc?1:0},1,100],
+ ['inf','Endless Night','Reach wave 5 in ENDLESS',function(){return Math.min(5,Math.max(EN.bestWave||0,EN.on?EN.wave:0))},5,150],
+ ['breath','Breathless','Hold your breath while a monster searches right next to you (5 times)',function(){return HD.cnt.breath|0},5,50]];
+function troCheck(){TR.forEach(function(t){if(HD.tro[t[0]])return;var v=0;try{v=t[3]()}catch(e){}if(v>=t[4]){HD.tro[t[0]]=Date.now();hsave();HU.raw=1;try{addCash(t[5],'Trophy: '+t[1])}finally{HU.raw=0}HU.toast('🏅 TROPHY: '+t[1]+' (+$'+t[5]+')','#ffd27a');tn({f:660,f2:1320,d:.5,v:.15})}})}
+setInterval(troCheck,3000);setTimeout(troCheck,1500);
+APPS.push(['🏅 TROPHIES','hutro']);
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);if(PHN.scr!='hutro')return r0;var r=MB.querySelector('.ph');if(!r||!r.children[1])return r0;try{r.children[0].querySelector('span:nth-child(2)').textContent='TROPHIES'}catch(e){}var got=TR.filter(function(t){return HD.tro[t[0]]}).length;
+ r.children[1].innerHTML='<small>'+got+' / '+TR.length+' trophies</small>'+TR.map(function(t){var v=0;try{v=t[3]()}catch(e){}var ok=HD.tro[t[0]],p=Math.min(1,v/t[4]);return '<div style="margin:7px 0;'+(ok?'':'opacity:.75')+'">'+(ok?'🏅':'▫')+' <b>'+e2(t[1])+'</b> <small>$'+t[5]+'</small><br><small>'+e2(t[2])+'</small><div style="height:5px;background:#333;margin-top:2px"><div style="height:100%;width:'+Math.round(p*100)+'%;background:'+(ok?'#ffd27a':'#7a6a2a')+'"></div></div><small>'+Math.min(v,t[4])+' / '+t[4]+'</small></div>'}).join('');return r0};
+// =====================================================================
+// 5. WALL WRITING left by people who came before
+// =====================================================================
+var WW=['DON\'T LOOK BACK','IT HEARS YOU RUN','HIDE. HOLD YOUR BREATH.','{UN} TURN AROUND','THE EXIT LIES','COUNT THE LIGHTS','WE WERE FIVE','DANA WAS HERE — 1994','NOT IN THE WATER','IF ITS EYES SHINE, RUN','KEEP THE CAMERAS ON','STAY IN THE LIGHT','I CAN SEE YOU READING THIS','THE HUM HAS FOUR NOTES','R.C. → KEEP GOING','LOCKERS ARE SAFE (MOSTLY)','DO NOT ANSWER WHEN IT SAYS YOUR NAME','HOW LONG HAVE YOU BEEN HERE?','THE ELEVATOR KNOWS','IT WAS HERE BEFORE THEM','{UN} WAS HERE','DON\'T TRUST THE QUIET','THE PHONE IS LYING','47 DAYS','SAME ROOM SAME ROOM SAME ROOM','LOOK UP','YOU\'VE BEEN HERE BEFORE','THE STATIC MAN JUST WATCHES','BATTERIES IN THE CRATES','HELP'];
+function wallWriting(){if(LVL>19||HU.SK)return;var r=HU.run(),rr=m32((((r&&r.id)||SEED)*71+LVL*313)|0),cs=[];for(var i=1;i<W-1;i++)for(var j=1;j<W-1;j++){if(g[i][j]||CL[i*W+j])continue;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(g[a]&&g[a][b]==1)cs.push([i,j,d])})}
+ var n=4+(rr()*3|0),cols=['rgba(120,10,10,.85)','rgba(20,20,20,.8)','rgba(60,30,10,.8)'];for(var k=0;k<n&&cs.length;k++){var c=cs.splice(rr()*cs.length|0,1)[0],d=c[2],t=WW[rr()*WW.length|0].replace('{UN}',un().toUpperCase());var cv=document.createElement('canvas');cv.width=512;cv.height=128;var x=cv.getContext('2d');var fs=56;x.font='bold '+fs+'px "Comic Sans MS", cursive';while(x.measureText(t).width>490&&fs>18){fs-=4;x.font='bold '+fs+'px "Comic Sans MS", cursive'}x.fillStyle=cols[rr()*3|0];x.textAlign='center';x.textBaseline='middle';x.translate(256,64);x.rotate((rr()-.5)*.12);x.fillText(t,0,0);x.globalAlpha=.4;x.fillText(t,2,3);
+  var m=new T.Mesh(new T.PlaneGeometry(2.2,.55),new T.MeshLambertMaterial({map:new T.CanvasTexture(cv),transparent:true,depthWrite:false}));m.position.set(cc(c[0])+d[0]*1.97,.8+rr()*1.5,cc(c[1])+d[1]*1.97);m.rotation.y=Math.atan2(-d[0],-d[1]);scene.add(m)}}
+try{wallWriting()}catch(e){}
+// =====================================================================
+var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{drawCompass();breathTick(dt);if(EHUD)EHUD.textContent=EN.on?'♾ WAVE '+EN.wave:'';}catch(e){if(!tick.e){tick.e=1;console.error('HU5',e)}}})();
+HU.endlessMenu=endP;HU.trophyCheck=troCheck;
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->

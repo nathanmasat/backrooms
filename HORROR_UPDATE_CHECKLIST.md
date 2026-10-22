@@ -68,3 +68,12 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | 10 | Multiplayer story | ⛔ | There is no server, so shared sessions are not possible. Everything works solo. |
 | 11 | Story delivery | ✅ | **Ways the story reaches you:** tapes, audio logs, terminals, notes, photos, cameras, elevator announcements, monster behavior, hidden rooms, menu changes and the cinematic. **Pacing:** nothing is unskippable, and the cinematic can be skipped. |
 | 12 | Implementation | ✅ | **Reliability:** required clues are always reachable. **Saves:** found and played states are saved in each save slot. **Admin:** the WORLD tab has buttons to add all lore and to summon a Boiled One sighting. |
+
+# Stage 5 — More stuff
+| Feature | What it does |
+|---|---|
+| Compass & objective markers | **Display:** a compass bar at the top of the screen. **Markers:** the exit (green once it's unlocked), the nearest objective item, story clues, discovered tapes, generators and the control room. **Toggle:** press O to show or hide it. |
+| Hold your breath | **How:** hold SPACE while hiding in a locker. **Effect:** monsters searching nearby notice you 80% less. **Limit:** you have about 8 seconds of air, and running out makes you gasp, which makes noise. |
+| ENDLESS mode | **Where:** a main menu button. **How it works:** escape a level and you drop into a random level you've found, each wave faster and darker. **Stakes:** one life, and your best score is saved. |
+| 🏅 TROPHIES | **Phone app:** 20 trophies covering every system, each with a progress bar and a cash reward. |
+| Wall writing | **What:** 4–6 handwritten messages on the walls of every level, including warnings, tips and lore, and sometimes your name. |
