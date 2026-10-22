@@ -77,3 +77,10 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | ENDLESS mode | **Where:** a main menu button. **How it works:** escape a level and you drop into a random level you've found, each wave faster and darker. **Stakes:** one life, and your best score is saved. |
 | 🏅 TROPHIES | **Phone app:** 20 trophies covering every system, each with a progress bar and a cash reward. |
 | Wall writing | **What:** 4–6 handwritten messages on the walls of every level, including warnings, tips and lore, and sometimes your name. |
+
+# Stage 6 — Player model, third-person view, drone maps
+| Feature | What it does |
+|---|---|
+| New player model | **What it has:** a suited explorer built from many parts: helmet with a dark glass visor, mask filters, headlamp, air tank or your backpack, belt and pouches, reflective stripes, name tag with your username, boots, gloves and a flashlight in the right hand. **Customization:** it is coloured by your suit and shows your accessories (cap, glasses, mask, gloves, backpack). **Where else it's used:** the phone camera, previews and selfies. |
+| Third-person view (7) | **Views:** press 7 to cycle first-person, over-the-shoulder and far. **Movement:** the model walks, runs, crouches, leans and points the flashlight. **Walls:** the camera never goes through walls; with no room behind you it rises up near the ceiling. |
+| Drone aerial map (B) | **Opening it:** press B or use MAP on the phone. **With a Mapping Drone:** a real top-down photo of the level, with a scanning reveal when the drone launches. **Without one:** only the areas you've explored. **Icons:** exit, objectives, story clues, tapes, wanderers, generators, vents, doors, batteries and water. **Extras:** your trail, zoom and pan, and click to set a waypoint that shows on the compass. |

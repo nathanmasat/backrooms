@@ -4809,6 +4809,7 @@ function markers(){var m=[];try{var ok=P.cards>=CF.k&&(!HU.fuse||HU.fuse());m.pu
  var tp=HU.tapeObj&&HU.tapeObj();if(tp&&tp.g.visible&&HD.vhs&&HD.vhs[tp.id]&&HD.vhs[tp.id].d)m.push({x:tp.x,z:tp.z,c:'#6cf',s:'▭',l:'VHS'});
  if(HU.LO&&HU.LO.gen)m.push({x:HU.LO.gen.x,z:HU.LO.gen.z,c:'#ff8a3a',s:'⚡',l:'generator'});
  if(HU.SK)HU.SK.gens.forEach(function(g2){if(!g2.on)m.push({x:g2.x,z:g2.z,c:'#ff8a3a',s:'⚡',l:'generator'})});
+ if(HU.waypoint)m.push({x:HU.waypoint.x,z:HU.waypoint.z,c:'#f6f',s:'✚',l:'waypoint'});
  var rm=HU.room;if(rm&&HD.cr&&HD.cr.found)m.push({x:rm.cx,z:rm.cz,c:'#9cf',s:'◈',l:'control room'})}catch(e){}return m}
 function drawCompass(){var on=SET.cmp&&playing();CV.style.display=on?'block':'none';if(!on)return;var x=CX,w=420,h=40;x.clearRect(0,0,w,h);x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,w,26);x.strokeStyle='rgba(228,213,106,.5)';x.strokeRect(.5,.5,w-1,25);
  var fov=PI*.9,ang=function(a){return Math.atan2(Math.sin(a),Math.cos(a))};x.fillStyle='rgba(228,213,106,.5)';x.font='10px monospace';x.textAlign='center';
@@ -4889,6 +4890,152 @@ try{wallWriting()}catch(e){}
 // =====================================================================
 var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{drawCompass();breathTick(dt);if(EHUD)EHUD.textContent=EN.on?'♾ WAVE '+EN.wave:'';}catch(e){if(!tick.e){tick.e=1;console.error('HU5',e)}}})();
 HU.endlessMenu=endP;HU.trophyCheck=troCheck;
+})();
+</script>
+<!-- ===== ULTIMATE HORROR UPDATE — STAGE 6: new player model, third-person view (7), drone aerial maps (B) ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,PI=Math.PI,MB=document.getElementById('mp');
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function playing(){return typeof started!='undefined'&&started&&!P.dead&&!(HU.PK&&HU.PK.cur)}
+function un(){return (typeof UN!='undefined'&&UN)?UN:'WANDERER'}
+// =====================================================================
+// 1. THE PLAYER MODEL — a proper suited explorer, coloured by your suit
+// =====================================================================
+function suitInfo(){var id=typeof SUIT!='undefined'?SUIT:'',s=null;try{s=SUITS.find(function(q){return q.id==id})}catch(e){}var sh=null;try{sh=SHOP.find(function(q){return q.id==id})}catch(e){}
+ var col=s?s.c:sh?sh.c:'#5a6068',haz=!!s||!id;return {id:id,col:col,haz:haz,name:s?s.n:sh?sh.n:'Field clothes'}}
+function buildPlayer(o){o=o||{};var si=suitInfo(),EQ=(typeof EQC!='undefined'?EQC:{})||{},G=new T.Group(),U={};G.userData=U;
+ var L=function(c,em){var m=new T.MeshLambertMaterial({color:c});if(em)m.emissive=new T.Color(em);return m},PH=function(c,sh){return new T.MeshPhongMaterial({color:c,shininess:sh||40,specular:0x666666})};
+ var base=new T.Color(si.col),suit=PH(base.getHex(),18),suitD=PH(base.clone().multiplyScalar(.62).getHex(),10),dark=L(0x1c1d20),rub=PH(0x2a2b2e,30),refl=PH(0xd8dcd0,90),skin=L(0xd4a882),metal=PH(0x8a8e94,80);
+ var cyl=function(r1,r2,h,m,seg){return new T.Mesh(new T.CylinderGeometry(r1,r2,h,seg||12),m)},sph=function(r,m,w,h2){return new T.Mesh(new T.SphereGeometry(r,w||14,h2||10),m)},box=function(w,h,d,m){return new T.Mesh(new T.BoxGeometry(w,h,d),m)};
+ var add=function(p,m,x,y,z){m.position.set(x||0,y||0,z||0);p.add(m);return m};
+ // hips + torso
+ var hips=add(G,new T.Group(),0,.95,0);U.hips=hips;add(hips,cyl(.2,.19,.22,suitD),0,0,0).scale.set(1.15,1,.85);
+ var torso=add(hips,new T.Group(),0,.1,0);U.torso=torso;var chest=add(torso,cyl(.23,.2,.58,suit),0,.32,0);chest.scale.set(1.18,1,.82);add(torso,sph(.235,suit),0,.6,0).scale.set(1.2,.55,.84);
+ if(si.haz){[.2,.48].forEach(function(y){var b=add(torso,cyl(.235,.235,.045,refl),0,y,0);b.scale.set(1.19,1,.83)})}else{add(torso,box(.04,.5,.02,dark),0,.33,.17)}
+ var belt=add(torso,cyl(.215,.215,.07,dark),0,.03,0);belt.scale.set(1.2,1,.86);add(torso,box(.06,.05,.02,metal),0,.03,.19);[-.17,.17].forEach(function(x){add(torso,box(.1,.11,.07,rub),x,.02,.15)});add(torso,box(.09,.13,.06,rub),.25,.02,0);
+ // name tag
+ try{var c=document.createElement('canvas');c.width=128;c.height=32;var x=c.getContext('2d');x.fillStyle='#e8e4d8';x.fillRect(0,0,128,32);x.fillStyle='#111';x.font='bold 18px monospace';x.textAlign='center';x.fillText(un().toUpperCase().slice(0,10),64,22);var tag=add(torso,new T.Mesh(new T.PlaneGeometry(.16,.04),new T.MeshBasicMaterial({map:new T.CanvasTexture(c)})),-.11,.46,.196);tag.rotation.y=-.12}catch(e){}
+ // backpack + air tank (or the explorer backpack)
+ if(EQ.backpack){var bp=add(torso,box(.36,.46,.2,L(0x6a4a2a)),0,.35,-.26);add(torso,box(.3,.14,.06,L(0x5a3a1a)),0,.18,-.37);add(torso,cyl(.05,.05,.36,L(0x3a5a3a)),0,.66,-.27).rotation.z=PI/2}
+ else if(si.haz){add(torso,box(.3,.4,.14,rub),0,.36,-.22);var tk=add(torso,cyl(.075,.075,.42,metal),.06,.4,-.31);add(torso,sph(.075,metal),.06,.61,-.31);add(torso,cyl(.02,.02,.2,dark),.12,.68,-.2).rotation.x=.9}
+ else{add(torso,box(.28,.34,.12,L(0x3a3a44)),0,.36,-.22)}
+ // head
+ var head=add(torso,new T.Group(),0,.8,0);U.head=head;add(head,cyl(.07,.08,.1,EQ.mask?L(0x999999):skin),0,-.08,0);
+ if(si.haz&&!o.face){var hel=add(head,sph(.2,suit,18,14),0,.08,0);hel.scale.set(1,1.05,1);var vis=add(head,new T.Mesh(new T.SphereGeometry(.205,20,12,-PI*.42,PI*.84,PI*.22,PI*.42),new T.MeshPhongMaterial({color:0x10161c,shininess:120,specular:0xffffff,transparent:true,opacity:.92})),0,.08,.004);vis.scale.set(1.02,1.07,1.04);
+  [-.07,.07].forEach(function(x2){var f=add(head,cyl(.045,.05,.07,rub,10),x2,-.04,.17);f.rotation.x=PI/2;add(head,cyl(.035,.035,.01,metal,10),x2,-.04,.207).rotation.x=PI/2});
+  var lamp=add(head,box(.07,.045,.05,dark),0,.27,.11);add(head,new T.Mesh(new T.CircleGeometry(.018,10),new T.MeshBasicMaterial({color:0xfff6c8})),0,.27,.137);U.lamp=lamp}
+ else{add(head,sph(.16,skin,16,12),0,.08,0).scale.set(1,1.12,1.05);add(head,new T.Mesh(new T.SphereGeometry(.168,16,10,0,PI*2,0,PI*.48),L(0x2a1a12)),0,.1,-.01);[-.055,.055].forEach(function(x2){add(head,sph(.018,L(0x111111),8,6),x2,.11,.15)});if(EQ.glasses){[-.055,.055].forEach(function(x2){var r=add(head,new T.Mesh(new T.TorusGeometry(.03,.006,6,12),dark),x2,.11,.165)})}if(EQ.mask)add(head,box(.17,.09,.05,L(0xbbbbbb)),0,.03,.15)}
+ if(EQ.hat){add(head,cyl(.19,.2,.1,L(0x3a3a2a),16),0,.26,0);add(head,box(.3,.02,.18,L(0x3a3a2a)),0,.22,.14)}
+ // arms
+ U.arms=[];[-1,1].forEach(function(sd){var sh=add(torso,new T.Group(),sd*.29,.56,0);add(sh,sph(.09,suit),0,0,0);var up=add(sh,cyl(.07,.065,.3,suit),0,-.16,0);if(si.haz)add(sh,cyl(.072,.072,.035,refl),0,-.22,0);var el=add(sh,new T.Group(),0,-.31,0);add(el,sph(.065,suitD),0,0,0);add(el,cyl(.062,.055,.27,suit),0,-.14,0);var hand=add(el,new T.Group(),0,-.3,0);add(hand,box(.1,.12,.08,EQ.gloves?L(0x77777a):rub),0,-.02,0);
+  if(sd>0){var fl=add(hand,cyl(.03,.035,.2,dark,10),0,-.04,.08);fl.rotation.x=PI/2;add(hand,new T.Mesh(new T.CircleGeometry(.032,12),new T.MeshBasicMaterial({color:0xfff6d0})),0,-.04,.181);U.flash=fl}
+  sh.userData={el:el};U.arms.push(sh)});
+ // legs
+ U.legs=[];[-1,1].forEach(function(sd){var hp=add(hips,new T.Group(),sd*.11,-.05,0);add(hp,cyl(.095,.085,.42,suit),0,-.22,0);var kn=add(hp,new T.Group(),0,-.44,0);add(kn,sph(.08,suitD),0,0,0);add(kn,cyl(.08,.07,.4,suit),0,-.2,0);if(si.haz)add(kn,cyl(.081,.081,.035,refl),0,-.1,0);var bt=add(kn,box(.15,.13,.27,rub),0,-.43,.04);add(kn,box(.155,.03,.28,dark),0,-.485,.04);hp.userData={kn:kn};U.legs.push(hp)});
+ G.traverse(function(m){if(m.isMesh){m.castShadow=true}});
+ // poses for the phone camera / selfies
+ var ps=o.pose;if(ps=='crouch'){hips.position.y=.62;U.legs.forEach(function(l){l.rotation.x=-1.1;l.userData.kn.rotation.x=1.9});torso.rotation.x=.25}
+ if(ps=='thumbs'){U.arms[1].rotation.set(-1.4,0,0);U.arms[1].userData.el.rotation.x=-1.2}
+ if(ps=='scared'){U.arms.forEach(function(a,i){a.rotation.set(-2.2,0,i?.4:-.4);a.userData.el.rotation.x=-1.4});head.rotation.x=.25}
+ if(ps=='shoulder'){G.rotation.y=PI*.8;head.rotation.y=-PI*.55}
+ return G}
+HU.buildPlayer=buildPlayer;
+// the phone camera, selfies and previews use the new model too
+try{char3=function(){return buildPlayer({pose:typeof CAM!='undefined'?CAM.pose:null})}}catch(e){}
+// =====================================================================
+// 2. THIRD-PERSON VIEW — press 7 (first person → over the shoulder → far → first person)
+// =====================================================================
+var TP={mode:SET.tp|0,g:null,sig:'',t:0,dist:0},TPD=[0,2.4,4.2];
+addEventListener('keydown',function(e){if(e.code!='Digit7'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(typeof started=='undefined'||!started)return;TP.mode=(TP.mode+1)%3;SET.tp=TP.mode;try{localStorage.setItem('brs',JSON.stringify(SET))}catch(x){}say(['First-person view','Third-person view (over the shoulder)','Third-person view (far)'][TP.mode]+'  — press 7 to switch',2)});
+function sig(){return suitInfo().id+'|'+JSON.stringify(typeof EQC!='undefined'?EQC:{})+'|'+un()}
+function ensureModel(){var s=sig();if(TP.g&&TP.sig==s)return;if(TP.g){scene.remove(TP.g);TP.g.traverse(function(m){if(m.geometry)m.geometry.dispose()})}TP.g=buildPlayer({});TP.sig=s;TP.g.visible=false;scene.add(TP.g)}
+function animModel(dt){var G=TP.g,U=G.userData,spd=P.spd||0,cr=(P.h||1.7)<1.35,ph=P.bob||0,mv=Math.min(1,spd/3),run=spd>4;
+ G.position.set(P.x,0,P.z);G.rotation.y=P.yaw+PI;
+ U.hips.position.y=cr?.66:.95+Math.abs(Math.sin(ph))*.035*mv;U.torso.rotation.x=cr?.35:(run?.18:.05*mv);U.torso.rotation.z=-(P.lean||0)*.25;U.head.rotation.x=-(P.pit||0)*.6+(cr?-.25:0);
+ var sw=Math.sin(ph*.5)*mv;U.legs.forEach(function(l,i){var s=i?-sw:sw;l.rotation.x=(cr?-1.0:0)+s*(run?.9:.6);l.userData.kn.rotation.x=(cr?1.7:0)+Math.max(0,-s)*(run?1.2:.8)+.05});
+ U.arms.forEach(function(a,i){var s=i?sw:-sw;if(i==1&&P.fl&&P.bat>0){a.rotation.set(-1.25-(P.pit||0)*.8,0,0);a.userData.el.rotation.x=-.25}else{a.rotation.set(s*(run?.9:.5)-(cr?.4:0),0,i?-.08:.08);a.userData.el.rotation.x=-.25-Math.max(0,s)*.6}});
+ if(U.lamp)U.lamp.visible=true}
+var tmp=new T.Vector3();
+function tpCamera(c){// place the camera behind and above the player, never inside a wall
+ var want=TPD[TP.mode];TP.dist+=(want-TP.dist)*.2;var fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),rx=Math.cos(P.yaw),rz=-Math.sin(P.yaw),side=TP.mode==1?.55:.25,up=TP.mode==1?.15:.55,hy=(P.h||1.7)-.05;
+ var px=P.x+rx*side*.6,pz=P.z+rz*side*.6,d=TP.dist,st=.1,ok=0;for(var k=0;k<=d;k+=st){var x=px-fx*k*Math.cos(P.pit||0)+rx*side*(k/d),z=pz-fz*k*Math.cos(P.pit||0)+rz*side*(k/d);if(blocked(x,z,.22)||(typeof fb=='function'&&false))break;ok=k}
+ var cx=px-fx*ok*Math.cos(P.pit||0)+rx*side*(ok/Math.max(d,.01)),cz=pz-fz*ok*Math.cos(P.pit||0)+rz*side*(ok/Math.max(d,.01)),cy=Math.max(.35,Math.min(H-.25,hy+up+Math.sin(P.pit||0)*ok*.9));
+ if(ok<1.2){// no room behind you: lift the camera up near the ceiling and look down at the player
+  cy=H-.3;var pit=Math.min(P.pit||0,-.75);c.position.set(cx,cy,cz);c.rotation.set(pit,P.yaw,0);return ok}
+ c.position.set(cx,cy,cz);c.rotation.set(P.pit||0,P.yaw,0);return ok}
+// =====================================================================
+// 3. DRONE AERIAL MAP — press B (or open MAP on the phone)
+// =====================================================================
+var DM={open:false,img:null,imgT:0,zoom:1,ox:0,oy:0,trail:[],trT:0,wp:null};HU.waypoint=null;
+var ov=document.createElement('div');ov.id='hu-dm';ov.style.cssText='position:fixed;inset:0;z-index:55;background:rgba(4,6,8,.94);display:none;font:12px monospace;color:#cde';ov.innerHTML='<div style="position:absolute;left:0;right:0;top:0;padding:8px 14px;display:flex;justify-content:space-between;align-items:center;background:#0b1014;border-bottom:1px solid #2a4a5a"><b id="dm-t" style="color:#9cf;letter-spacing:.15em">🛰 MAP</b><span id="dm-s"></span><span style="cursor:pointer;color:#f99" id="dm-x">✖ CLOSE (B)</span></div><canvas id="dm-c" style="position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);width:min(88vw,74vh);height:min(88vw,74vh);border:1px solid #2a4a5a;cursor:crosshair;touch-action:none"></canvas><div id="dm-l" style="position:absolute;left:12px;bottom:12px;line-height:1.7;background:#0b1014cc;padding:8px 10px;border:1px solid #2a4a5a"></div><div style="position:absolute;right:12px;bottom:12px;text-align:right;line-height:1.7;background:#0b1014cc;padding:8px 10px;border:1px solid #2a4a5a">scroll / pinch: zoom · drag: move<br>click: set a waypoint (shows on your compass)<br>right-click: clear waypoint</div>';document.body.appendChild(ov);
+var dc=document.getElementById('dm-c');dc.width=900;dc.height=900;var dx2=dc.getContext('2d');
+function drone(){return typeof DRON!='undefined'&&DRON}
+function aerial(){// render the real level from the drone, looking straight down, ceiling removed
+ var N=1024,rt=new T.WebGLRenderTarget(N,N),half=W*S/2,cm2=new T.OrthographicCamera(-half,half,half,-half,.1,80);cm2.position.set(half,40,half);cm2.up.set(0,0,-1);cm2.lookAt(half,0,half);
+ var hid=[],fog=scene.fog,ai=amb.intensity,ac=amb.color.clone();scene.traverse(function(o){if(!o.visible)return;if((o.isMesh||o.isSprite)&&o.position.y>H-.4&&!(o.parent&&o.parent.isInstancedMesh)){if(o.isInstancedMesh)return;hid.push(o);o.visible=false}});
+ [typeof lm!='undefined'?lm:null,typeof mon!='undefined'?mon:null,typeof ghost!='undefined'?ghost:null,typeof grin!='undefined'?grin:null,TP.g].forEach(function(o){if(o&&o.visible){hid.push(o);o.visible=false}});
+ scene.fog=null;amb.intensity=1.1;amb.color.setRGB(1,.97,.9);var s1=sp.intensity,s2=sp2.intensity;sp.intensity=0;sp2.intensity=0;
+ try{ren.setRenderTarget(rt);ren.render(scene,cm2);var px=new Uint8Array(N*N*4);ren.readRenderTargetPixels(rt,0,0,N,N,px);ren.setRenderTarget(null);var id=new ImageData(N,N);for(var y=0;y<N;y++)for(var x=0;x<N;x++){var s0=((N-1-y)*N+x)*4,d0=(y*N+x)*4;id.data[d0]=px[s0];id.data[d0+1]=px[s0+1];id.data[d0+2]=px[s0+2];id.data[d0+3]=255}var cv=document.createElement('canvas');cv.width=N;cv.height=N;cv.getContext('2d').putImageData(id,0,0);DM.img=cv;DM.imgT=performance.now()}catch(e){try{ren.setRenderTarget(null)}catch(x){}}
+ scene.fog=fog;amb.intensity=ai;amb.color.copy(ac);sp.intensity=s1;sp2.intensity=s2;hid.forEach(function(o){o.visible=true});rt.dispose()}
+function openMap(){if(typeof started=='undefined'||(!started&&!DM.open))return;DM.open=true;DM.was=started;started=false;try{document.exitPointerLock()}catch(e){}ov.style.display='block';if(drone()&&(!DM.img||performance.now()-DM.imgT>15000)){aerial();DM.reveal=0}document.getElementById('dm-t').textContent=drone()?'🛰 DRONE AERIAL MAP — '+(CF.n||''):'🗺 MAP — '+(CF.n||'')+' (explored areas only)';DM.ox=DM.oy=0}
+function closeMap(){if(!DM.open)return;DM.open=false;ov.style.display='none';if(DM.was&&!P.dead){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}}
+HU.openMap=openMap;
+document.getElementById('dm-x').onclick=closeMap;
+addEventListener('keydown',function(e){if(e.code!='KeyB'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(HU.PK&&HU.PK.cur)return;if(DM.open)closeMap();else if(typeof started!='undefined'&&started&&!P.dead)openMap()});
+addEventListener('keydown',function(e){if(DM.open&&e.code=='Escape')closeMap()});
+// the phone MAP app opens the big map too
+try{var oAct=phAct;phAct=function(a){if(a=='app:map'&&PHN.ing){closeP();setTimeout(openMap,60);return}return oAct.apply(this,arguments)}}catch(e){}
+// deploying a drone plays a scan and opens the aerial map
+try{var oUD=useDrone;useDrone=function(){var had=DRON,r=oUD.apply(this,arguments);if(!had&&DRON){DM.img=null;setTimeout(function(){started=true;openMap();DM.reveal=0;say('The drone sweeps the whole level...',3)},400)}return r}}catch(e){}
+// zoom / pan / waypoint
+var drag=null;dc.addEventListener('wheel',function(e){e.preventDefault();DM.zoom=Math.max(1,Math.min(5,DM.zoom*(e.deltaY<0?1.15:1/1.15)))});
+dc.addEventListener('pointerdown',function(e){drag={x:e.clientX,y:e.clientY,ox:DM.ox,oy:DM.oy,moved:0};try{dc.setPointerCapture(e.pointerId)}catch(x){}});
+dc.addEventListener('pointermove',function(e){if(!drag)return;var r=dc.getBoundingClientRect(),k=dc.width/r.width;var mx=(e.clientX-drag.x)*k,my=(e.clientY-drag.y)*k;if(Math.abs(mx)+Math.abs(my)>6)drag.moved=1;DM.ox=drag.ox+mx;DM.oy=drag.oy+my});
+dc.addEventListener('pointerup',function(e){if(drag&&!drag.moved&&e.button==0){var w=toWorld(e);if(w&&!solid(w[0],w[1])){HU.waypoint={x:w[0],z:w[1]};say('Waypoint set. Follow it on your compass (O).',2)}}drag=null});
+dc.addEventListener('contextmenu',function(e){e.preventDefault();HU.waypoint=null});
+function view(){var Wd=W*S,sc=dc.width/Wd*DM.zoom,cx=dc.width/2+DM.ox,cy=dc.height/2+DM.oy,fx=DM.zoom>1?P.x:Wd/2,fz=DM.zoom>1?P.z:Wd/2;return {sc:sc,tx:function(x){return cx+(x-fx)*sc},ty:function(z){return cy+(z-fz)*sc},fx:fx,fz:fz,cx:cx,cy:cy}}
+function toWorld(e){var r=dc.getBoundingClientRect(),k=dc.width/r.width,mx=(e.clientX-r.left)*k,my=(e.clientY-r.top)*k,v=view();return [v.fx+(mx-v.cx)/v.sc,v.fz+(my-v.cy)/v.sc]}
+function drawMap(dt){var x=dx2,v=view(),cw=dc.width,sz=S*v.sc,dro=drone();x.fillStyle='#05080a';x.fillRect(0,0,cw,cw);
+ if(dro&&DM.img){x.save();x.globalAlpha=.95;x.drawImage(DM.img,v.tx(0),v.ty(0),W*S*v.sc,W*S*v.sc);x.restore();
+  // walls outlined so the maze reads clearly
+  x.fillStyle='rgba(10,14,18,.55)';for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j])x.fillRect(v.tx(i*S),v.ty(j*S),sz+.5,sz+.5);
+  if(DM.reveal<1){DM.reveal+=dt*.6;var ry=v.ty(0)+W*S*v.sc*DM.reveal;x.fillStyle='#05080a';x.fillRect(0,ry,cw,cw);x.fillStyle='rgba(120,220,255,.8)';x.fillRect(0,ry-3,cw,3)}}
+ else{for(var i2=0;i2<W;i2++)for(var j2=0;j2<W;j2++){if(!MX[i2*W+j2])continue;x.fillStyle=g[i2][j2]?'#4a4222':'#1c1a10';x.fillRect(v.tx(i2*S),v.ty(j2*S),sz+.5,sz+.5)}}
+ // grid
+ x.strokeStyle='rgba(120,200,255,.06)';x.lineWidth=1;for(var k=0;k<=W;k+=5){x.beginPath();x.moveTo(v.tx(k*S),v.ty(0));x.lineTo(v.tx(k*S),v.ty(W*S));x.stroke();x.beginPath();x.moveTo(v.tx(0),v.ty(k*S));x.lineTo(v.tx(W*S),v.ty(k*S));x.stroke()}
+ var known=function(px,pz){return dro||MX[ce(px)*W+ce(pz)]};var ico=function(px,pz,col,s,lab){if(!known(px,pz))return;var X=v.tx(px),Y=v.ty(pz);x.fillStyle='rgba(0,0,0,.6)';x.beginPath();x.arc(X,Y,11,0,7);x.fill();x.fillStyle=col;x.font='bold 15px sans-serif';x.textAlign='center';x.textBaseline='middle';x.fillText(s,X,Y+1);if(lab&&DM.zoom>1.6){x.font='10px monospace';x.fillText(lab,X,Y+17)}};
+ try{DOORS.forEach(function(d){if(known(d.x,d.z)){x.fillStyle=d.open?'#c84':'#e95';x.fillRect(v.tx(d.x)-4,v.ty(d.z)-4,8,8)}});lockers.forEach(function(l){if(known(l.position.x,l.position.z)){x.fillStyle='#9aa';x.fillRect(v.tx(l.position.x)-3,v.ty(l.position.z)-3,6,6)}});
+  VENTS.forEach(function(q){ico(cc(q.ci),cc(q.cj),'#39f','◫','vent')});
+  items.forEach(function(it){if(it.got)return;if(it.type=='card')ico(it.x,it.z,'#ffe033','◆',(CF.kn||'item').split(' ').pop());else if(dro&&it.type=='bat')ico(it.x,it.z,'#ff9a30','▮','battery');else if(dro&&it.type=='water')ico(it.x,it.z,'#5cf','●','water')});
+  if(typeof AMMO!='undefined')AMMO.forEach(function(a){if(!a.got)ico(a.x,a.z,'#69f','⁍','ammo')});
+  (HU.lorePL||[]).forEach(function(p){if(p.g.visible)ico(p.x,p.z,p.q.req?'#ffd8a0':'#a0d8ff','✦',p.q.req?'story':'lore')});
+  var tp=HU.tapeObj&&HU.tapeObj();if(tp&&tp.g.visible)ico(tp.x,tp.z,'#6cf','▭','VHS');
+  (HU.NPCS||[]).forEach(function(n){if(n.st!='gone'&&n.st!='saved'&&n.g.visible)ico(n.x,n.z,'#9f9','☺',n.name.split(' ')[0])});
+  if(HU.LO&&HU.LO.gen)ico(HU.LO.gen.x,HU.LO.gen.z,'#ff8a3a','⚡','generator');
+  if(HU.room&&HD.cr&&HD.cr.found)ico(HU.room.cx,HU.room.cz,'#9cf','◈','control room');
+  ico(EL.x||cc(EL.i),EL.z||cc(EL.j),P.cards>=CF.k?'#3f8':'#f55','▣','EXIT');
+  if(typeof ex!='undefined'&&known(cc(ex[0]),cc(ex[1])))ico(cc(ex[0]),cc(ex[1]),'#f33','■','red door')}catch(e){}
+ // your trail and position
+ x.strokeStyle='rgba(80,255,140,.55)';x.lineWidth=2;x.beginPath();DM.trail.forEach(function(p,i){i?x.lineTo(v.tx(p[0]),v.ty(p[1])):x.moveTo(v.tx(p[0]),v.ty(p[1]))});x.stroke();
+ if(HU.waypoint){var wx=v.tx(HU.waypoint.x),wy=v.ty(HU.waypoint.z),pu=6+Math.sin(performance.now()/200)*3;x.strokeStyle='#f6f';x.lineWidth=2;x.beginPath();x.arc(wx,wy,pu+6,0,7);x.stroke();x.fillStyle='#f6f';x.font='bold 16px sans-serif';x.textAlign='center';x.fillText('✚',wx,wy+5)}
+ x.save();x.translate(v.tx(P.x),v.ty(P.z));x.rotate(-P.yaw);x.fillStyle='#3f8';x.strokeStyle='#000';x.lineWidth=2;x.beginPath();x.moveTo(0,-14);x.lineTo(9,9);x.lineTo(0,4);x.lineTo(-9,9);x.closePath();x.stroke();x.fill();x.restore();
+ var legend=[['▣','#3f8','exit / elevator'],['◆','#ffe033',CF.kn||'objective'],['✦','#ffd8a0','story clue'],['▭','#6cf','VHS tape'],['☺','#9f9','wanderer'],['⚡','#ff8a3a','generator'],['◫','#39f','vent'],['■','#e95','door']];if(dro)legend.push(['▮','#ff9a30','battery'],['●','#5cf','almond water']);
+ document.getElementById('dm-l').innerHTML=legend.map(function(l){return '<span style="color:'+l[1]+'">'+l[0]+'</span> '+e2(l[2])}).join('<br>')+'<br><span style="color:#3f8">▲</span> you'+(dro?'':'<br><span style="opacity:.7">Use a Mapping Drone (shop) for the full aerial photo.</span>');
+ var tot=0,ex2=0;for(var q=0;q<W*W;q++){if(!g[(q/W)|0][q%W]){tot++;if(MX[q])ex2++}}document.getElementById('dm-s').textContent=(dro?'Drone scan: 100%':'Explored: '+Math.round(ex2/tot*100)+'%')+'  ·  '+CF.kn+': '+P.cards+'/'+CF.k}
+// the compass shows the waypoint
+try{var oP2=null}catch(e){}
+// =====================================================================
+// per frame and the render hook
+// =====================================================================
+var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{
+ if(playing()){DM.trT-=dt;if(DM.trT<=0){DM.trT=1;var l=DM.trail[DM.trail.length-1];if(!l||Math.hypot(l[0]-P.x,l[1]-P.z)>1.5){DM.trail.push([P.x,P.z]);if(DM.trail.length>600)DM.trail.shift()}}
+  if(HU.waypoint&&Math.hypot(HU.waypoint.x-P.x,HU.waypoint.z-P.z)<2.5){HU.waypoint=null;say('Waypoint reached.',2)}}
+ if(DM.open)drawMap(dt)}catch(e){if(!tick.e){tick.e=1;console.error('HU6',e)}}})();
+var oP=window.PFX;window.PFX=function(s,c){try{var tpOn=TP.mode>0&&typeof started!='undefined'&&started&&!P.dead&&!(HU.PK&&HU.PK.cur)&&!P.hide;if(tpOn){ensureModel();TP.g.visible=true;animModel(1/60);tpCamera(c)}else if(TP.g){TP.g.visible=false;TP.dist=0}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+// compass: add the waypoint marker
+try{var cv0=null;HU.waypointMarker=function(){return HU.waypoint}}catch(e){}
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
