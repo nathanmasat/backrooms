@@ -1,4 +1,32 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><script>
+<!DOCTYPE html><html><head><meta charset="utf-8">
+<!-- TABLE OF CONTENTS — every part of the game lives in this one file, in this order:
+  1. Main game (levels 0-19, monsters, phone, shop, save system)
+  2. MONSTER ART: sculpted 3D models for every monster
+  3. GRAPHICS: light & shadow, dead/flickering lights, dust, found-footage camera
+  4. LEVEL 6: THE DARK FOREST — twisted trees arching over a dark road
+  5. LEVEL 6: RED & GREEN MUSHROOMS — the Treestalker's hunt
+  6. LEVELS 10-19: new environments, objectives, secrets, monsters
+  7. PHONE MINIGAMES — earn Backrooms Cash
+  8. PHONE IMAGES APP + RUN RECORDER
+  9. 3D JUMPSCARES: the real monster lunges out of the dark, right into your face
+  10. GADGETS: lighter, tactical flashlight, night vision, glow sticks and more
+  11. ULTIMATE HORROR UPDATE — STAGE 1: difficulty, runs, mutations, lights-out, sanity hallucinations, elevator anomalies, meta horror, daily challenges
+  12. ULTIMATE HORROR UPDATE — STAGE 2A: pocket encounters (Don't Look Back challenge, fake exits), Level 0 secret control room
+  13. ULTIMATE HORROR UPDATE — STAGE 2B: the Copycat's new AI, Lost Wanderers VHS expansion, monster encyclopedia, the creature beneath the water
+  14. ULTIMATE HORROR UPDATE — STAGE 3A: lost wanderer NPCs, rescue missions, STALKER mode (AI substitute)
+  15. ULTIMATE HORROR UPDATE — STAGE 3B: hidden symbols, containment breakout, secret Level 20, endings A-H and the final cinematic
+  16. ULTIMATE HORROR UPDATE — STAGE 3C: rare suits & cosmetics, death replays
+  17. ULTIMATE HORROR UPDATE — STAGE 4: THE LORE — the Threshold Project, the First Wanderers, the Boiled One
+  18. ULTIMATE HORROR UPDATE — STAGE 5: compass & objective markers, holding your breath, ENDLESS mode, trophies, wall writing
+  19. ULTIMATE HORROR UPDATE — STAGE 6: new player model, third-person view (7), drone aerial maps (B)
+  20. ADMIN PANEL (hidden; admin account: nathen)
+  21. SAVE FILE PICKER
+  22. SOUND & MUSIC
+  23. CONTROLS SCREEN + KEY REBINDING
+  24. PHONE / TOUCH CONTROLS
+  25. ORGANIZE: tidy main menu tabs, grouped phone home screen, one controls sheet, pause-menu shortcuts
+-->
+<script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
 var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc','brrp'];
@@ -5645,6 +5673,81 @@ var $b=function(i){return document.getElementById(i)},body=document.body,wasPlay
  }
  requestAnimationFrame(tick)})();
 function nearPick(){try{return AMMO.some(function(a){return !a.got&&Math.hypot(P.x-a.x,P.z-a.z)<1.9})||(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2)}catch(e){return false}}
+})();
+</script>
+<!-- ===== ORGANIZE: tidy main menu tabs, grouped phone home screen, one controls sheet, pause-menu shortcuts ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||typeof APPS=='undefined')return;
+var MB=document.getElementById('mp');
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var css=document.createElement('style');css.textContent=
+ '#mb{max-height:none!important;overflow:visible!important}'+
+ '#org-tabs{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin:8px auto 4px;max-width:min(560px,94vw)}'+
+ '#org-tabs span{cursor:pointer;font:12px monospace;letter-spacing:.12em;color:#b8a850;border:1px solid #4a4018;padding:6px 10px;background:#0c0a02aa}'+
+ '#org-tabs span.on{color:#fff;border-color:#e4d56a;background:#2a2408cc}'+
+ '#org-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-width:min(560px,94vw);margin:0 auto;max-height:34vh;overflow-y:auto;padding:2px}'+
+ '#org-grid .bt{width:auto!important;margin:0!important;font-size:12px!important;letter-spacing:.12em;padding:9px 6px!important}'+
+ '#org-grid .bt[hidden]{display:none}'+
+ '#org-desc{font:11px monospace;color:#8a7d3a;text-align:center;margin:4px auto 0;max-width:94vw;min-height:14px}'+
+ '.org-sec{font:bold 10px monospace;letter-spacing:.2em;color:#9a8a40;margin:10px 2px 4px;border-bottom:1px solid #3a3418;padding-bottom:2px;grid-column:1/-1}'+
+ '.org-app{cursor:pointer;background:#ffffff12;border-radius:9px;padding:9px 2px;text-align:center;font-size:11px;line-height:1.3}'+
+ '.org-app:hover{background:#ffffff24}'+
+ '.org-apps{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}'+
+ '.org-keys{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;text-align:left;font-size:12px}.org-keys b{color:#fff;white-space:nowrap}.org-keys i{grid-column:1/-1;color:#e4d56a;font-style:normal;font-weight:bold;margin-top:8px;letter-spacing:.15em}';
+document.head.appendChild(css);
+// =====================================================================
+// ONE PLACE FOR EVERY CONTROL
+// =====================================================================
+var KEYS=[['MOVING'],['W A S D','Walk'],['Shift','Sprint (loud!)'],['C','Crouch (quiet)'],['Z / X','Lean left / right'],['Mouse','Look around'],['7','Camera: first person → over the shoulder → far'],
+ ['USING THINGS'],['F','Use, open doors, hide in lockers, talk'],['E','Pick up / stun gun'],['R','Reload stun gun · flash the flashlight in special encounters'],['T','Flashlight on / off'],['Q','Monster scanner'],['I','Inventory'],['Space','Hold your breath (while hiding)'],
+ ['MAPS & HELP'],['M','Mini-map on / off'],['B','Big map (drone aerial photo after you use a drone)'],['O','Compass with objective markers'],['Tab','Scoreboard (hold)'],
+ ['GADGETS'],['L','Zippo lighter'],['N','Night-vision goggles'],['G','Glow stick'],['1 – 5','Energy drink · first-aid kit · noise maker · smoke bomb · battery pack'],
+ ['MENUS'],['P','Phone'],['V','Voice effects (microphone)'],['Esc','Pause'],['`','Admin panel (admin account only)']];
+function controlsHTML(){return '<b>⌨ ALL CONTROLS</b><br><small style="opacity:.7">Default keys. You can change most of them in CONTROLS.</small><div class="org-keys">'+KEYS.map(function(k){return k.length==1?'<i>'+k[0]+'</i>':'<b>'+e2(k[0])+'</b><span>'+e2(k[1])+'</span>'}).join('')+'</div>'}
+function controlsP(){pnl(controlsHTML())}
+window.ORG={controls:controlsP};
+// =====================================================================
+// MAIN MENU: PLAY, then four tidy tabs
+// =====================================================================
+var GROUPS=[['MODES','▶ MODES','Ways to play.',['b-run','b-lvs','b-dc','b-end','b-stk','b-mp']],
+ ['PLAYER','👤 PLAYER','Your character, progress and saves.',['b-ch','b-ph','b-st','b-lb','b-sf']],
+ ['SETTINGS','⚙ SETTINGS','Sound, controls and accessibility.',['b-acc','b-ctl','b-keys','b-vo']],
+ ['INFO','ℹ INFO','How the game works.',['b-how','b-guide','b-cr']]];
+function guideP(){pnl('<b>📘 GAME GUIDE</b><div style="text-align:left;font-size:12px;line-height:1.65;max-height:60vh;overflow:auto">'+
+ '<b style="color:#e4d56a">THE GOAL</b><br>Each level: find the items it asks for, then reach the elevator. Levels 0–19, plus a secret Level 20.<br>'+
+ '<b style="color:#e4d56a">STAYING ALIVE</b><br>Be quiet (crouch, walk), hide in lockers and hold your breath, keep the lights on for your sanity, read the monster\'s warning signs.<br>'+
+ '<b style="color:#e4d56a">RUNS</b><br>When you press PLAY you pick a difficulty and get random mutations. They stay the same until the run ends.<br>'+
+ '<b style="color:#e4d56a">SECRETS</b><br>The Level 0 control room (3 keycards), the Watcher corridor, fake exits, the containment facility, 19 hidden symbols, Level 20, endings A–H.<br>'+
+ '<b style="color:#e4d56a">THE STORY</b><br>Collect documents, recordings and VHS tapes. Read them in the phone: LORE ARCHIVE, VHS ARCHIVE, ENCYCLOPEDIA, SECRETS.<br>'+
+ '<b style="color:#e4d56a">EXTRA MODES</b><br>DAILY CHALLENGES, ENDLESS, STALKER (AI version).<br>'+
+ '<b style="color:#e4d56a">MONEY & STYLE</b><br>Earn cash from levels, trophies and challenges. Spend it in the phone SHOP on suits and gadgets. Some rare suits can only be earned.</div>')}
+function buildMenu(){var mb=document.getElementById('mb');if(!mb||document.getElementById('org-tabs'))return;var play=document.getElementById('b-play');
+ // extra buttons: the controls sheet and the guide
+ if(!document.getElementById('b-keys')){var k=document.createElement('div');k.className='bt';k.id='b-keys';k.textContent='⌨ ALL CONTROLS';k.onclick=controlsP;mb.appendChild(k)}
+ if(!document.getElementById('b-guide')){var gd=document.createElement('div');gd.className='bt';gd.id='b-guide';gd.textContent='📘 GAME GUIDE';gd.onclick=guideP;mb.appendChild(gd)}
+ var tabs=document.createElement('div');tabs.id='org-tabs';var grid=document.createElement('div');grid.id='org-grid';var desc=document.createElement('div');desc.id='org-desc';
+ if(play)play.after(tabs);else mb.prepend(tabs);tabs.after(grid);grid.after(desc);
+ var placed={};GROUPS.forEach(function(gp){gp[3].forEach(function(id){var b=document.getElementById(id);if(b){b.dataset.grp=gp[0];grid.appendChild(b);placed[id]=1}})});
+ // anything we did not plan for goes into MODES, so nothing is ever lost
+ [].slice.call(mb.querySelectorAll('.bt')).forEach(function(b){if(b===play||placed[b.id]||b.closest('#org-grid'))return;b.dataset.grp='MODES';grid.appendChild(b)});
+ var cur='MODES';try{cur=localStorage.getItem('brmenuTab')||'MODES'}catch(e){}
+ function show(t){cur=t;try{localStorage.setItem('brmenuTab',t)}catch(e){}[].slice.call(tabs.children).forEach(function(s){s.classList.toggle('on',s.dataset.t==t)});[].slice.call(grid.children).forEach(function(b){b.hidden=b.dataset.grp!=t});var g=GROUPS.find(function(q){return q[0]==t});desc.textContent=g?g[2]:''}
+ GROUPS.forEach(function(gp){var s=document.createElement('span');s.textContent=gp[1];s.dataset.t=gp[0];s.onclick=function(e){e.stopPropagation();show(gp[0])};tabs.appendChild(s)});show(cur)}
+// =====================================================================
+// PHONE HOME SCREEN: apps grouped into sections
+// =====================================================================
+var SECT=[['ESSENTIALS',['map','scan','fl','gx','drone','emg']],['STORY & LORE',['hulore','huvhs','arc','huenc','mons','husec','notes']],['PROGRESS',['hurun','hudc','hutro','rec']],['STYLE & MONEY',['shop','wallet','suits','hurs']],['PHOTOS & FUN',['cam','files','img','mg']]];
+var oScr=phScr;phScr=function(){var r0=oScr.apply(this,arguments);try{if(PHN.scr=='home'){var r=MB.querySelector('.ph');if(r&&r.children[1]){var used={},lab={};APPS.forEach(function(a){lab[a[1]]=a[0]});var h='';
+  SECT.forEach(function(s){var ids=s[1].filter(function(id){return lab[id]});if(!ids.length)return;h+='<div class="org-sec">'+s[0]+'</div><div class="org-apps">'+ids.map(function(id){used[id]=1;return '<div class="org-app" data-p="app:'+id+'">'+e2(lab[id])+'</div>'}).join('')+'</div>'});
+  var rest=APPS.filter(function(a){return !used[a[1]]});if(rest.length)h+='<div class="org-sec">MORE</div><div class="org-apps">'+rest.map(function(a){return '<div class="org-app" data-p="app:'+a[1]+'">'+e2(a[0])+'</div>'}).join('')+'</div>';
+  r.children[1].innerHTML=h}}}catch(e){}return r0};
+// =====================================================================
+// PAUSE MENU: controls + quick phone
+// =====================================================================
+function pauseExtras(){var pm=document.getElementById('pm');if(!pm||document.getElementById('p-keys'))return;var res=document.getElementById('p-menu');var k=document.createElement('div');k.className='bt';k.id='p-keys';k.textContent='⌨ CONTROLS';k.onclick=function(e){e.stopPropagation();controlsP()};(res||pm).before?res.before(k):pm.appendChild(k)}
+function ready(){try{buildMenu()}catch(e){console.error('org menu',e)}try{pauseExtras()}catch(e){}}
+if(document.readyState=='complete')setTimeout(ready,50);else addEventListener('load',function(){setTimeout(ready,50)});
 })();
 </script>
 </body></html>
