@@ -1,5 +1,16 @@
 # Changelog
 
+## Cleanup update
+- **Phone home screen:** shrunk from 25 tiles to 18. Apps that belong together now open from one folder:
+  - ARCHIVE: lore archive, VHS archive, found tapes and notes.
+  - MONSTERS: the encyclopedia and the monster log.
+  - PROGRESS: run, daily challenges and trophies.
+  - SUITS: suits and rare suits.
+  - GALLERY: files and images.
+- **Pause menu:** the duplicate CONTROLS button is gone.
+- **Main menu:** MULTIPLAYER (info only) moved from MODES to INFO.
+- **Admin panel:** all story and secret test buttons moved out of WORLD into their own STORY tab, sorted into Events, Encounters, Give / Unlock and Tools.
+
 ## Organizing update
 - **Main menu:** a big PLAY button, with everything else sorted into four tabs: MODES, PLAYER, SETTINGS and INFO. The game remembers the last tab you used.
 - **Phone:** the home screen is sorted into sections: Essentials, Story & Lore, Progress, Style & Money, and Photos & Fun.
