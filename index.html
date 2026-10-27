@@ -1106,7 +1106,7 @@ const shk=t>13.8&&t<14.6?.05:t>15?.012:.003;
 cm.position.set(-.38+(R()-.5)*shk,1.15+(R()-.5)*shk,.2);cm.rotation.set(-.07,yaw,0);
 hl.forEach(s=>s.intensity=t>15&&R()<.15?.3:4);gm.color.setHex(t>15&&R()<.3?0xff3322:0x33ff99);
 once2('crash',19.4,()=>A_(()=>{tone({t:'sawtooth',f:800,f2:90,d:1.4,v:.6,lp:2500,a:.01});burst({f:5000,q:.5,d:1.2,v:.6,a:.003});burst({f:120,t:'lowpass',d:1.6,v:1.2,a:.003})}));
-if(t>19&&t<19.8){o.fade.style.background='#fff';o.fade.style.opacity=Math.min(1,(t-19)*2)}else if(t>=19.8){o.fade.style.background='#000';o.fade.style.opacity=1}
+if(t>19&&t<19.8){o.fade.style.background='#7a1a14';o.fade.style.opacity=Math.min(.75,(t-19)*1.6)}else if(t>=19.8){o.fade.style.background='#000';o.fade.style.opacity=1}
 if(t>=21){go=false;clearInterval(iv);o.end();done()}})}
 
 const MX=new Uint8Array(W*W),mc=$('map').getContext('2d');let MAPON=true,mapT=0;
@@ -1250,7 +1250,7 @@ function finish(){skipB.style.display='none';ren.domElement.style.filter='';if(m
 function endCut(){if(DC){DC.stop();DC=null}finish()}
 function begin3D(){DC=null;if(!CAR){finish();return}cph=1;ct=0;fadeEl.style.opacity=0}
 function cutTick(dt){if(cph!=1)return;ct+=dt;carTick(dt);const t=ct;let px=CAR.x-.4,pz=CAR.z-.5,py=1.0,yw=-Math.PI/2,pt=-.08;
-cl=t<12?1:t<14.5?Math.max(.05,1-(t-12)*.45)*(R()<.2?.4:1):t<19.5?(t<17.5?.03:.01):Math.min(1,(t-19.5))*(R()<.2?.5:1);
+cl=t<12?1:t<14.5?Math.max(.42,1-(t-12)*.25)*(R()<.15?.85:1):t<19.5?(t<17.5?.4:.36):Math.max(.36,Math.min(1,(t-19.5)*.7))*(R()<.15?.85:1);
 amb.intensity=(.04+(CF.am-.02)*cl)*SET.br;pm.color.setScalar(.12+.88*cl).multiply(new THREE.Color(1,.96,.75));pl.intensity=.1+.4*cl;
 if(AC)master.gain.value=SET.vol*Math.min(1,.2+t*.1);ren.domElement.style.filter=t<4?'blur('+Math.max(0,5-t*1.3)+'px)':'';
 if(t<3.5){yw=-Math.PI/2+Math.sin(t*.7)*.2;py=1+Math.sin(t*1.6)*.03;one('br'+Math.floor(t/2),0,()=>A_(()=>burst({f:500,t:'lowpass',d:1.2,a:.4,v:.25})))}
@@ -1602,7 +1602,8 @@ if(!OPEN&&LIVE.length){
  var ao2=document.createElement('canvas');ao2.width=ao2.height=N;var a2=ao2.getContext('2d');a2.translate(0,N);a2.scale(1,-1);a2.drawImage(ao,0,0);var aoC=new THREE.CanvasTexture(ao2);
  [[fl,aoF],[ce2,aoC]].forEach(function(q){var me=q[0];if(!me||!me.geometry)return;me.geometry.setAttribute('uv2',me.geometry.attributes.uv);me.material.aoMap=q[1];me.material.aoMapIntensity=1;me.material.needsUpdate=true});
  // walls: brighter near working lights, darker in between
- try{var n=0;for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]){var d=near(cc(i),cc(j)),b=Math.max(POOL+.18,Math.min(1,1.15-d/11));col.setRGB(b,b*.98,b*.94);wm.setColorAt(n++,col)}if(wm.instanceColor)wm.instanceColor.needsUpdate=true}catch(e){}
+ window.WALLCOL=function(x,z){var d=near(x,z);return Math.max(POOL+.3,Math.min(1,1.15-d/11))};
+ try{var n=0;for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]){var d=near(cc(i),cc(j)),b=WALLCOL(cc(i),cc(j));col.setRGB(b,b*.98,b*.94);wm.setColorAt(n++,col)}if(wm.instanceColor)wm.instanceColor.needsUpdate=true}catch(e){}
 }
 // the player's own "lantern" glow was lighting every wall; keep it subtle
 try{pl.intensity=Math.min(pl.intensity,.32)}catch(e){}
@@ -3790,8 +3791,9 @@ function cellBusy(i,j){if(i<1||j<1||i>=W-1||j>=W-1)return true;if(i<=5&&j<=5)ret
  if(items.some(function(it){return ce(it.x)==i&&ce(it.z)==j}))return true;if(DOORS.some(function(d){return d.ci==i&&d.cj==j}))return true;if(lockers.some(function(l){return Math.abs(l.position.x-cc(i))<3&&Math.abs(l.position.z-cc(j))<3}))return true;
  if(typeof FURN!='undefined'&&FURN.some(function(f){return ce(f.x)==i&&ce(f.z)==j}))return true;if(typeof VENTS!='undefined'&&VENTS.some(function(v){return (v.ci==i&&v.cj==j)}))return true;if(typeof AMMO!='undefined'&&AMMO.some(function(a){return ce(a.x)==i&&ce(a.z)==j}))return true;return false}
 function reachAll(gr){var seen=new Uint8Array(W*W),q=[[1,1]];seen[W+1]=1;for(var h=0;h<q.length;h++){var c=q[h];for(var k=0;k<4;k++){var a=c[0]+[1,-1,0,0][k],b=c[1]+[0,0,1,-1][k];if(a<0||b<0||a>=W||b>=W||gr[a][b]||seen[a*W+b])continue;seen[a*W+b]=1;q.push([a,b])}}return seen}
-function rebuildWalls(skip){var n=0,m4=new T.Matrix4(),cap=wm.instanceMatrix.count,extra=[];for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]&&!(skip&&skip[i*W+j])){if(n<cap){m4.makeTranslation(cc(i),H/2,cc(j));wm.setMatrixAt(n,m4)}else extra.push([i,j]);n++}
- wm.count=Math.min(n,cap);wm.instanceMatrix.needsUpdate=true;if(extra.length){if(!rebuildWalls.ex){rebuildWalls.ex=new T.InstancedMesh(wm.geometry,wm.material,64);if(wm.instanceColor){var cl=new T.Color(1,1,1);try{wm.getColorAt(0,cl)}catch(e){}for(var q=0;q<64;q++)rebuildWalls.ex.setColorAt(q,cl);rebuildWalls.ex.instanceColor.needsUpdate=true}scene.add(rebuildWalls.ex)}var e=rebuildWalls.ex;extra.slice(0,64).forEach(function(c,k){m4.makeTranslation(cc(c[0]),H/2,cc(c[1]));e.setMatrixAt(k,m4)});e.count=Math.min(64,extra.length);e.instanceMatrix.needsUpdate=true}else if(rebuildWalls.ex)rebuildWalls.ex.count=0;
+function wallTint(mesh,k,i,j){if(!mesh.instanceColor)return;var v=window.WALLCOL?WALLCOL(cc(i),cc(j)):1;mesh.setColorAt(k,new T.Color(v,v*.98,v*.94))}
+function rebuildWalls(skip){var n=0,m4=new T.Matrix4(),cap=wm.instanceMatrix.count,extra=[];for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]&&!(skip&&skip[i*W+j])){if(n<cap){m4.makeTranslation(cc(i),H/2,cc(j));wm.setMatrixAt(n,m4);wallTint(wm,n,i,j)}else extra.push([i,j]);n++}if(wm.instanceColor)wm.instanceColor.needsUpdate=true;
+ wm.count=Math.min(n,cap);wm.instanceMatrix.needsUpdate=true;if(extra.length){if(!rebuildWalls.ex){rebuildWalls.ex=new T.InstancedMesh(wm.geometry,wm.material,64);if(wm.instanceColor){var cl=new T.Color(1,1,1);try{wm.getColorAt(0,cl)}catch(e){}for(var q=0;q<64;q++)rebuildWalls.ex.setColorAt(q,cl);rebuildWalls.ex.instanceColor.needsUpdate=true}scene.add(rebuildWalls.ex)}var e=rebuildWalls.ex;extra.slice(0,64).forEach(function(c,k){m4.makeTranslation(cc(c[0]),H/2,cc(c[1]));e.setMatrixAt(k,m4);wallTint(e,k,c[0],c[1])});if(e.instanceColor)e.instanceColor.needsUpdate=true;e.count=Math.min(64,extra.length);e.instanceMatrix.needsUpdate=true}else if(rebuildWalls.ex)rebuildWalls.ex.count=0;
  open.length=0;for(var a=0;a<W;a++)for(var b=0;b<W;b++)if(!g[a][b])open.push([a,b])}
 function buildRoom(){if(LVL!=0||typeof wm=='undefined')return;var rr=m32((SEED*7+101)|0),before=reachAll(g),cands=[];
  for(var i0=3;i0<W-6;i0++)for(var j0=3;j0<W-6;j0++){if(i0<9&&j0<9)continue;var ok=true;for(var a=-1;a<=3&&ok;a++)for(var b=-1;b<=3&&ok;b++)if(cellBusy(i0+a,j0+b))ok=false;if(ok)cands.push([i0,j0])}
@@ -5325,30 +5327,48 @@ var TL=new T.TextureLoader(),TX={};function tx(k){if(!TX[k]){TX[k]=TL.load(IMG[k
 var SCIMG=new Image();SCIMG.src=IMG.scare;
 // ===================== THE MODEL: a crouching boy in a hoodie, corrupted =====================
 MART.kid=function(o){o=o||{};var G=new T.Group(),U=G.userData,L=function(c,m){return new T.MeshLambertMaterial(Object.assign({color:c},m||{}))},
- hood=L(0x26324a,{map:tx('hood')}),hoodD=L(0x161d2c),pants=L(0x14161c),shoe=L(0xe8e8e8),skin=L(0xb8c4b0),
- bx=function(p,w,h,d,x,y,z,m){var q=new T.Mesh(new T.BoxGeometry(w,h,d),m);q.position.set(x,y,z);p.add(q);return q},
- cy=function(p,r1,r2,h,x,y,z,m){var q=new T.Mesh(new T.CylinderGeometry(r1,r2,h,10),m);q.position.set(x,y,z);p.add(q);return q};
- var st=!!o.stand,hip=st?1.25:.62;
- // legs: crouched (knees up) or stretched and standing
- U.g=[-1,1].map(function(s){var lg=new T.Group();lg.position.set(s*.16,hip,0);G.add(lg);
-  if(st){cy(lg,.09,.08,1.2,0,-.6,0,pants);bx(lg,.17,.12,.32,0,-1.2,.06,shoe)}
-  else{var th=cy(lg,.1,.09,.55,0,.02,.26,pants);th.rotation.x=PI/2-.25;cy(lg,.085,.08,.58,0,-.32,.5,pants);bx(lg,.17,.12,.32,0,-.58,.56,shoe);bx(lg,.18,.03,.33,0,-.635,.56,L(0xcccccc))}
+ hood=L(0x2c3a58),hoodD=L(0x1b2336),cuff=L(0x151b29),pants=L(0x12141a),pantS=L(0x1e2129),shoe=L(0xececec),sole=L(0xbdbdbd),lace=L(0x222222),skin=L(0xa9b5a0),skinD=L(0x7e8a76),hair=L(0x6e604a),hairL=L(0x8a7a5e),
+ add=function(p,m,x,y,z){p.add(m);m.position.set(x||0,y||0,z||0);return m},
+ bx=function(p,w,h,d,x,y,z,m){return add(p,new T.Mesh(new T.BoxGeometry(w,h,d),m),x,y,z)},
+ cy=function(p,r1,r2,h,x,y,z,m,s){return add(p,new T.Mesh(new T.CylinderGeometry(r1,r2,h,s||12),m),x,y,z)},
+ sp=function(p,r,x,y,z,m,sx,sy,sz){var q=add(p,new T.Mesh(new T.SphereGeometry(r,14,10),m),x,y,z);q.scale.set(sx||1,sy||1,sz||1);return q},
+ lathe=function(p,pts,m,x,y,z){var g=new T.LatheGeometry(pts.map(function(a){return new T.Vector2(a[0],a[1])}),18);return add(p,new T.Mesh(g,m),x,y,z)};
+ var st=!!o.stand,hip=st?1.22:.6;
+ // ---- legs: joggers that taper to the ankle, white sneakers with soles and laces
+ function sneaker(p,y,z){var s=new T.Group();add(p,s,0,y,z);bx(s,.15,.05,.3,0,-.035,.03,sole);var up=bx(s,.14,.1,.26,0,.03,.03,shoe);sp(s,.075,0,.03,.15,shoe,1,.65,1);for(var k=0;k<3;k++)bx(s,.09,.008,.012,0,.085,-.03+k*.045,lace);bx(s,.145,.06,.03,0,.03,-.1,L(0xdedede));return s}
+ U.g=[-1,1].map(function(sg){var lg=new T.Group();lg.position.set(sg*.15,hip,0);G.add(lg);
+  if(st){cy(lg,.1,.085,.6,0,-.3,0,pants);sp(lg,.085,0,-.6,0,pants);cy(lg,.085,.065,.58,0,-.9,0,pants);cy(lg,.07,.07,.05,0,-1.17,0,cuff);sneaker(lg,-1.22,.02)}
+  else{var th=new T.Group();add(lg,th,0,0,0);th.rotation.x=1.25;cy(th,.11,.095,.5,0,.25,0,pants);var kn=sp(lg,.095,0,.12,.47,pants);
+   var sh=cy(lg,.09,.07,.6,0,-.2,.52,pants);sh.rotation.x=.12;cy(lg,.072,.072,.05,0,-.5,.55,cuff);sneaker(lg,-.56,.6)}
   return lg});
- // torso: hunched forward
- var tor=new T.Group();tor.position.set(0,hip,0);tor.rotation.x=st?.15:.55;G.add(tor);
- bx(tor,.58,.72,.36,0,.38,0,hood);bx(tor,.5,.18,.04,0,.2,.19,hoodD);// pocket
- [-.07,.07].forEach(function(x){cy(tor,.008,.008,.3,x,.55,.19,L(0x111111))});// strings
- // head, wearing his corrupted face, with the hood behind it
- var hd=new T.Group();hd.position.set(0,.88,.05);tor.add(hd);U.h=hd;
- var fm=new T.MeshLambertMaterial({map:tx('face'),emissive:0x221111});
- var head=new T.Mesh(new T.BoxGeometry(.36,.4,.34),[L(0x8a8a78),L(0x8a8a78),L(0x9a9a84),L(0x8a8a78),fm,L(0x8a8a78)]);head.position.y=.18;hd.add(head);
- var hb=new T.Mesh(new T.SphereGeometry(.3,14,10,0,PI*2,0,PI*.62),hoodD);hb.position.set(0,.16,-.13);hb.rotation.x=-1.05;hd.add(hb);
- [-.075,.075].forEach(function(x){var e=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xff2010,transparent:true,blending:T.AdditiveBlending,depthWrite:false}));e.scale.set(.12,.12,1);e.position.set(x,.23,.19);hd.add(e)});
- U.j=[-1,1].map(function(s){var j=bx(hd,.05,.02,.01,s*.03,.06,.176,L(0x050000));return j});
- // long arms that reach the floor, pale long fingers
- U.l=[-1,1].map(function(s){var a=new T.Group();a.position.set(s*.34,.66,0);tor.add(a);var up=cy(a,.08,.07,.6,0,-.3,0,hood);var lo=cy(a,.07,.06,.62,0,-.88,.06,hood);bx(a,.11,.08,.1,0,-1.2,.08,skin);
-  for(var f=0;f<4;f++){var fg=cy(a,.012,.008,.24,-.04+f*.027,-1.33,.12,skin);fg.rotation.x=.4}a.rotation.set(-.45,0,s*.12);return a});
- G.traverse(function(q){if(q.isMesh)q.castShadow=false});
+ // ---- torso: a rounded, baggy hoodie, hunched forward
+ var tor=new T.Group();tor.position.set(0,hip,0);tor.rotation.x=st?.18:.6;G.add(tor);
+ var body=lathe(tor,[[0,.78],[.16,.76],[.26,.7],[.3,.55],[.31,.35],[.3,.12],[.25,.02],[0,0]],L(0x2a3650,{side:T.DoubleSide}));body.scale.set(1,1,.68);
+ bx(tor,.36,.07,.06,0,.06,.2,cuff);// waistband
+ var pk=bx(tor,.42,.16,.04,0,.24,.2,hoodD);pk.rotation.x=-.05;// front pocket
+ bx(tor,.07,.04,.01,-.13,.53,.215,L(0xe0602a));bx(tor,.09,.016,.01,-.05,.53,.215,L(0xdddddd));// logo
+ [-.06,.06].forEach(function(x){var s=cy(tor,.007,.007,.28,x,.58,.2,L(0x0d0d0d),6);s.rotation.x=.08;sp(tor,.012,x,.44,.215,L(0x0d0d0d))});
+ // the hood: a thick fold around the neck and a cowl behind the head
+ var cowl=add(tor,new T.Mesh(new T.TorusGeometry(.2,.07,8,18),hoodD),0,.78,-.02);cowl.rotation.x=PI/2-.2;cowl.scale.set(1,.85,1);
+ var back=add(tor,new T.Mesh(new T.SphereGeometry(.26,16,12,0,PI*2,0,PI*.55),hood),0,.92,-.12);back.rotation.x=-1.25;back.scale.set(1,1.05,.9);
+ // ---- head: round, wearing his corrupted face, messy hair
+ var hd=new T.Group();hd.position.set(0,.98,.06);tor.add(hd);U.h=hd;
+ sp(hd,.17,0,.1,-.01,skinD,1,1.12,1);
+ var fm=new T.MeshLambertMaterial({map:tx('face'),emissiveMap:tx('face'),emissive:0x6a6262});
+ var face=new T.Mesh(new T.SphereGeometry(.175,24,18,PI*.5-1.15,2.3,.18,2.45),fm);face.position.set(0,.1,0);face.scale.set(1,1.12,1);face.rotation.y=PI;hd.add(face);
+ face.rotation.y=0;
+ sp(hd,.045,-.17,.1,-.02,skinD,.5,1,.8);sp(hd,.045,.17,.1,-.02,skinD,.5,1,.8);// ears
+ sp(hd,.175,0,.17,-.02,hair,1.05,.7,1.05);for(var k=0;k<26;k++){var a=RND()*PI*2,r=.08+RND()*.09,tuft=add(hd,new T.Mesh(new T.ConeGeometry(.04,.09,5),k%3?hair:hairL),Math.cos(a)*r*.95,.27+RND()*.04-(r-.1)*.6,Math.sin(a)*r*.9-.02);tuft.rotation.set(Math.sin(a)*.9+(RND()-.5)*.5,RND()*3,-Math.cos(a)*.9+(RND()-.5)*.5)}
+ for(var k=0;k<7;k++){var f=add(hd,new T.Mesh(new T.ConeGeometry(.032,.11,5),k%2?hair:hairL),-.12+k*.04,.24,.13);f.rotation.set(2.6+(RND()-.5)*.3,0,(RND()-.5)*.4)}// bangs
+ // glasses: thin dark frames over the eyes in the photo
+ var gf=L(0x2a1e16);[-.065,.065].forEach(function(x){var r=add(hd,new T.Mesh(new T.TorusGeometry(.045,.007,6,16),gf),x,.135,.168);r.scale.y=.8});bx(hd,.04,.008,.008,0,.14,.175,gf);
+ [-.075,.075].forEach(function(x){var e=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xff2010,transparent:true,blending:T.AdditiveBlending,depthWrite:false}));e.scale.set(.1,.1,1);e.position.set(x,.135,.2);hd.add(e)});
+ U.j=[-1,1].map(function(s){return bx(hd,.04,.015,.008,s*.025,.02,.17,L(0x050000))});
+ // ---- arms: long sleeves with elbows, cuffs, pale hands with long fingers that drag on the floor
+ U.l=[-1,1].map(function(sg){var a=new T.Group();a.position.set(sg*.31,.66,0);tor.add(a);sp(a,.1,0,0,0,hood);cy(a,.095,.08,.55,0,-.28,0,hood);sp(a,.08,0,-.56,0,hood);
+  var fo=new T.Group();add(a,fo,0,-.56,0);fo.rotation.x=-.35;cy(fo,.08,.07,.55,0,-.28,0,hood);cy(fo,.072,.072,.07,0,-.57,0,cuff);
+  var hn=new T.Group();add(fo,hn,0,-.63,0);sp(hn,.06,0,-.02,0,skin,1,.7,.6);for(var f=0;f<4;f++){var fg=cy(hn,.011,.006,.26,-.035+f*.023,-.15,.02,skin,6);fg.rotation.x=.25+f*.05}var th2=cy(hn,.012,.008,.12,sg*-.05,-.07,.03,skin,6);th2.rotation.z=sg*.5;
+  a.rotation.set(-.4,0,sg*.1);return a});
  if(!st)G.scale.setScalar(1.25);
  return G};
 // ===================== THE JUMPSCARE =====================
@@ -5390,6 +5410,8 @@ var oSnap=snapPhoto;snapPhoto=function(){var wild=E.on&&E.g&&E.g.visible,inPic=(
 // ===================== THE OPENING CAR SCENE: he replaces the Boiled One =====================
 var CARK=0,oMk=mkMon;mkMon=function(){if(CARK){CARK=0;return MART.kid({stand:true})}return oMk.apply(this,arguments)};
 var oDC=driveCut;driveCut=function(){CARK=1;try{return oDC.apply(this,arguments)}finally{CARK=0}};
+var GH=null;var oB3=begin3D;begin3D=function(){try{if(!GH){GH={old:ghost.children.slice(),k:MART.kid({stand:true})};GH.old.forEach(function(c){c.visible=false});ghost.add(GH.k)}}catch(e){}return oB3.apply(this,arguments)};
+(function gw(){if(GH&&typeof cph!='undefined'&&cph!=1&&!(typeof CUT!='undefined'&&CUT)){ghost.remove(GH.k);GH.old.forEach(function(c){c.visible=true});GH=null}if(GH||!window.__kidGW)requestAnimationFrame(gw)})();
 HU.kid={scare:kidScare,spawn:function(){E.next=0},E:E};
 })();
 </script>

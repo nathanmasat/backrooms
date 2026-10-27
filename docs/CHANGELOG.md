@@ -1,5 +1,16 @@
 # Changelog
 
+## Better Corrupted model + cutscene lighting fix
+- **The Corrupted** has a new, detailed model:
+  - a round head that wears his corrupted face (it glows a little, so it can be seen in the dark), messy hair with bangs, ears and glasses frames
+  - a baggy hoodie with a hood, a fold around the neck, a front pocket, drawstrings and a logo patch
+  - arms with elbows and cuffs, pale long fingers
+  - tapered joggers, and white sneakers with soles and laces
+- **The walk after the car crash:** the figure that appears now is The Corrupted, not the Boiled One.
+- **Cutscene lighting:** the lights used to drop to 1–3%, which made the walls pitch black while the ceiling lights stayed bright. Now they stay dim but readable.
+- **The crash flash:** a short dark-red flash instead of a full white screen.
+- **Level 0 wall shading:** the secret control room rebuilds walls; they now get the correct brightness instead of keeping stale colours.
+
 ## The Corrupted (custom monster)
 - **What he is:** a new monster made from a photo of a friend of the developer, used with his permission. His face is corrupted: grey skin, black tears, burning red eyes behind his glasses, and a jagged grin. His 3D model is a crouching boy in a dark hoodie with long arms.
 - **In the levels:** he rarely shows up crouched down a hallway, lit by a faint red glow. If you stare at him or walk up to him, he rushes you and jumpscares you (−20 sanity, but it can never kill you). If you ignore him, he gives up.
