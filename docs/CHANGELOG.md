@@ -1,16 +1,20 @@
 # Changelog
 
+## N4TH4N is now 14 - 1 - 20 - 8 - 1 - 14
+- **New name:** the monster is now called **14 - 1 - 20 - 8 - 1 - 14**. Those are the letters of NATHAN as numbers (N=14, A=1, T=20, H=8). The encyclopedia hints at it: "it spells a name when you count the letters of the alphabet".
+- **Portrait:** now `docs/14-1-20-8-1-14.png`.
+
 ## The Croucher is now N4TH4N
 - **New name:** N4TH4N, which is "Nathan" with the A's written as 4s.
 - **File number:** 14-1-20-8-1-14. Those are the letters of NATHAN as numbers (N=14, A=1, T=20, H=8). The encyclopedia entry mentions it.
 - **Jumpscare caption:** the static whispers the numbers.
-- **Portrait:** now `docs/n4th4n.png`.
+- **Portrait:** now `docs/14-1-20-8-1-14.png`.
 
 ## The Croucher
 - The custom monster now has a name: **The Croucher**.
 - **Every level:** he can appear in every level from 0 to 19. His first appearance is 35–70 seconds into a level, then about every 2–3 minutes. He picks a spot you can see, 7–28 m away.
 - **Sharper face:** the eyes line up with the glasses frames, and no photo background shows at the sides of his head.
-- **Portrait:** `docs/n4th4n.png`.
+- **Portrait:** `docs/14-1-20-8-1-14.png`.
 
 ## Better Corrupted model + cutscene lighting fix
 - **The Corrupted** has a new, detailed model:
