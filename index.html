@@ -20,7 +20,7 @@
   18. ULTIMATE HORROR UPDATE — STAGE 5: compass & objective markers, holding your breath, ENDLESS mode, trophies, wall writing
   19. ULTIMATE HORROR UPDATE — STAGE 6: new player model, third-person view (7), drone aerial maps (B)
   19b. HIDE AND SEEK MODE: lobbies (local), prop disguises, seekers, abilities, rounds, rewards, stats
-  19c. THE CROUCHER: a custom monster made from a player photo
+  19c. N4TH4N: a custom monster made from a player photo
   20. ADMIN PANEL (hidden; admin account: nathen) — includes the ENTITY TRANSFORMATION tab
   21. SAVE FILE PICKER
   22. SOUND & MUSIC
@@ -5314,7 +5314,7 @@ MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closes
 // reopen the Hide and Seek menu after "back to menu"
 (function(){try{if(sessionStorage.getItem('brhsOpen')){sessionStorage.removeItem('brhsOpen');setTimeout(function(){if(window.HU&&HU.hsMenu&&!(HU.data.hs&&HU.data.hs.pending))HU.hsMenu()},1200)}}catch(e){}})();
 </script>
-<!-- ===== THE CROUCHER: custom monster made from a player photo (every level, jumpscare, phone camera, opening car scene) ===== -->
+<!-- ===== N4TH4N: custom monster made from a player photo (every level, jumpscare, phone camera, opening car scene) ===== -->
 <script>
 (function(){
 if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
@@ -5374,13 +5374,13 @@ MART.kid=function(o){o=o||{};var G=new T.Group(),U=G.userData,L=function(c,m){re
 // ===================== THE JUMPSCARE =====================
 function kidScare(){var c=document.createElement('canvas');c.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:8;pointer-events:none;background:#000';c.width=640;c.height=360;document.body.append(c);var x=c.getContext('2d'),t=0,rf=typeof SET!='undefined'&&SET.rf,ra=typeof SET!='undefined'&&SET.ra?.45:1;
  snd(function(){tone({t:'sawtooth',f:220,f2:1700,d:1.1,v:.9*ra,a:.01,lp:5000});tone({t:'square',f:70,f2:420,d:1.1,v:.5*ra,a:.01,lp:2500});burst({f:2600,q:.4,d:1.3,v:1*ra,a:.005})});
- try{if(HU.cap)HU.cap('[a scream full of static]',2)}catch(e){}
+ try{if(HU.cap)HU.cap('[static: fourteen... one... twenty... eight... one... fourteen]',2.5)}catch(e){}
  var iv=setInterval(function(){t++;var k=1.02+t*.035,sh=rf?3:14;x.setTransform(1,0,0,1,0,0);x.fillStyle='#000';x.fillRect(0,0,640,360);var z=1.35+t*.045;x.translate(320+(RND()-.5)*sh,60*z+(RND()-.5)*sh);x.scale(z,z);x.drawImage(SCIMG,-295,-60,640,360);x.setTransform(1,0,0,1,0,0);
   if(!rf&&t%4<2){x.fillStyle='rgba(255,0,0,.18)';x.fillRect(0,0,640,360)}for(var i=0;i<8;i++){var y=RND()*360;x.drawImage(c,0,y,640,6,(RND()-.5)*40,y,640,6)}
   if(t>26){clearInterval(iv);c.style.transition='opacity .4s';c.style.opacity=0;setTimeout(function(){c.remove()},450)}},33)}
 window.KIDSCARE=kidScare;
 // ===================== MONSTER LOG + ENCYCLOPEDIA =====================
-try{if(!MONS.find(function(m){return m.id=='kid'}))MONS.push({id:'kid',n:'The Croucher',lv:'Any level (rare)',st:0,d:'A boy in a dark hoodie, crouched in the corner of rooms that should be empty. His glasses hide two burning red eyes. He does not move while you are not looking.',t:'Do not stare at him. Do not walk up to him. If you see him, turn around and leave.'});
+try{if(!MONS.find(function(m){return m.id=='kid'}))MONS.push({id:'kid',n:'N4TH4N',lv:'Any level (rare)',st:0,d:'File 14-1-20-8-1-14. Nobody knows who wrote that number on his file, or why it spells something when you count the letters. A boy in a dark hoodie, crouched in the corner of rooms that should be empty. His glasses hide two burning red eyes. He does not move while you are not looking.',t:'Do not stare at him. Do not walk up to him. If you see him, turn around and leave.'});
  MD.kid={c:'#ff2a1a',a:'A crouching boy in a dark hoodie and glasses|Grey skin, black tears, red burning eyes|Arms so long his fingers drag on the floor',b:'Appears crouched far down a hallway|Waits for you to notice him',sn:'CORRUPTED SCREAM',s:'If you stare at him or walk close, he rushes you',v:'Look away and leave the area|He gives up if you ignore him'}}catch(e){}
 // ===================== ENCOUNTERS (any normal level, rare) =====================
 var E={g:null,on:false,t:0,next:35+RND()*35,stare:0,rush:false,life:0};
@@ -5402,11 +5402,11 @@ var lt=performance.now();(function tick(){requestAnimationFrame(tick);var nw=per
  }catch(e){if(!tick.e){tick.e=1;console.error('kid',e)}}})();
 // ===================== THE PHONE CAMERA: photograph him =====================
 var PB=null;
-var oScr=phScr;phScr=function(){var r=oScr.apply(this,arguments);try{var sn=document.querySelector('[data-p="snap"]');if(sn&&KD.n>0&&!document.querySelector('[data-p="kidph"]')){var d=document.createElement('div');d.style.cssText='text-align:center;margin:6px 0';d.innerHTML='<span class="ch" data-p="kidph" style="color:'+(KD.phOn?'#ff5a4a':'')+'">👁 '+(KD.phOn?'HE IS IN THE PHOTO (tap to send him away)':'INVITE THE CROUCHER INTO THE PHOTO')+'</span>';sn.before(d)}}catch(e){}return r};
+var oScr=phScr;phScr=function(){var r=oScr.apply(this,arguments);try{var sn=document.querySelector('[data-p="snap"]');if(sn&&KD.n>0&&!document.querySelector('[data-p="kidph"]')){var d=document.createElement('div');d.style.cssText='text-align:center;margin:6px 0';d.innerHTML='<span class="ch" data-p="kidph" style="color:'+(KD.phOn?'#ff5a4a':'')+'">👁 '+(KD.phOn?'HE IS IN THE PHOTO (tap to send him away)':'INVITE N4TH4N INTO THE PHOTO')+'</span>';sn.before(d)}}catch(e){}return r};
 var oAct=phAct;phAct=function(a){if(a=='kidph'){KD.phOn=KD.phOn?0:1;hsave();if(KD.phOn)snd(function(){burst({f:400,t:'lowpass',d:1.2,v:.2})});phScr();return}return oAct.apply(this,arguments)};
 // place him in the world while the camera screen is open (behind you for a selfie, in front for "what I see")
 (function pt(){requestAnimationFrame(pt);try{var camOpen=!!document.querySelector('[data-p="snap"]')&&KD.phOn&&typeof P!='undefined'&&!busy();if(!camOpen){if(PB)PB.visible=false;return}if(!PB){PB=MART.kid();scene.add(PB)}var back=typeof CAM!='undefined'&&CAM.side=='back',fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),k=back?2.6:-1.1,x=P.x+fx*k,z=P.z+fz*k;if(blocked(x,z,.3)){x=P.x+fx*k*.5;z=P.z+fz*k*.5}PB.position.set(x,0,z);PB.rotation.y=Math.atan2(P.x-x,P.z-z)+(back?0:PI*.15);PB.visible=true;PB.userData.h.rotation.z=Math.sin(performance.now()/200)*.08}catch(e){}})();
-var oSnap=snapPhoto;snapPhoto=function(){var wild=E.on&&E.g&&E.g.visible,inPic=(PB&&PB.visible)||wild;var r=oSnap.apply(this,arguments);if(inPic){KD.photos++;try{disc('kid')}catch(e){}var day=new Date().toDateString();if(KD.cash!==day){KD.cash=day;HU.raw=1;try{addCash(15,'Photo of The Croucher')}finally{HU.raw=0}}hsave();setTimeout(function(){try{say(wild?'He saw the flash.':'He is in the photo. He was not there a second ago.',3)}catch(e){}},300);if(wild){E.rush=true}}return r};
+var oSnap=snapPhoto;snapPhoto=function(){var wild=E.on&&E.g&&E.g.visible,inPic=(PB&&PB.visible)||wild;var r=oSnap.apply(this,arguments);if(inPic){KD.photos++;try{disc('kid')}catch(e){}var day=new Date().toDateString();if(KD.cash!==day){KD.cash=day;HU.raw=1;try{addCash(15,'Photo of N4TH4N')}finally{HU.raw=0}}hsave();setTimeout(function(){try{say(wild?'He saw the flash.':'He is in the photo. He was not there a second ago.',3)}catch(e){}},300);if(wild){E.rush=true}}return r};
 // ===================== THE OPENING CAR SCENE: he replaces the Boiled One =====================
 var CARK=0,oMk=mkMon;mkMon=function(){if(CARK){CARK=0;return MART.kid({stand:true})}return oMk.apply(this,arguments)};
 var oDC=driveCut;driveCut=function(){CARK=1;try{return oDC.apply(this,arguments)}finally{CARK=0}};
@@ -5659,7 +5659,7 @@ var EX={on:false,id:null,mode:'player',g:null,size:1,spd:1,snd:true,fx:true,ai:t
 var ENTMOVE={boiled:'Stalks slowly, flickers at the edge of your sight',grin:'Floats through the dark, only during blackouts',water:'Swims under the surface, follows splashing',party:'Walks in groups, wanders towards noise',m3:'Tall, patient walker that pushes a luggage cart',m4:'Patrols corridors on a fixed route',m5:'Copies the player\'s movement',m6:'Long strides between the trees',m7:'Drifts along the flooded tracks',m8:'Silent walk, checks every room',m9:'Glitches from place to place'};
 var ENTAB={boiled:['Static burst','Edge-of-sight blink'],grin:['Lights out','Grin flash'],water:['Submerge','Surface lunge'],party:['Balloon pop','Party noise']};
 function ELIST(){var L=MLIST.map(function(m){var d=(typeof MONS!='undefined'?MONS:[]).find(function(x){return x.id==m[0]})||{};return {id:m[0],n:d.n||m[1],lv:m[2],home:d.lv||('Level '+m[2].join(', ')),d:d.d||'An entity of the Backrooms.',mv:ENTMOVE[m[0]]||'Hunts on foot: patrol, investigate, chase',ab:(ENTAB[m[0]]||['Roar','Lunge']).concat(['Screech','Jumpscare test'])}});
- L.push({id:'kid',n:'The Croucher',lv:[0],home:'Any level (rare)',d:'A crouching boy in a dark hoodie with burning red eyes behind his glasses.',mv:'Waits crouched, then rushes when you stare',ab:['Corrupted scream','Lunge','Screech','Jumpscare test']});
+ L.push({id:'kid',n:'N4TH4N',lv:[0],home:'Any level (rare)',d:'A crouching boy in a dark hoodie with burning red eyes behind his glasses.',mv:'Waits crouched, then rushes when you stare',ab:['Corrupted scream','Lunge','Screech','Jumpscare test']});
  L.push({id:'rem',n:'The Rememberer',lv:[20],home:'Level 20 (the Void)',d:'What waits at the very end. It wears the shape of the first thing that ever hunted you.',mv:'Slow, certain walk that never stops',ab:['Static burst','Memory blink','Screech','Jumpscare test']});return L}
 function eInfo(id){return ELIST().find(function(e){return e.id==id})}
 function eScare(id){if(id=='kid'&&window.KIDSCARE)return KIDSCARE();testScare(id=='rem'?'boiled':id)}
