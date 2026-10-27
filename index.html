@@ -19,7 +19,8 @@
   17. ULTIMATE HORROR UPDATE — STAGE 4: THE LORE — the Threshold Project, the First Wanderers, the Boiled One
   18. ULTIMATE HORROR UPDATE — STAGE 5: compass & objective markers, holding your breath, ENDLESS mode, trophies, wall writing
   19. ULTIMATE HORROR UPDATE — STAGE 6: new player model, third-person view (7), drone aerial maps (B)
-  20. ADMIN PANEL (hidden; admin account: nathen)
+  19b. HIDE AND SEEK MODE: lobbies (local), prop disguises, seekers, abilities, rounds, rewards, stats
+  20. ADMIN PANEL (hidden; admin account: nathen) — includes the ENTITY TRANSFORMATION tab
   21. SAVE FILE PICKER
   22. SOUND & MUSIC
   23. CONTROLS SCREEN + KEY REBINDING
@@ -5061,10 +5062,254 @@ var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=perf
  if(playing()){DM.trT-=dt;if(DM.trT<=0){DM.trT=1;var l=DM.trail[DM.trail.length-1];if(!l||Math.hypot(l[0]-P.x,l[1]-P.z)>1.5){DM.trail.push([P.x,P.z]);if(DM.trail.length>600)DM.trail.shift()}}
   if(HU.waypoint&&Math.hypot(HU.waypoint.x-P.x,HU.waypoint.z-P.z)<2.5){HU.waypoint=null;say('Waypoint reached.',2)}}
  if(DM.open)drawMap(dt)}catch(e){if(!tick.e){tick.e=1;console.error('HU6',e)}}})();
-var oP=window.PFX;window.PFX=function(s,c){try{var tpOn=TP.mode>0&&typeof started!='undefined'&&started&&!P.dead&&!(HU.PK&&HU.PK.cur)&&!P.hide;if(tpOn){ensureModel();TP.g.visible=true;animModel(1/60);tpCamera(c)}else if(TP.g){TP.g.visible=false;TP.dist=0}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+var oP=window.PFX;window.PFX=function(s,c){try{var tpOn=TP.mode>0&&typeof started!='undefined'&&started&&!P.dead&&!(HU.PK&&HU.PK.cur)&&!P.hide&&!HU.hidePlayerModel;if(tpOn){ensureModel();TP.g.visible=true;animModel(1/60);tpCamera(c)}else if(TP.g){TP.g.visible=false;TP.dist=0}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
 // compass: add the waypoint marker
 try{var cv0=null;HU.waypointMarker=function(){return HU.waypoint}}catch(e){}
 })();
+</script>
+<!-- ===== HIDE AND SEEK MODE: prop disguises, seekers, detection pulse, rounds, rewards (AI players: no online server) ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||!window.HU||typeof THREE=='undefined'||typeof scene=='undefined')return;
+var T=THREE,LVL=SV.lv|0,HU=window.HU,HD=HU.data,RND=Math.random,MB=document.getElementById('mp'),PI=Math.PI;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}
+function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function un(){return (typeof UN!='undefined'&&UN)?UN:'You'}
+function dayKey(){var d=new Date();return d.getUTCFullYear()+'-'+(d.getUTCMonth()+1)+'-'+d.getUTCDate()}
+HD.hs=HD.hs||{};var HS=HD.hs;HS.st=HS.st||{rounds:0,hw:0,sw:0,tags:0,best:0,streak:0,bestStreak:0,pts:0,fav:{}};HS.set=HS.set||{map:0,role:'random',bots:5,seekers:1,hide:30,len:300,spd:1,ab:{quick:1,silent:1,decoy:1,last:1,pulse:1},all:0};
+// =====================================================================
+// PROPS: every disguise is a real model that also appears in the map
+// =====================================================================
+var M_=function(c){return new T.MeshLambertMaterial({color:c})};
+function box(G,w,h,d,x,y,z,c){var m=new T.Mesh(new T.BoxGeometry(w,h,d),M_(c));m.position.set(x,y,z);G.add(m);return m}
+function cyl(G,r1,r2,h,x,y,z,c,s){var m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,s||14),M_(c));m.position.set(x,y,z);G.add(m);return m}
+function sph(G,r,x,y,z,c){var m=new T.Mesh(new T.SphereGeometry(r,12,10),M_(c));m.position.set(x,y,z);G.add(m);return m}
+var PROPS={
+ chair:['Office chair','🪑',.4,function(G){cyl(G,.04,.04,.4,0,.25,0,0x333333);[0,1,2,3,4].forEach(function(i){var a=i*1.2566;box(G,.32,.03,.04,Math.cos(a)*.15,.06,Math.sin(a)*.15,0x222222).rotation.y=-a});box(G,.48,.08,.46,0,.48,0,0x2a3040);box(G,.46,.5,.07,0,.8,-.21,0x2a3040)}],
+ desk:['Desk','🗄',.75,function(G){box(G,1.4,.05,.7,0,.74,0,0x8a6a44);box(G,.05,.72,.66,-.66,.36,0,0x6a4a2a);box(G,.45,.6,.62,.45,.36,0,0x6a4a2a);box(G,.3,.22,.03,.45,.5,.32,0x5a3a1a)}],
+ cabinet:['Filing cabinet','🗃',.4,function(G){box(G,.48,1.3,.6,0,.65,0,0x8a8e92);[.25,.6,.95].forEach(function(y){box(G,.42,.3,.02,0,y,.3,0x9a9ea2);box(G,.12,.03,.02,0,y+.05,.315,0x444444)})}],
+ boxc:['Cardboard box','📦',.35,function(G){box(G,.6,.45,.5,0,.225,0,0xb08850);box(G,.61,.04,.08,0,.45,0,0xc8a060)}],
+ trash:['Trash can','🗑',.3,function(G){cyl(G,.22,.18,.6,0,.3,0,0x4a4e52);cyl(G,.24,.24,.05,0,.62,0,0x3a3e42)}],
+ lamp:['Floor lamp','💡',.25,function(G){cyl(G,.15,.17,.04,0,.02,0,0x333333);cyl(G,.02,.02,1.5,0,.77,0,0x555555);cyl(G,.12,.22,.28,0,1.6,0,0xf0e0b0)}],
+ shelf:['Shelf','📚',.6,function(G){box(G,1.1,1.8,.04,0,.9,-.18,0x6a4a2a);[0,.6,1.2,1.78].forEach(function(y){box(G,1.1,.04,.4,0,y+.02,0,0x7a5a3a)});[-.4,-.1,.2].forEach(function(x,i){box(G,.14,.4,.28,x,.85,0,[0x8a2a2a,0x2a4a8a,0x2a6a3a][i])})}],
+ locker:['Locker','🚪',.45,function(G){box(G,.6,1.9,.5,0,.95,0,0x3a4a48);box(G,.02,1.7,.02,0,.95,.26,0x222222);[1.6,1.65,1.7].forEach(function(y){box(G,.4,.02,.01,0,y,.26,0x222222)})}],
+ table:['Small table','▭',.45,function(G){box(G,.8,.05,.8,0,.72,0,0x7a5a3a);[[-.34,-.34],[.34,-.34],[-.34,.34],[.34,.34]].forEach(function(p){box(G,.05,.7,.05,p[0],.35,p[1],0x5a3a1a)})}],
+ vend:['Vending machine','🥤',.6,function(G){box(G,.9,1.9,.75,0,.95,0,0xb02020);box(G,.6,1.2,.02,-.08,1.15,.38,0x1a2a3a);box(G,.16,.5,.02,.32,1.1,.38,0x222222)}],
+ bucket:['Bucket','🪣',.22,function(G){cyl(G,.18,.14,.32,0,.16,0,0x3a6aa0);var h=new T.Mesh(new T.TorusGeometry(.16,.01,6,16,PI),M_(0x888888));h.position.y=.32;G.add(h)}],
+ ccart:['Cleaning cart','🧹',.5,function(G){box(G,.9,.05,.5,0,.35,0,0x2a5a8a);box(G,.9,.05,.5,0,.8,0,0x2a5a8a);[-.42,.42].forEach(function(x){box(G,.04,.85,.04,x,.42,.23,0x888888);box(G,.04,.85,.04,x,.42,-.23,0x888888)});cyl(G,.15,.13,.35,-.2,.55,0,0xe0c020);cyl(G,.02,.02,1.1,.3,.9,0,0x8a6a44)}],
+ crate:['Crate','📦',.45,function(G){box(G,.8,.8,.8,0,.4,0,0x7a5a30);box(G,.82,.08,.82,0,.4,0,0x5a3a18)}],
+ cooler:['Water cooler','🚰',.25,function(G){box(G,.35,1.0,.35,0,.5,0,0xdddddd);cyl(G,.15,.15,.4,0,1.2,0,0x80c0ff)}],
+ plant:['Potted plant','🪴',.3,function(G){cyl(G,.2,.15,.35,0,.17,0,0x8a4a2a);sph(G,.32,0,.65,0,0x2a6a2a);sph(G,.2,.12,.9,0,0x3a7a3a)}],
+ ring:['Pool ring','⭕',.4,function(G){var r=new T.Mesh(new T.TorusGeometry(.32,.11,10,20),M_(0xff5050));r.rotation.x=PI/2;r.position.y=.11;G.add(r)}],
+ lounger:['Pool lounger','🏖',.6,function(G){box(G,.6,.06,1.6,0,.35,0,0xf0f0f0);box(G,.6,.06,.6,0,.55,-.6,0xf0f0f0).rotation.x=-.6;[[-.25,.7],[.25,.7],[-.25,-.7],[.25,-.7]].forEach(function(p){box(G,.04,.35,.04,p[0],.17,p[1],0xaaaaaa)})}],
+ towels:['Towel stack','🧺',.3,function(G){[0,1,2,3].forEach(function(i){box(G,.5,.09,.4,0,.05+i*.09,0,[0xe0e0ff,0xffe0e0,0xe0ffe0,0xffffff][i])})}],
+ gift:['Gift box','🎁',.3,function(G){box(G,.5,.45,.5,0,.225,0,0xc02a6a);box(G,.52,.47,.08,0,.225,0,0xffd040);box(G,.08,.47,.52,0,.225,0,0xffd040)}],
+ cake:['Cake table','🎂',.5,function(G){box(G,.9,.05,.6,0,.72,0,0xffffff);[[-.4,-.25],[.4,-.25],[-.4,.25],[.4,.25]].forEach(function(p){box(G,.04,.7,.04,p[0],.35,p[1],0xdddddd)});cyl(G,.22,.22,.25,0,.87,0,0xf8c0d0)}],
+ balloons:['Balloon bunch','🎈',.3,function(G){cyl(G,.08,.1,.08,0,.04,0,0x666666);[[0,1.5,0,0xff4060],[.2,1.4,.1,0xffd040],[-.18,1.45,-.1,0x40a0ff]].forEach(function(b){sph(G,.2,b[0],b[1],b[2],b[3]);cyl(G,.004,.004,1.3,b[0]/2,.7,b[2]/2,0xffffff)})}],
+ sdesk:['School desk','✏',.45,function(G){box(G,.7,.04,.5,0,.7,0,0xc8a060);box(G,.6,.6,.04,0,.4,-.22,0x666666);box(G,.4,.04,.4,0,.42,.45,0x2a4a8a);box(G,.4,.4,.04,0,.62,.64,0x2a4a8a)}],
+ globe:['Globe','🌍',.25,function(G){cyl(G,.12,.15,.05,0,.03,0,0x5a3a1a);cyl(G,.02,.02,.6,0,.33,0,0x5a3a1a);sph(G,.2,0,.8,0,0x3a7ac0)}],
+ luggage:['Suitcase','🧳',.3,function(G){box(G,.45,.65,.25,0,.36,0,0x2a2a4a);box(G,.2,.04,.04,0,.72,0,0x111111)}],
+ armchair:['Armchair','🛋',.5,function(G){box(G,.8,.4,.75,0,.25,0,0x6a2a3a);box(G,.8,.6,.15,0,.6,-.3,0x6a2a3a);box(G,.15,.35,.7,-.35,.55,0,0x5a1a2a);box(G,.15,.35,.7,.35,.55,0,0x5a1a2a)}],
+ rscart:['Room-service cart','🛎',.45,function(G){box(G,.8,.05,.5,0,.8,0,0xdddddd);box(G,.8,.05,.5,0,.3,0,0xdddddd);var c=new T.Mesh(new T.SphereGeometry(.2,12,8,0,PI*2,0,PI/2),M_(0xd0c8b0));c.position.y=.83;G.add(c)}],
+ cone:['Traffic cone','🔺',.22,function(G){box(G,.36,.04,.36,0,.02,0,0xff6a10);cyl(G,.02,.15,.6,0,.33,0,0xff6a10);cyl(G,.1,.12,.07,0,.32,0,0xffffff)}],
+ tires:['Tire stack','⚫',.4,function(G){[0,1,2].forEach(function(i){var t=new T.Mesh(new T.TorusGeometry(.28,.11,8,18),M_(0x1a1a1a));t.rotation.x=PI/2;t.position.y=.11+i*.22;G.add(t)})}],
+ barrel:['Barrel','🛢',.35,function(G){cyl(G,.3,.3,.9,0,.45,0,0x2a5a8a);[.15,.75].forEach(function(y){cyl(G,.31,.31,.04,0,y,0,0x222222)})}],
+ bookcart:['Book cart','📖',.45,function(G){box(G,.8,.05,.4,0,.3,0,0x5a3a1a);box(G,.8,.05,.4,0,.75,0,0x5a3a1a);for(var i=0;i<6;i++)box(G,.1,.3,.25,-.3+i*.12,.92,0,[0x8a2a2a,0x2a4a8a,0x2a6a3a,0x6a5a2a][i%4])}],
+ bear:['Prize teddy bear','🧸',.3,function(G){sph(G,.22,0,.22,0,0x9a6a3a);sph(G,.15,0,.5,0,0x9a6a3a);sph(G,.05,-.1,.62,0,0x9a6a3a);sph(G,.05,.1,.62,0,0x9a6a3a)}],
+ bench:['Bench','🪑',.7,function(G){box(G,1.4,.06,.45,0,.45,0,0x7a5a3a);box(G,1.4,.4,.05,0,.7,-.2,0x7a5a3a);[-.6,.6].forEach(function(x){box(G,.06,.45,.4,x,.22,0,0x333333)})}],
+ tank:['Fish tank','🐟',.45,function(G){box(G,.8,.7,.5,0,.65,0,0x3a3a3a);var g2=new T.Mesh(new T.BoxGeometry(.78,.5,.48),new T.MeshLambertMaterial({color:0x40a0c0,transparent:true,opacity:.6}));g2.position.y=.95;G.add(g2)}],
+ shopcart:['Shopping cart','🛒',.45,function(G){box(G,.55,.4,.85,0,.65,0,0x9a9ea2).material.wireframe=true;box(G,.55,.03,.85,0,.47,0,0x9a9ea2);[[-.22,-.35],[.22,-.35],[-.22,.35],[.22,.35]].forEach(function(p){cyl(G,.05,.05,.04,p[0],.05,p[1],0x222222).rotation.z=PI/2});box(G,.55,.04,.04,0,1,.44,0x333333)}],
+ lcart:['Luggage cart','🛄',.5,function(G){box(G,.6,.05,1,0,.25,0,0x888888);box(G,.6,.9,.05,0,.7,.48,0x888888);box(G,.45,.5,.3,0,.55,0,0x4a2a2a)}]};
+var GEN=['boxc','crate','bucket','trash'];
+var PAL={0:['chair','desk','cabinet','boxc','trash','lamp','shelf','locker','table','vend','bucket','ccart','crate','cooler','plant'],
+ 1:['ring','lounger','towels','bucket','boxc','crate','plant'],2:['gift','cake','balloons','chair','table','boxc','trash'],3:['luggage','armchair','rscart','lamp','table','plant','ccart','trash'],
+ 4:['sdesk','globe','locker','shelf','trash','bucket','boxc','chair'],5:['chair','desk','cabinet','boxc','trash','lamp','shelf','table','cooler','plant','vend'],
+ 10:['vend','bench','trash','plant','shopcart','boxc','luggage'],11:['cone','tires','barrel','boxc','crate','trash'],12:['bench','tank','plant','bucket','boxc','trash'],
+ 13:['bookcart','shelf','chair','table','lamp','globe','boxc'],14:['barrel','bear','gift','crate','boxc','balloons'],16:['luggage','lcart','bench','trash','plant','vend','boxc']};
+var MAPS=[0,1,2,3,4,5,10,11,12,13,14,16];
+function palette(lv){var p=(PAL[lv]||PAL[0].concat()).slice();if(HS.set.all)p=Object.keys(PROPS);return p}
+function mkProp(id){var d=PROPS[id]||PROPS.boxc,G=new T.Group();d[3](G);G.userData.pid=id;return G}
+HU.PROPS=PROPS;HU.mkProp=mkProp;
+// =====================================================================
+// MENU (Quick Play, lobbies, map, rules, customization, how to play)
+// =====================================================================
+var NAMES=['Rook','Mara','Jax','Ivy','Dex','Nova','Kit','Sol','Pip','Rue','Tam','Zed','Lux','Bo'];
+var LOB=null,LOBT=0;
+function mapName(lv){return lv=='rand'?'Random map':(LV[lv]?LV[lv].n.split('— ')[1]:'Level '+lv)}
+function menuP(msg){var s=HS.set,st=HS.st;var ch=daily();pnl('<b>🫥 HIDE AND SEEK</b><br><small style="color:#fc6">Online lobbies need a multiplayer server, which this game does not have yet. Every match is played against AI players — they fill the empty slots.</small>'+(msg?'<div style="color:#9f9">'+e2(msg)+'</div>':'')+
+ '<div class="bt pl" data-hs="quick">QUICK PLAY</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="bt" data-hs="create">CREATE LOBBY</div><div class="bt" data-hs="join">JOIN LOBBY</div><div class="bt" data-hs="private">PRIVATE MATCH</div><div class="bt" data-hs="map">CHOOSE MAP</div><div class="bt" data-hs="rules">CHOOSE RULES</div><div class="bt" data-hs="custom">CHARACTER</div><div class="bt" data-hs="how">HOW TO PLAY</div><div class="bt" data-hs="stats">STATS</div></div>'+
+ '<small>Map: '+e2(mapName(s.map))+' · role: '+s.role+' · '+s.bots+' AI players · '+s.seekers+' seeker(s)<br>Daily challenge: '+e2(ch.t)+(ch.done?' <span style="color:#9f9">✔ done</span>':' (+$'+ch.r+')')+'</small>')}
+function lobbyP(priv){if(!LOB){LOB={code:Math.random().toString(36).slice(2,8).toUpperCase(),priv:!!priv,pl:[{n:un(),you:1,ready:0}]};var nm=NAMES.slice().sort(function(){return RND()-.5});for(var i=0;i<HS.set.bots;i++)LOB.pl.push({n:nm[i],bot:1,ready:0,t:1+RND()*3})}
+ var all=LOB.pl.every(function(p){return p.ready});pnl('<b>'+(LOB.priv?'🔒 PRIVATE MATCH':'🫥 LOBBY')+'</b><br><small>Join code: <b style="letter-spacing:.2em">'+LOB.code+'</b> <span style="color:#fc6">(local only — other people cannot use it until there is a server)</span></small><div style="text-align:left;margin:8px 0;font-size:13px">'+LOB.pl.map(function(p){return (p.ready?'<span style="color:#9f9">✔ READY</span>':'<span style="opacity:.6">… waiting</span>')+' · '+e2(p.n)+(p.you?' (you, host)':' (AI)')}).join('<br>')+'</div><small>Map: '+e2(mapName(HS.set.map))+' · hide '+HS.set.hide+'s · round '+Math.round(HS.set.len/60)+' min · '+HS.set.seekers+' seeker(s)</small><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px"><div class="bt" data-hs="ready">'+(LOB.pl[0].ready?'UNREADY':'READY')+'</div><div class="bt" data-hs="rules">RULES</div><div class="bt" data-hs="map">MAP</div><div class="bt" data-hs="leave">LEAVE LOBBY</div></div><div class="bt pl" data-hs="start" style="'+(all?'':'opacity:.4')+'">START ROUND'+(all?'':' (everyone must be ready)')+'</div>');
+ clearTimeout(LOBT);if(LOB.pl.some(function(p){return p.bot&&!p.ready}))LOBT=setTimeout(function(){if(!LOB||!MB.querySelector('[data-hs="start"]'))return;LOB.pl.forEach(function(p){if(p.bot&&!p.ready){p.t-=1;if(p.t<=0)p.ready=1}});lobbyP()},1000)}
+function mapP(){pnl('<b>CHOOSE MAP</b><div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">'+MAPS.concat(['rand']).map(function(lv){var lock=lv!='rand'&&lv>(SV.max|0);return '<div class="bt" data-hs="setmap:'+lv+'" style="'+(HS.set.map==lv?'border-color:#fff;color:#fff':'')+(lock?';opacity:.4':'')+'">'+e2(mapName(lv))+(lock?' 🔒':'')+'</div>'}).join('')+'</div><small>Locked maps unlock when you discover them in the story. Each map only offers props that really exist there.</small>')}
+function rulesP(){var s=HS.set,ab=s.ab,o=function(k,l,v){return '<div style="margin:5px 0">'+l+': '+v+'</div>'},ch=function(a,l){return '<span class="ch" data-hs="'+a+'">'+l+'</span>'};
+ pnl('<b>RULES (host)</b><div style="text-align:left;font-size:13px">'+o('role','Your role',['random','hider','seeker'].map(function(r){return ch('role:'+r,(s.role==r?'▶':'')+r.toUpperCase())}).join(' '))+o('bots','AI players',ch('bots:-','−')+' '+s.bots+' '+ch('bots:+','+'))+o('seek','Seekers',ch('seek:-','−')+' '+s.seekers+' '+ch('seek:+','+'))+o('hide','Hiding phase',ch('hide:-','−')+' '+s.hide+'s '+ch('hide:+','+'))+o('len','Round length',ch('len:-','−')+' '+Math.round(s.len/60)+' min '+ch('len:+','+'))+o('spd','Player speed',ch('spd:-','−')+' ×'+s.spd.toFixed(1)+' '+ch('spd:+','+'))+
+  '<div style="margin:8px 0"><b>Abilities</b> (each can be used once per round)<br>'+[['quick','Quick Transform (hider)'],['silent','Silent Movement (hider)'],['decoy','Decoy Prop (hider)'],['last','Last Chance (hider)'],['pulse','Detection Pulse (seeker)']].map(function(a){return ch('ab:'+a[0],(ab[a[0]]?'☑':'☐')+' '+a[1])}).join('<br>')+'</div>'+ch('all',(s.all?'☑':'☐')+' Allow every prop on every map')+'</div>')}
+function howP(){pnl('<b>HOW TO PLAY — HIDE AND SEEK</b><div style="text-align:left;font-size:13px;line-height:1.6;max-height:60vh;overflow:auto"><b style="color:#e4d56a">HIDERS</b><br>You get a head start while the seekers are locked in. Find a spot and turn into an object that belongs in this map.<br>• <b>E</b> — transform / turn back (H also works) · <b>J</b> — prop wheel (pick your disguise) · <b>[ ]</b> — previous / next prop<br>• <b>Z / X</b> — rotate your disguise · you can still move slowly while disguised, but moving props are easy to spot<br>• Abilities: <b>1</b> Quick Transform · <b>2</b> Silent Movement · <b>3</b> Decoy Prop · <b>4</b> Last Chance (speed burst)<br><b style="color:#e4d56a">SEEKERS</b><br>• <b>F</b> or left-click — tag the object in front of you (close range, no walls). Tagging an empty object gives you a short cooldown.<br>• <b>Q</b> — Detection Pulse: briefly reveals hiders close to you (3 uses, cooldown)<br>• Listen: transforming makes a small "pop" sound.<br><b style="color:#e4d56a">WINNING</b><br>Seekers win if every hider is tagged. Hiders win if one survives until time runs out.<br><b style="color:#e4d56a">AI PLAYERS</b><br>There is no online server yet, so the other players are AI. They hide, move, panic and search like players would.</div>')}
+function statsP(){var s=HS.st,fav=Object.keys(s.fav).sort(function(a,b){return s.fav[b]-s.fav[a]})[0];pnl('<b>HIDE AND SEEK STATS</b><div style="text-align:left;font-size:13px;line-height:1.7">Rounds played: '+s.rounds+'<br>Hider wins: '+s.hw+'<br>Seeker wins: '+s.sw+'<br>Successful tags: '+s.tags+'<br>Best survival time: '+Math.floor(s.best/60)+':'+String(Math.floor(s.best%60)).padStart(2,'0')+'<br>Favorite disguise: '+(fav?e2(PROPS[fav]?PROPS[fav][0]:fav)+' ('+s.fav[fav]+'×)':'—')+'<br>Win streak: '+s.streak+' (best '+s.bestStreak+')<br>Total points: '+s.pts+'</div>')}
+var DCH=[['Survive a round as a Hider','hsurv',60],['Tag 3 Hiders in one round','tag3',60],['Win as a Seeker in under 3 minutes','fast',60],['Survive without changing your disguise','nochange',60]];
+function daily(){var k=dayKey(),h=0;for(var i=0;i<k.length;i++)h=(h*31+k.charCodeAt(i))|0;var c=DCH[Math.abs(h)%DCH.length];HS.dc=HS.dc||{};return {t:c[0],id:c[1],r:c[2],done:HS.dc[k]==c[1],k:k}}
+function startMatch(){var s=HS.set,lv=s.map=='rand'?MAPS.filter(function(m){return m<=(SV.max|0)})[RND()*MAPS.filter(function(m){return m<=(SV.max|0)}).length|0]:s.map;if(lv==null||lv>(SV.max|0)&&lv!=0)lv=0;var role=s.role=='random'?(RND()<(s.seekers/(s.bots+1))?'seeker':'hider'):s.role;
+ HS.pending={lv:lv,role:role,prev:HS.pending&&HS.pending.prev!=null?HS.pending.prev:SV.lv,t:Date.now(),code:LOB?LOB.code:null};hsave();started=false;SV.lv=lv;SV.cont=0;save();location.reload()}
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hs]');if(!el)return;e.stopPropagation();var a=el.dataset.hs.split(':'),k=a[0],v=a[1],s=HS.set;
+ if(k=='quick'){LOB=null;startMatch();return}if(k=='create'){LOB=null;lobbyP(false);return}if(k=='private'){LOB=null;lobbyP(true);return}
+ if(k=='join'){pnl('<b>JOIN LOBBY</b><br><input id="hs-code" maxlength="6" placeholder="JOIN CODE" style="width:140px;text-align:center;letter-spacing:.2em"><div class="bt" data-hs="joingo">JOIN</div><small style="color:#fc6">Joining other people needs an online server, which this game does not have yet. Public matchmaking and join codes only work for local matches against AI.</small>');return}
+ if(k=='joingo'){var c=(document.getElementById('hs-code')||{}).value||'';menuP(c?'No lobby with code '+c.toUpperCase()+' was found: there is no server to connect to. Try QUICK PLAY to play against AI.':'Type a code first.');return}
+ if(k=='map'){mapP();return}if(k=='setmap'){var lv=v=='rand'?'rand':+v;if(lv!='rand'&&lv>(SV.max|0)){mapP();return}s.map=lv;hsave();LOB?lobbyP():menuP('Map: '+mapName(lv));return}
+ if(k=='rules'){rulesP();return}if(k=='how'){howP();return}if(k=='stats'){statsP();return}if(k=='custom'){closeP();try{charP()}catch(x){}return}
+ if(k=='role'){s.role=v}if(k=='bots')s.bots=Math.max(2,Math.min(9,s.bots+(v=='+'?1:-1)));if(k=='seek')s.seekers=Math.max(1,Math.min(3,s.seekers+(v=='+'?1:-1)));if(k=='hide')s.hide=Math.max(15,Math.min(60,s.hide+(v=='+'?5:-5)));if(k=='len')s.len=Math.max(120,Math.min(480,s.len+(v=='+'?60:-60)));if(k=='spd')s.spd=Math.round(Math.max(.8,Math.min(1.2,s.spd+(v=='+'?.1:-.1)))*10)/10;if(k=='ab')s.ab[v]=s.ab[v]?0:1;if(k=='all')s.all=s.all?0:1;
+ if(['role','bots','seek','hide','len','spd','ab','all'].indexOf(k)>=0){if(k=='bots'&&LOB)LOB=null;hsave();rulesP();return}
+ if(k=='ready'){LOB.pl[0].ready=LOB.pl[0].ready?0:1;lobbyP();return}if(k=='leave'){LOB=null;menuP('You left the lobby.');return}if(k=='start'){if(LOB.pl.every(function(p){return p.ready}))startMatch();else lobbyP();return}
+ if(k=='again'){startMatch();return}if(k=='back'){delete HS.pending;hsave();SV.lv=HS.prevLv!=null?HS.prevLv:SV.lv;save();location.reload();return}},true);
+try{var bd=document.getElementById('b-dc'),bh=document.createElement('div');bh.className='bt';bh.id='b-hs';bh.textContent='🫥 HIDE AND SEEK';bd.before(bh);bh.onclick=function(){menuP()}}catch(e){}
+HU.hsMenu=menuP;
+// =====================================================================
+// THE ROUND (only when a match is loading on this page)
+// =====================================================================
+var PEND=HS.pending&&HS.pending.lv===LVL?HS.pending:null;if(!PEND)return;
+var R={ph:'wait',t:0,hide:HS.set.hide,len:HS.set.len,role:PEND.role,bots:[],props:[],decoys:[],over:false,you:{dis:null,pid:null,sel:0,cd:0,changes:0,tagged:false,ab:{},quickNext:false,silent:0,last:0,pulses:3,pcd:0,tcd:0,tags:0,t0:0},area:{x:cc(7),z:cc(7),r:36},pops:[]};HU.HSR=R;
+// quiet the normal game: no level monster, no blackouts, no deaths, no story NPCs, no exits
+M.x=M.z=-9999;try{mon.visible=false;shd.visible=false;if(lm)lm.visible=false}catch(e){}updMon=function(){};updLM=function(){};updGrin=function(){};if(HU.LO)HU.LO.cd=1e9;
+var oDie=die;die=function(){};var oEx=exitLevel;exitLevel=function(){say('Hide and Seek round in progress — the elevator is off.',2);if(!started&&!P.dead){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}};
+setTimeout(function(){(HU.NPCS||[]).forEach(function(n){if(!n.hs){n.st='gone';n.g.visible=false}})},300);
+var PAL2=palette(LVL);
+function inArea(x,z,m){return Math.hypot(x-R.area.x,z-R.area.z)<R.area.r-(m||0)}
+function reach(){var seen=new Uint8Array(W*W),q=[[1,1]];seen[W+1]=1;for(var h=0;h<q.length;h++){var c=q[h];for(var k=0;k<4;k++){var a=c[0]+[1,-1,0,0][k],b=c[1]+[0,0,1,-1][k];if(a<0||b<0||a>=W||b>=W||g[a][b]||seen[a*W+b])continue;seen[a*W+b]=1;q.push([a,b])}}return seen}
+var RS=reach(),SPOTS=[];for(var i=0;i<W;i++)for(var j=0;j<W;j++){if(g[i][j]||!RS[i*W+j]||!inArea(cc(i),cc(j),3))continue;if(i<=2&&j<=2)continue;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var a=i+d[0],b=j+d[1];if(g[a]&&g[a][b]==1)SPOTS.push({i:i,j:j,x:cc(i)+d[0]*1.3,z:cc(j)+d[1]*1.3,ry:Math.atan2(-d[0],-d[1])})})}
+SPOTS.sort(function(){return RND()-.5});
+// real props scattered through the play area, so disguises blend in
+for(var k=0;k<46&&k<SPOTS.length;k++){var sp=SPOTS[k],id=PAL2[RND()*PAL2.length|0],G=mkProp(id);G.position.set(sp.x,0,sp.z);G.rotation.y=sp.ry+(RND()<.5?0:PI/2);scene.add(G);R.props.push({g:G,x:sp.x,z:sp.z,id:id})}
+SPOTS=SPOTS.slice(46);
+// lots of light so seekers can inspect suspicious objects
+try{amb.intensity=Math.max(amb.intensity,.35)}catch(e){}
+// AI players
+var nm=NAMES.slice().sort(function(){return RND()-.5}),nSeek=HS.set.seekers,total=HS.set.bots+1,botSeekers=R.role=='seeker'?nSeek-1:nSeek;
+for(var b=0;b<HS.set.bots;b++){var isS=b<botSeekers,cols=[0x6a3a8a,0x2a6a5a,0x8a6a2a,0x3a5a8a,0x8a3a3a,0x4a4a4a,0x2a8a6a,0x8a2a6a,0x6a6a2a],n=HU.mkNPC({name:nm[b],col:cols[b%9],x:cc(1)+(RND()-.5)*2+.6,z:cc(1)+(RND()-.5)*2+.6,st:'hs'});n.hs=isS?'seeker':'hider';n.ai=isS?seekAI:hideAI;n.prop=null;n.pt=0;n.path=[];R.bots.push(n);var ix=HU.NPCS.indexOf(n);if(ix>=0)HU.NPCS.splice(ix,1)}
+function hiders(){var h=R.bots.filter(function(n){return n.hs=='hider'&&!n.tagged});return h}
+function hidersLeft(){return hiders().length+(R.role=='hider'&&!R.you.tagged?1:0)}
+// ---------- HUD ----------
+var hud=document.createElement('div');hud.style.cssText='position:fixed;left:50%;top:36px;transform:translateX(-50%);z-index:7;font:bold 15px monospace;color:#fff;text-shadow:0 0 6px #000;pointer-events:none;text-align:center;white-space:pre';document.body.appendChild(hud);
+var hint=document.createElement('div');hint.style.cssText='position:fixed;left:14px;top:190px;z-index:7;font:12px monospace;color:#cde;text-shadow:0 0 4px #000;pointer-events:none;line-height:1.6;background:#0008;padding:6px 9px;border-left:3px solid #9cf';document.body.appendChild(hint);
+var blind=document.createElement('div');blind.style.cssText='position:fixed;inset:0;z-index:6;background:#000;display:none;color:#e4d56a;font:bold 26px monospace;align-items:center;justify-content:center;text-align:center;pointer-events:none';document.body.appendChild(blind);
+var wheel=document.createElement('div');wheel.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;display:none;background:#0b0e12ee;border:1px solid #9cf;border-radius:14px;padding:14px;color:#cde;font:13px monospace;max-width:92vw';document.body.appendChild(wheel);
+// ---------- player disguise ----------
+function poof(x,z){for(var i=0;i<10;i++){var s=new T.Sprite(new T.SpriteMaterial({map:GFX.glowTex,color:0xdddddd,transparent:true,opacity:.6,depthWrite:false}));s.scale.set(.6,.6,1);s.position.set(x+(RND()-.5)*.8,.3+RND()*1.2,z+(RND()-.5)*.8);scene.add(s);R.pops.push({s:s,t:.8})}R.lastPop={x:x,z:z,t:4};bs({f:1400,q:1,d:.25,v:.25})}
+function canHere(x,z,r){return !blocked(x,z,Math.max(.35,r*.8))&&inArea(x,z)&&!R.props.some(function(p){return Math.hypot(p.x-x,p.z-z)<.9})}
+function youTransform(){var Y=R.you;if(R.role!='hider'||Y.tagged||R.over)return;if(Y.cd>0){say('Transform cooling down ('+Math.ceil(Y.cd)+'s)',1);return}
+ if(Y.dis){scene.remove(Y.dis);Y.dis=null;Y.pid=null;HU.hidePlayerModel=false;Y.cd=2;poof(P.x,P.z);say('You are yourself again.',1.5);return}
+ var id=PAL2[Y.sel%PAL2.length],d=PROPS[id];if(!canHere(P.x,P.z,d[2])){say('Not enough room to become a '+d[0].toLowerCase()+' here.',2);return}
+ var go=function(){if(Y.dis||Y.tagged)return;Y.dis=mkProp(id);Y.pid=id;Y.ry=P.yaw;Y.dis.position.set(P.x,0,P.z);scene.add(Y.dis);HU.hidePlayerModel=true;Y.cd=4;Y.changes++;HS.st.fav[id]=(HS.st.fav[id]|0)+1;hsave();poof(P.x,P.z);say('You are a '+d[0].toLowerCase()+'. Stay still!',2)};
+ if(Y.quickNext){Y.quickNext=false;go()}else{P.para=Math.max(P.para,.6);say('Transforming...',.6);setTimeout(go,600)}}
+function useAb(n){var Y=R.you,ab=HS.set.ab;if(R.over)return;if(R.role=='seeker'){if(n==5)pulse(P.x,P.z,true);return}if(Y.tagged)return;var map={1:'quick',2:'silent',3:'decoy',4:'last'},k=map[n];if(!k)return;if(!ab[k]){say('That ability is turned off in this lobby.',2);return}if(Y.ab[k]){say('Already used this round.',2);return}Y.ab[k]=1;
+ if(k=='quick'){Y.quickNext=true;Y.cd=0;say('Quick Transform ready: your next transform is instant.',2)}
+ if(k=='silent'){Y.silent=10;say('Silent Movement: 10 seconds.',2)}
+ if(k=='decoy'){var id=Y.pid||PAL2[Y.sel%PAL2.length],G=mkProp(id),a=P.yaw;G.position.set(P.x-Math.sin(a)*1.2,0,P.z-Math.cos(a)*1.2);scene.add(G);R.decoys.push({g:G,x:G.position.x,z:G.position.z,a:a,t:12});say('Decoy prop released — it wanders off.',2)}
+ if(k=='last'){Y.last=3.5;if(Y.dis)youTransform();say('LAST CHANCE! Run!',2)}}
+function showWheel(on){if(!on){wheel.style.display='none';return}wheel.innerHTML='<b>PICK A DISGUISE</b> <small>(props that exist in '+e2(mapName(LVL))+')</small><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px">'+PAL2.map(function(id,i){var d=PROPS[id];return '<div data-pw="'+i+'" style="cursor:pointer;border:1px solid '+(i==R.you.sel%PAL2.length?'#fff':'#355')+';border-radius:8px;padding:8px 4px;text-align:center"><div style="font-size:22px">'+d[1]+'</div>'+e2(d[0])+'</div>'}).join('')+'</div><small>Click to choose · J closes · E transforms</small>';wheel.style.display='block';try{document.exitPointerLock()}catch(e){}R.wheelWas=started;started=false}
+wheel.addEventListener('click',function(e){var el=e.target.closest('[data-pw]');if(!el)return;R.you.sel=+el.dataset.pw;wheel.style.display='none';started=true;try{ren.domElement.requestPointerLock()}catch(x){}say('Disguise: '+PROPS[PAL2[R.you.sel]][0],1.5)});
+// ---------- seeker: tagging and pulse ----------
+function lookTarget(fromX,fromZ,yaw,range){var best=null,bd=range||2.4,f=[-Math.sin(yaw),-Math.cos(yaw)];var cand=[];R.props.forEach(function(p){cand.push({x:p.x,z:p.z,kind:'prop',o:p})});R.decoys.forEach(function(d){cand.push({x:d.x,z:d.z,kind:'decoy',o:d})});R.bots.forEach(function(n){if(n.hs=='hider'&&!n.tagged)cand.push({x:n.x,z:n.z,kind:'bot',o:n})});if(R.role=='hider'&&!R.you.tagged&&fromX!==P.x)cand.push({x:P.x,z:P.z,kind:'you'});
+ cand.forEach(function(c){var dx=c.x-fromX,dz=c.z-fromZ,d=Math.hypot(dx,dz);if(d>bd||d<.01)return;if((f[0]*dx+f[1]*dz)/d<.7&&d>1)return;if(!los(fromX,fromZ,c.x,c.z))return;bd=d;best=c});return best}
+function tagBot(n,by){n.tagged=true;if(n.prop){scene.remove(n.prop);n.prop=null}n.g.visible=true;n.st='gone';setTimeout(function(){n.g.visible=false},1500);bs({f:900,q:.6,d:.4,v:.3});HU.cap&&HU.cap('['+n.name+' was found by '+by+']',2.5);checkEnd()}
+function youTag(){var Y=R.you;if(R.role!='seeker'||R.ph!='hunt'||R.over)return;if(Y.tcd>0){say('Tag cooling down',.8);return}var t=lookTarget(P.x,P.z,P.yaw,2.4);if(!t){say('Nothing in reach.',.8);return}
+ if(t.kind=='bot'){Y.tags++;tagBot(t.o,'you');say('TAGGED '+t.o.name+'! ('+hidersLeft()+' left)',2);tn({f:660,f2:1320,d:.3,v:.2})}else{Y.tcd=2.5;say(t.kind=='decoy'?'A decoy! It falls over — empty.':'Just a '+PROPS[t.o.id][0].toLowerCase()+'. (tag cooldown)',2);tn({t:'square',f:200,d:.2,v:.1});if(t.kind=='decoy'){scene.remove(t.o.g);t.o.t=0}}}
+function pulse(x,z,isYou){var Y=R.you;if(isYou){if(!HS.set.ab.pulse){say('Detection Pulse is off in this lobby.',2);return}if(Y.pulses<=0){say('No pulses left.',1.5);return}if(Y.pcd>0){say('Pulse recharging ('+Math.ceil(Y.pcd)+'s)',1);return}Y.pulses--;Y.pcd=20}
+ var ring=new T.Mesh(new T.RingGeometry(.3,.5,40),new T.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.7,side:T.DoubleSide,depthWrite:false}));ring.rotation.x=-PI/2;ring.position.set(x,.05,z);scene.add(ring);R.pops.push({s:ring,t:1.2,ring:1});tn({f:300,f2:900,d:.6,v:.15});
+ var found=0;R.bots.forEach(function(n){if(n.hs!='hider'||n.tagged)return;if(Math.hypot(n.x-x,n.z-z)<14){n.rev=3.5;found++}});if(R.role=='hider'&&!Y.tagged&&!isYou&&Math.hypot(P.x-x,P.z-z)<14){Y.rev=3.5;say('A detection pulse washed over you! You are revealed for 3 seconds.',2.5)}if(isYou)say('PULSE: '+found+' hider(s) nearby revealed for 3 seconds.',2.5);return found}
+// ---------- AI: hiders ----------
+function walkTo(n,dt,v){if(!n.path||!n.path.length)return true;var c=n.path[0],tx=cc(c[0]),tz=cc(c[1]),dx=tx-n.x,dz=tz-n.z,d=Math.hypot(dx,dz);if(d<.3){n.path.shift();return !n.path.length}n.x+=dx/d*v*dt;n.z+=dz/d*v*dt;n.g.rotation.y=Math.atan2(dx,dz);n.moving=1;return false}
+function botDisguise(n){var sp=null;for(var k=0;k<SPOTS.length;k++){var s=SPOTS[k];if(Math.hypot(s.x-n.x,s.z-n.z)<2.6&&canHere(s.x,s.z,.4)){sp=s;SPOTS.splice(k,1);break}}var x=sp?sp.x:n.x,z=sp?sp.z:n.z;n.x=x;n.z=z;var id=PAL2[RND()*PAL2.length|0];n.prop=mkProp(id);n.pid=id;n.prop.position.set(x,0,z);n.prop.rotation.y=(sp?sp.ry:RND()*6)+(RND()-.5)*.35;scene.add(n.prop);n.g.visible=false;poof(x,z)}
+function hideAI(n,dt,dP){if(n.tagged)return;if(R.ph=='wait')return;
+ if(!n.prop){if(!n.goal){var c=SPOTS[RND()*SPOTS.length|0];n.goal=c;n.path=bfs(ce(n.x),ce(n.z),c.i,c.j)||[]}var arrived=walkTo(n,dt,n.flee>0?5:3.2);if(n.flee>0)n.flee-=dt;
+  if((arrived&&(n.flee||0)<=0)||(R.ph=='hide'&&R.t>R.hide-3)){botDisguise(n);n.goal=null}}
+ else{n.g.visible=false;// stay still; panic if a seeker is right next to us and looking away
+  var s=nearestSeeker(n.x,n.z);if(s&&s.d<3.2&&RND()<dt*.35&&!n.usedLast){n.usedLast=1;scene.remove(n.prop);n.prop=null;n.g.visible=true;n.flee=3;var far=SPOTS[RND()*SPOTS.length|0];n.goal=far;n.path=bfs(ce(n.x),ce(n.z),far.i,far.j)||[];poof(n.x,n.z);HU.cap&&HU.cap('[a '+PROPS[n.pid][0].toLowerCase()+' suddenly sprouts legs and runs!]',2)}
+  // a tiny wobble now and then: a fair clue for sharp eyes
+  if(n.prop&&RND()<dt*.12){n.wob=.35}if(n.wob>0){n.wob-=dt;n.prop.rotation.z=Math.sin(n.wob*40)*.03}else if(n.prop)n.prop.rotation.z=0}
+ if(n.rev>0){n.rev-=dt}}
+function nearestSeeker(x,z){var best=null;R.bots.forEach(function(s){if(s.hs!='seeker')return;var d=Math.hypot(s.x-x,s.z-z);if(!best||d<best.d)best={d:d,n:s}});if(R.role=='seeker'){var d=Math.hypot(P.x-x,P.z-z);if(!best||d<best.d)best={d:d,you:1}}return best}
+// ---------- AI: seekers ----------
+function seekAI(n,dt,dP){if(R.ph!='hunt'){n.x=cc(1)+.6;n.z=cc(1)+.6;return}n.pt-=dt;n.tcd=(n.tcd||0)-dt;n.pcd=(n.pcd==null?15+RND()*20:n.pcd)-dt;
+ // pick something suspicious
+ if(n.pt<=0){n.pt=.6;var best=null,bs2=0;var look=function(x,z,base,ref){var d=Math.hypot(x-n.x,z-n.z);if(d>11||!los(n.x,n.z,x,z))return;var s=base*(1-d/14)+RND()*.12;if(s>bs2){bs2=s;best={x:x,z:z,ref:ref}}};
+  R.props.forEach(function(p){look(p.x,p.z,.08,p)});R.decoys.forEach(function(d){look(d.x,d.z,.9,d)});
+  R.bots.forEach(function(h){if(h.hs!='hider'||h.tagged)return;if(h.prop)look(h.x,h.z,(h.wob>0?.6:.12)+(h.rev>0?2:0),h);else look(h.x,h.z,1.5,h)});
+  if(R.role=='hider'&&!R.you.tagged){var Y=R.you,mv=(P.spd||0)>.3;look(P.x,P.z,Y.dis?((mv&&!(Y.silent>0)?.75:.1)+(Y.rev>0?2:0)):1.6,'you')}
+  if(R.lastPop&&R.lastPop.t>0&&Math.hypot(R.lastPop.x-n.x,R.lastPop.z-n.z)<16&&RND()<.5)best={x:R.lastPop.x,z:R.lastPop.z,ref:null};
+  if(best&&bs2>.14){n.tgt=best;n.path=bfs(ce(n.x),ce(n.z),ce(best.x),ce(best.z))||[]}else if(!n.path.length){var c=SPOTS[RND()*SPOTS.length|0]||{i:7,j:7};n.tgt=null;n.path=bfs(ce(n.x),ce(n.z),c.i,c.j)||[]}}
+ var t=n.tgt,v=3.3*HS.set.spd;if(t){var d=Math.hypot(t.x-n.x,t.z-n.z);if(d>1.6){if(!n.path.length){var dx=t.x-n.x,dz=t.z-n.z;n.x+=dx/d*v*dt;n.z+=dz/d*v*dt;n.moving=1}else walkTo(n,dt,v)}else if(n.tcd<=0){n.tcd=1.6;n.g.rotation.y=Math.atan2(t.x-n.x,t.z-n.z);
+   if(t.ref=='you'&&R.role=='hider'&&!R.you.tagged&&Math.hypot(P.x-n.x,P.z-n.z)<2.3&&los(n.x,n.z,P.x,P.z)){youTagged(n)}else if(t.ref&&t.ref.hs=='hider'&&!t.ref.tagged&&Math.hypot(t.ref.x-n.x,t.ref.z-n.z)<2.3){tagBot(t.ref,n.name)}else if(t.ref&&R.decoys.indexOf(t.ref)>=0){scene.remove(t.ref.g);t.ref.t=0}n.tgt=null;n.path=[]}}else walkTo(n,dt,v*.9);
+ if(n.pcd<=0&&HS.set.ab.pulse){n.pcd=35+RND()*15;pulse(n.x,n.z,false)}
+ // keep inside the play area
+ if(!inArea(n.x,n.z,1)){n.path=bfs(ce(n.x),ce(n.z),7,7)||[]}}
+function youTagged(by){var Y=R.you;if(Y.tagged)return;Y.tagged=true;Y.surv=R.ph=='hunt'?R.t:0;if(Y.dis){scene.remove(Y.dis);Y.dis=null}HU.hidePlayerModel=true;P.para=9999;say(by.name+' found you! You are out — spectating.',4);tn({t:'sawtooth',f:300,f2:120,d:.6,v:.2});checkEnd()}
+function checkEnd(){if(R.over)return;if(hidersLeft()<=0)endRound('seekers')}
+// ---------- round end, results and rewards ----------
+function endRound(win){if(R.over)return;R.over=true;started=false;try{document.exitPointerLock()}catch(e){}var Y=R.you,s=HS.st,youWon=(win=='hiders'&&R.role=='hider'&&!Y.tagged)||(win=='seekers'&&R.role=='seeker'),pts=0,why=[];
+ s.rounds++;if(R.role=='hider'){var surv=Y.tagged?Y.surv:R.len;s.best=Math.max(s.best,surv);if(!Y.tagged){pts+=30;why.push('Survived the round +30');s.hw++;if(Y.changes<=1){pts+=15;why.push('Never changed disguise +15')}}}
+ else{pts+=Y.tags*10;if(Y.tags)why.push('Tags ×'+Y.tags+' +'+(Y.tags*10));s.tags+=Y.tags;if(win=='seekers'){pts+=30;why.push('Seekers win +30');s.sw++}}
+ if(youWon&&!Object.keys(Y.ab).length&&!(R.role=='seeker'&&Y.pulses<3)){pts+=10;why.push('Won without abilities +10')}
+ if(youWon){s.streak++;s.bestStreak=Math.max(s.bestStreak,s.streak)}else s.streak=0;s.pts+=pts;
+ // daily challenge
+ var ch=daily(),dok=false;if(!ch.done){if(ch.id=='hsurv'&&R.role=='hider'&&!Y.tagged)dok=true;if(ch.id=='tag3'&&Y.tags>=3)dok=true;if(ch.id=='fast'&&R.role=='seeker'&&win=='seekers'&&R.t<180)dok=true;if(ch.id=='nochange'&&R.role=='hider'&&!Y.tagged&&Y.changes<=1)dok=true;if(dok){HS.dc[ch.k]=ch.id;why.push('Daily challenge complete')}}
+ // cash: capped per round and per day, rounds shorter than 60 s pay nothing (no farming)
+ var today=dayKey();HS.cash=HS.cash&&HS.cash.k==today?HS.cash:{k:today,n:0};var played=R.ph=='hunt'?R.t:0,cash=played<60?0:Math.min(40,Math.round(pts/2));cash=Math.min(cash,200-HS.cash.n);if(dok)cash+=ch.r;if(cash>0){HS.cash.n+=Math.min(cash,200);HU.raw=1;try{addCash(cash,'Hide and Seek')}finally{HU.raw=0}}hsave();
+ var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;color:#e4d56a;font:15px monospace;text-align:center';var surv2=R.bots.filter(function(n){return n.hs=='hider'&&!n.tagged}).map(function(n){return n.name});
+ ov.innerHTML='<div class="pn" style="max-width:520px"><h2 style="color:'+(youWon?'#9f9':'#f77')+'">'+(win=='seekers'?'SEEKERS WIN':'HIDERS WIN')+'</h2>You were a <b>'+R.role.toUpperCase()+'</b>'+(youWon?' — you won!':'')+'<br><small>Survivors: '+(surv2.concat(R.role=='hider'&&!Y.tagged?[un()+' (you)']:[]).map(e2).join(', ')||'nobody')+'</small><br><br>'+why.map(e2).join('<br>')+'<br><b>Points: '+pts+'</b> · cash: $'+cash+(played<60?' <small>(rounds under 1 minute pay no cash)</small>':'')+'<br><small>Streak '+s.streak+' · rounds '+s.rounds+' · total points '+s.pts+'</small><br><br><div class="bt pl" data-hs2="again">PLAY AGAIN</div><div class="bt" data-hs2="lobby">BACK TO HIDE AND SEEK MENU</div><div class="bt" data-hs2="menu">MAIN MENU</div></div>';
+ ov.addEventListener('click',function(e){var k=e.target.dataset&&e.target.dataset.hs2;if(!k)return;HS.prevLv=PEND.prev;if(k=='again'){HS.pending=null;startMatch();return}delete HS.pending;hsave();SV.lv=PEND.prev;SV.cont=0;save();if(k=='lobby')sessionStorage.setItem('brhsOpen','1');location.reload()});document.body.appendChild(ov);hud.style.display='none';hint.style.display='none';blind.style.display='none'}
+// ---------- input ----------
+addEventListener('keydown',function(e){if(R.over||typeof started=='undefined')return;var tg=e.target;if(tg&&(tg.tagName=='INPUT'||tg.tagName=='TEXTAREA'))return;var c=e.code,used=true;
+ if(c=='KeyJ'&&R.role=='hider'){showWheel(wheel.style.display!='block');if(wheel.style.display!='block'){started=true;try{ren.domElement.requestPointerLock()}catch(x){}}}
+ else if(!started)return;
+ else if((c=='KeyE'||c=='KeyH')&&R.role=='hider')youTransform();
+ else if(c=='BracketRight'&&R.role=='hider'){R.you.sel=(R.you.sel+1)%PAL2.length;say('Disguise: '+PROPS[PAL2[R.you.sel]][0],1.2)}else if(c=='BracketLeft'&&R.role=='hider'){R.you.sel=(R.you.sel+PAL2.length-1)%PAL2.length;say('Disguise: '+PROPS[PAL2[R.you.sel]][0],1.2)}
+ else if(/^Digit[1-4]$/.test(c)&&R.role=='hider')useAb(+c.slice(5));
+ else if(c=='KeyQ'&&R.role=='seeker')useAb(5);
+ else if(c=='KeyF'&&R.role=='seeker')youTag();
+ else if(c=='KeyF'&&R.you.dis)used=true;
+ else used=false;
+ if(used){e.stopImmediatePropagation();e.preventDefault()}},true);
+addEventListener('mousedown',function(e){if(e.button==0&&started&&R.role=='seeker'&&!R.over&&document.pointerLockElement)youTag()});
+// ---------- per frame ----------
+var lt=performance.now();(function tick(){if(R.dead)return;requestAnimationFrame(tick);var nw=performance.now(),dt=Math.min(.1,(nw-lt)/1000);lt=nw;try{
+ R.pops=R.pops.filter(function(p){p.t-=dt;if(p.ring){p.s.scale.setScalar(1+(1.2-p.t)*24);p.s.material.opacity=Math.max(0,p.t/1.2*.7)}else{p.s.position.y+=dt*.6;p.s.material.opacity=Math.max(0,p.t*.7)}if(p.t<=0){scene.remove(p.s);return false}return true});
+ if(R.lastPop)R.lastPop.t-=dt;
+ if(R.over)return;
+ if(typeof started=='undefined'||!started){if(R.ph=='wait')hud.textContent='🫥 HIDE AND SEEK — press PLAY to start';return}
+ var Y=R.you;
+ if(R.ph=='wait'){R.ph='hide';R.t=0;try{closeP()}catch(x){}if(R.role=='seeker'){P.x=cc(1);P.z=cc(1)}say(R.role=='hider'?'You are a HIDER! Hide before the seekers are released. (E transform · J prop wheel)':'You are a SEEKER! You are locked in until the countdown ends.',6)}
+ R.t+=dt;
+ if(R.ph=='hide'){var left=R.hide-R.t;if(R.role=='seeker'){P.para=Math.max(P.para,.2);blind.style.display='flex';blind.innerHTML='YOU ARE A SEEKER<br><span style="font-size:54px">'+Math.ceil(left)+'</span><br><small style="font-size:14px">The hiders are finding their spots...</small>'}if(left<=0){R.ph='hunt';R.t=0;blind.style.display='none';P.para=0;say('SEEKERS RELEASED!',3);tn({t:'sawtooth',f:400,f2:900,d:.8,v:.2})}}
+ else if(R.ph=='hunt'){if(R.t>=R.len){endRound(hidersLeft()>0?'hiders':'seekers');return}}
+ // AI players (ticked here, not by the story NPC system, so F never opens a story conversation)
+ R.bots.forEach(function(n){n.t+=dt;n.moving=0;if(n.st!='gone')n.ai(n,dt);n.g.position.set(n.x,0,n.z);var sw=n.moving?Math.sin(n.t*8):0;n.legs.forEach(function(l,i){l.rotation.x=sw*.6*(i?-1:1)});n.arms.forEach(function(a,i){a.rotation.x=sw*.5*(i?1:-1)})});
+ R.bots.forEach(function(n){if(n.prop){n.prop.position.set(n.x,0,n.z);if(n.rev>0){n.prop.traverse(function(m){if(m.material&&m.material.emissive)m.material.emissive.setHex(Math.sin(nw/90)>0?0x660000:0)})}else n.prop.traverse(function(m){if(m.material&&m.material.emissive)m.material.emissive.setHex(0)})}});
+ R.decoys=R.decoys.filter(function(d){d.t-=dt;if(d.t<=0){scene.remove(d.g);return false}d.a+=(RND()-.5)*dt*2;var nx=d.x-Math.sin(d.a)*1.1*dt,nz=d.z-Math.cos(d.a)*1.1*dt;if(!blocked(nx,nz,.35)&&inArea(nx,nz)){d.x=nx;d.z=nz}else d.a+=PI/2;d.g.position.set(d.x,0,d.z);d.g.rotation.y=d.a;return true});
+ // the player as a hider
+ if(R.role=='hider'&&!Y.tagged){Y.cd=Math.max(0,Y.cd-dt);if(Y.silent>0)Y.silent-=dt;if(Y.rev>0)Y.rev-=dt;
+  if(Y.dis){K.ShiftLeft=0;K.KeyC=1;Y.dis.position.set(P.x,0,P.z);if(K.KeyZ)Y.ry+=dt*2;if(K.KeyX)Y.ry-=dt*2;Y.dis.rotation.y=Y.ry;Y.dis.traverse(function(m){if(m.material&&m.material.emissive)m.material.emissive.setHex(Y.rev>0&&Math.sin(nw/90)>0?0x660000:0)})}else if(Y.wasDis){K.KeyC=0}Y.wasDis=!!Y.dis;
+  if(Y.last>0){Y.last-=dt;P.st=100;P.tired=false;K.ShiftLeft=1}}
+ if(R.role=='seeker'){Y.pcd=Math.max(0,Y.pcd-dt);Y.tcd=Math.max(0,Y.tcd-dt)}
+ // play area boundary
+ if(!inArea(P.x,P.z)){var a=Math.atan2(P.x-R.area.x,P.z-R.area.z);var nx=R.area.x+Math.sin(a)*(R.area.r-.6),nz=R.area.z+Math.cos(a)*(R.area.r-.6);if(!solid(nx,nz)){P.x=nx;P.z=nz}if(msgT<=0)say('Edge of the play area.',1)}
+ // HUD
+ var tl=R.ph=='hide'?R.hide-R.t:R.len-R.t;hud.textContent=(R.ph=='hide'?'HIDING PHASE  ':'⏱ ')+Math.floor(Math.max(0,tl)/60)+':'+String(Math.floor(Math.max(0,tl)%60)).padStart(2,'0')+'   ·   HIDERS LEFT: '+hidersLeft()+'   ·   YOU: '+(Y.tagged?'OUT (spectating)':R.role.toUpperCase());
+ var ab=HS.set.ab,cd=function(k,l,n){return ab[k]?(Y.ab[k]?'<span style="opacity:.4">'+n+' '+l+' (used)</span>':'<b>'+n+'</b> '+l):''};
+ hint.innerHTML=R.role=='hider'?(Y.tagged?'You were found. Watching the rest of the round...':'<b>E</b> '+(Y.dis?'turn back':'transform')+(Y.cd>0?' ('+Math.ceil(Y.cd)+'s)':'')+' · <b>J</b> props · <b>[ ]</b> switch<br>Disguise: '+PROPS[PAL2[Y.sel%PAL2.length]][1]+' '+e2(PROPS[PAL2[Y.sel%PAL2.length]][0])+(Y.dis?' · <b>Z/X</b> rotate':'')+'<br>'+[cd('quick','Quick','1'),cd('silent','Silent','2'),cd('decoy','Decoy','3'),cd('last','Last Chance','4')].filter(Boolean).join(' · ')+(Y.silent>0?'<br>🤫 silent '+Math.ceil(Y.silent)+'s':''))
+  :'<b>F</b> / click — tag the object in front of you'+(Y.tcd>0?' ('+Y.tcd.toFixed(1)+'s)':'')+'<br><b>Q</b> Detection Pulse: '+(ab.pulse?Y.pulses+' left'+(Y.pcd>0?' (recharging '+Math.ceil(Y.pcd)+'s)':''):'off')+'<br>Tags this round: '+Y.tags;
+ if(R.role=='seeker'&&R.ph=='hunt'&&msgT<=0){var tt=lookTarget(P.x,P.z,P.yaw,2.4);if(tt)say('[F] Tag this '+(tt.kind=='bot'?PROPS[tt.o.pid||'boxc'][0].toLowerCase():tt.kind=='decoy'?'object':PROPS[tt.o.id][0].toLowerCase())+'?',.1)}
+ }catch(e){if(!tick.e){tick.e=1;console.error('HS tick',e)}}})();
+// disguised camera: behind and above the prop; spectator camera follows a remaining hider
+var oP=window.PFX;window.PFX=function(s,c){try{if(typeof started!='undefined'&&(started||R.over===false)&&!R.over){var Y=R.you;if(Y.dis||Y.tagged){var tx=P.x,tz=P.z,yaw=P.yaw;if(Y.tagged){var h=R.bots.find(function(n){return n.hs=='hider'&&!n.tagged})||R.bots.find(function(n){return n.hs=='seeker'});if(h){tx=h.x;tz=h.z;yaw=(performance.now()/4000)%(PI*2)}}var fx=-Math.sin(yaw),fz=-Math.cos(yaw),d=Y.tagged?5:2.6,k=0;for(var q=0;q<=d;q+=.1){if(blocked(tx-fx*q,tz-fz*q,.2))break;k=q}c.position.set(tx-fx*k,Y.tagged?3:1.9,tz-fz*k);c.rotation.set(Y.tagged?-.5:-.32,yaw,0)}}}catch(e){}if(oP)oP(s,c);else ren.render(s,c)};
+// when a round page loads, show the round banner
+setTimeout(function(){if(typeof MENU!='undefined'&&MENU){if(!HU.run())HU.newRun('normal',false);pnl('<b>🫥 HIDE AND SEEK — ROUND READY</b><br>Map: '+e2(mapName(LVL))+'<br>You are a <b>'+R.role.toUpperCase()+'</b>'+(PEND.code?' · lobby '+PEND.code:'')+'<br><small>'+HS.set.bots+' AI players · '+HS.set.seekers+' seeker(s) · hiding '+HS.set.hide+'s · round '+Math.round(HS.set.len/60)+' min</small><br><br><div class="bt pl" data-hs2b="go">▶ START ROUND</div><span class="ch" data-hs2b="cancel" style="color:#f99">✖ CANCEL THE ROUND</span>')}},900);
+MB.addEventListener('click',function(e){var el=e.target.closest&&e.target.closest('[data-hs2b]');if(!el)return;e.stopPropagation();if(el.dataset.hs2b=='go'){try{closeP()}catch(x){}var bp=document.getElementById('b-play');if(bp)bp.click();return}delete HS.pending;hsave();SV.lv=PEND.prev;SV.cont=0;save();location.reload()},true);
+})();
+// reopen the Hide and Seek menu after "back to menu"
+(function(){try{if(sessionStorage.getItem('brhsOpen')){sessionStorage.removeItem('brhsOpen');setTimeout(function(){if(window.HU&&HU.hsMenu&&!(HU.data.hs&&HU.data.hs.pending))HU.hsMenu()},1200)}}catch(e){}})();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
@@ -5158,7 +5403,7 @@ function dumAI(dt){ADM.dum.forEach(function(dm){if(!ADM.ai)return;var d=Math.hyp
 setInterval(function(){if(ADM.dum.length&&typeof P!='undefined')dumAI(.05)},50);
 function testScare(id){var e=MLIST.find(function(m){return m[0]==id});if(!e)return;try{JS3.lvOv=id[0]=='m'?+id.slice(1):null;jumpscare(e[3])}finally{setTimeout(function(){JS3.lvOv=null},50)}}
 // ---------------- UI ----------------
-var TABS=['PLAYERS','WORLD','STORY','MONSTERS','ITEMS','LEVELS','SERVER','CONSOLE','AUDIT LOG'];
+var TABS=['PLAYERS','WORLD','STORY','MONSTERS','ENTITY','ITEMS','LEVELS','SERVER','CONSOLE','AUDIT LOG'];
 function show(){root.style.display='block';try{if(typeof started!='undefined'&&started){ADM.wasStarted=true;started=false;document.exitPointerLock()}}catch(e){}render()}
 function hide(){root.style.display='none';if(ADM.wasStarted&&!P.dead){ADM.wasStarted=false;started=true;try{ren.domElement.requestPointerLock()}catch(e){}}}
 function toggle(){root.style.display=='block'?hide():show()}
@@ -5181,7 +5426,7 @@ function render(){if(root.style.display!='block')return;if(!authed()){loginView(
  box.querySelectorAll('[data-tab]').forEach(function(e){e.onclick=function(){ADM.tab=e.dataset.tab;ADM.lm=null;render()}});
  box.querySelectorAll('[data-ad]').forEach(function(e){e.onclick=function(){act(e.dataset.ad)}});
  var ci=$a('acmd');if(ci){ci.onkeydown=function(e){if(e.key=='Enter'){runCmd(ci.value);ci.value=''}};ci.focus()}
- var cs=$a('aconout');if(cs)cs.scrollTop=1e9}
+ var cs=$a('aconout');if(cs)cs.scrollTop=1e9;if(T=='ENTITY')try{entMount()}catch(e){}}
 var NOPLAY='Only one player exists in this build: multiplayer has no server yet.';
 function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
  if(T=='PLAYERS'){var nm=profileName()||'Guest',hit=!q||nm.toLowerCase().indexOf(q)>=0;
@@ -5194,6 +5439,7 @@ function body(T){var q=ADM.q.toLowerCase(),ig=inGame();
   '<h4>ENVIRONMENT</h4>'+btn('quake','TREMOR (shake)')+btn('static','STATIC STORM (sanity drain)')+btn('calm','CALM (restore sanity drain)')+
   '<h4>MOVEMENT</h4>'+btn('tp:start','TELEPORT: START')+btn('tp:elev','TELEPORT: ELEVATOR')+btn('tp:rand','TELEPORT: RANDOM VALID SPOT')+btn('god',ADM.god?'GOD MODE: ON':'GOD MODE: OFF')+btn('free',ADM.free?'FREE CAMERA: ON':'FREE CAMERA: OFF')+'<br><span class="dim">Free camera: WASD fly, mouse look, Space up, C down, Shift fast. Monsters cannot catch you while it is on.</span>'+
   '<h4>LEVEL</h4>'+btn('reset','RESET CURRENT LEVEL','dg')}
+ if(T=='ENTITY')return entBody(q,ig);
  if(T=='MONSTERS'){var o=ig?monNow():null,list=MLIST.filter(function(m){return !q||m[1].toLowerCase().indexOf(q)>=0||m[0].indexOf(q)>=0});
   return (ig?'<h4>THIS LEVEL\'S MONSTER</h4><div class="card"><b style="color:#f66">'+esc2((MLIST.find(function(m){return m[0]==o.id})||[0,'?'])[1])+'</b>'+(ADM.gone?' <span class="er">(removed)</span>':'')+'<br>State: '+esc2(o.st)+' · target: '+esc2(o.tgt||'—')+' · distance '+o.d.toFixed(1)+' m<br>AI: '+(ADM.ai?'on':'<span class="er">off</span>')+' · speed ×'+ADM.spd.toFixed(2)+'</div>'+
   btn('ms:patrol','PATROL')+btn('ms:investigate','INVESTIGATE ME')+btn('ms:chase','CHASE ME')+btn('ms:return','RETURN TO PATROL')+btn('mtp','TELEPORT TO A VALID SPOT')+btn('mremove','REMOVE','dg')+btn('mback','RESTORE')+btn('ai',ADM.ai?'DISABLE AI':'ENABLE AI')+btn('follow',ADM.follow?'STOP SPECTATING':'SPECTATE MONSTER')+
@@ -5221,6 +5467,7 @@ function ban(t,ms){var b=$a('admban');b.textContent=t;b.style.display='block';cl
 function tpTo(x,z){if(!isFinite(x)||solid(x,z))return {err:'That spot is inside a wall.'};P.x=x;P.z=z;P.vx=P.vz=0;if(ADM.free){ADM.fc.x=x;ADM.fc.z=z}return {msg:'Teleported to '+x.toFixed(1)+', '+z.toFixed(1)}}
 function cashAmt(){var v=Math.floor(+($a('acash')||{}).value);return v}
 function act(a){var ig=inGame(),i=a.indexOf(':'),k=i<0?a:a.slice(0,i),v=i<0?'':a.slice(i+1),nm=profileName()||'Guest';
+ if(k=='ent'){if(!authed()){msg('ACCESS DENIED',false);audit('entity',v,false,'not authorized');return}return entAct(v)}
  if(k=='revive')return guard('revive',nm,function(){if(!P.dead)return {msg:nm+' is not dead. Health restored instead.'}&&(P.san=100,P.st=100,{msg:nm+' is alive — health restored.'});P.dead=false;P.san=100;P.st=100;P.imp=0;P.sz=0;GR.k=0;try{$a('ov').style.display='none';$a('red').style.opacity=0;$a('red').style.transition='';$a('msg').textContent=''}catch(e){}var c=openCellNear(P.x,P.z,0,8);if(c){P.x=cc(c[0]);P.z=cc(c[1])}if(lm)LM.st='cool';M.state='patrol';ADM.wasStarted=true;ADM.revT=Date.now()+20000;try{cam.position.y=P.h;mon.scale.setScalar(1)}catch(e){}return {msg:nm+' revived. Close the panel to keep playing.'}});
  if(k=='heal')return guard('restore health',nm,function(){P.san=100;P.st=100;P.imp=0;P.sz=0;P.tired=false;return {msg:'Health, stamina and imprint restored.'}});
  if(k=='resetpos')return guard('reset position',nm,function(){P.x=cc(1);P.z=cc(1);P.vx=P.vz=0;return {msg:'Moved back to the level start.'}},{confirm:'Move '+esc2(nm)+' back to the start of the level?'});
@@ -5303,6 +5550,98 @@ function runCmd(raw){var line=String(raw||'').trim().slice(0,200);if(!line)retur
  if(c=='spectate'){var tg=(p[1]||'').toLowerCase();if(!inGame())return fail('start a level first');if(tg=='monster'){act('follow');out('Spectating the monster.');return}if(!who(tg))return fail('no player named "'+(p[1]||'')+'"');out('That player is you. Use the free camera (WORLD tab) to look around.');audit('console',line,true,'');return}
  if(c=='reset_level'){act('reset');out('Confirm the reset in the dialog.');return}
  fail('unknown command "'+c+'". Type help.')}
+// ---------------- ENTITY TRANSFORMATION (admin only; every action goes through guard(): role check, rate limit, audit log) ----------------
+var EX={on:false,id:null,mode:'player',g:null,size:1,spd:1,snd:true,fx:true,ai:true,hk:false,rule:'return',cat:'all',sel:'boiled',perm:{atk:0,dmg:0,scare:0,ab:1,vis:1,invis:0,fly:0,tp:0,fx:1,limits:0},hist:[],snap:null,lx:0,lz:0,yaw:0,path:[],pt:0,abT:0,stepT:0,badge:null,light:null};
+var ENTMOVE={boiled:'Stalks slowly, flickers at the edge of your sight',grin:'Floats through the dark, only during blackouts',water:'Swims under the surface, follows splashing',party:'Walks in groups, wanders towards noise',m3:'Tall, patient walker that pushes a luggage cart',m4:'Patrols corridors on a fixed route',m5:'Copies the player\'s movement',m6:'Long strides between the trees',m7:'Drifts along the flooded tracks',m8:'Silent walk, checks every room',m9:'Glitches from place to place'};
+var ENTAB={boiled:['Static burst','Edge-of-sight blink'],grin:['Lights out','Grin flash'],water:['Submerge','Surface lunge'],party:['Balloon pop','Party noise']};
+function ELIST(){var L=MLIST.map(function(m){var d=(typeof MONS!='undefined'?MONS:[]).find(function(x){return x.id==m[0]})||{};return {id:m[0],n:d.n||m[1],lv:m[2],home:d.lv||('Level '+m[2].join(', ')),d:d.d||'An entity of the Backrooms.',mv:ENTMOVE[m[0]]||'Hunts on foot: patrol, investigate, chase',ab:(ENTAB[m[0]]||['Roar','Lunge']).concat(['Screech','Jumpscare test'])}});
+ L.push({id:'rem',n:'The Rememberer',lv:[20],home:'Level 20 (the Void)',d:'What waits at the very end. It wears the shape of the first thing that ever hunted you.',mv:'Slow, certain walk that never stops',ab:['Static burst','Memory blink','Screech','Jumpscare test']});return L}
+function eInfo(id){return ELIST().find(function(e){return e.id==id})}
+function eModel(id){return id=='rem'?MART.boiled(STM,GFX.monCore):mkModel(id)}
+function eCat(e){var lv=e.lv[0];return EX.cat=='all'||(EX.cat=='early'&&lv<=2)||(EX.cat=='mid'&&lv>=3&&lv<=9)||(EX.cat=='deep'&&lv>=10)}
+function eHist(t){EX.hist.unshift({t:Date.now(),a:t});if(EX.hist.length>30)EX.hist.pop()}
+function eModeName(){return !EX.on?'NORMAL PLAYER':EX.mode=='player'?'PLAYER-CONTROLLED ENTITY':'AI-CONTROLLED ENTITY'}
+function eMax(){return EX.perm.limits?3:1.6}
+function eBadge(){if(!EX.badge){EX.badge=document.createElement('div');EX.badge.style.cssText='position:fixed;right:12px;bottom:12px;z-index:9;font:bold 12px monospace;color:#3f3;background:#000c;border:1px solid #3f3;padding:6px 9px;pointer-events:none';document.body.appendChild(EX.badge)}var e=EX.on&&eInfo(EX.id);EX.badge.style.display=EX.on?'block':'none';if(e)EX.badge.innerHTML='🛡 '+esc2(eModeName())+'<br>'+esc2(e.n)+' · size ×'+EX.size.toFixed(1)+' · speed ×'+EX.spd.toFixed(1)+(EX.hk&&EX.mode=='player'?'<br>8 / 9 / 0 abilities':'')}
+function eFx(){if(!EX.g)return;if(!EX.light){EX.light=new THREE.PointLight(0xff2020,0,6);scene.add(EX.light)}EX.light.intensity=EX.on&&EX.fx&&EX.perm.fx?.9:0;EX.g.visible=!EX.perm.invis}
+function eStart(id,mode){if(!inGame())return {err:'Start a level first.'};if(window.HU&&HU.HSR&&!HU.HSR.over)return {err:'Not available during a Hide and Seek round.'};if(P.dead)return {err:'Revive first (PLAYERS tab).'};var e=eInfo(id);if(!e)return {err:'Unknown entity.'};
+ if(EX.on)eStop(true);
+ EX.snap={san:P.san,st:P.st,bat:P.bat,inv:JSON.stringify(typeof invP!='undefined'?null:null),h:P.h,x:P.x,z:P.z};
+ EX.g=eModel(id);EX.g.scale.setScalar(EX.size);EX.g.position.set(P.x,0,P.z);scene.add(EX.g);EX.on=true;EX.id=id;EX.mode=mode||'player';EX.lx=P.x;EX.lz=P.z;EX.x=P.x;EX.z=P.z;EX.path=[];EX.pt=0;
+ if(window.HU)HU.hidePlayerModel=true;eFx();eBadge();eHist('Transformed into '+e.n+' ('+EX.mode+')');return {msg:'You are now '+e.n+' — '+eModeName()+'. Close the panel to play. Your level, items and objectives are unchanged.'}}
+function eStop(quiet){if(!EX.on)return {err:'You are already a normal player.'};var e=eInfo(EX.id);if(EX.g){scene.remove(EX.g);EX.g=null}if(EX.light)EX.light.intensity=0;
+ if(EX.mode=='ai'){P.para=0}
+ if(EX.snap){P.san=Math.max(P.san,EX.snap.san);P.st=Math.max(P.st,EX.snap.st)}EX.on=false;EX.mode='player';if(window.HU)HU.hidePlayerModel=false;try{cam.position.y=P.h}catch(x){}eBadge();if(!quiet)eHist('Returned to normal player');return {msg:'Back to normal. Health and stamina restored to at least what they were; nothing was removed from your run.'}}
+function eAbility(n){if(!EX.on)return {err:'Transform first.'};if(!EX.perm.ab)return {err:'Abilities are turned off in the permission toggles.'};if(EX.abT>performance.now())return {err:'Ability cooling down.'};EX.abT=performance.now()+1500;var e=eInfo(EX.id),nm=e.ab[n]||e.ab[0],x=EX.mode=='player'?P.x:EX.x,z=EX.mode=='player'?P.z:EX.z;
+ if(nm=='Jumpscare test'){if(!EX.perm.scare)return {err:'Jumpscares are off. Turn on "Can trigger jumpscares" first.'};testScare(EX.id=='rem'?'boiled':EX.id);eHist('Jumpscare test');return {msg:'Jumpscare played (only you can see it — there are no other players).'}}
+ try{if(EX.snd){if(/Screech|Roar|Grin/.test(nm))tone({t:'sawtooth',f:180,f2:60,d:.9,v:.25});else if(/pop|noise/i.test(nm))burst({f:2500,q:1,d:.2,v:.3});else burst({f:600,q:.5,d:.6,v:.25})}}catch(x){}
+ if(/Lunge|blink/i.test(nm)){var a=EX.mode=='player'?P.yaw:EX.g.rotation.y+Math.PI,nx=x,nz=z;for(var q=.3;q<=4;q+=.3){var tx=x-Math.sin(a)*q,tz=z-Math.cos(a)*q;if(blocked(tx,tz,.35))break;nx=tx;nz=tz}if(EX.mode=='player'){P.x=nx;P.z=nz;EX.lx=nx;EX.lz=nz}else{EX.x=nx;EX.z=nz}}
+ if(nm=='Lights out'&&EX.perm.fx){try{L.black=Math.max(L.black||0,4)}catch(x){}}
+ if(nm=='Submerge'&&EX.g){EX.sub=2.5}
+ if((nm=='Static burst'||nm=='Grin flash')&&EX.perm.fx){var fl=document.createElement('div');fl.style.cssText='position:fixed;inset:0;z-index:8;pointer-events:none;background:'+(nm=='Grin flash'?'#fff':'repeating-linear-gradient(0deg,#fff3 0 2px,#0003 2px 4px)')+';opacity:.5;transition:opacity .6s';document.body.appendChild(fl);setTimeout(function(){fl.style.opacity=0},60);setTimeout(function(){fl.remove()},800)}
+ eHist('Ability: '+nm);return {msg:nm+'!'}}
+function eAI(dt){var sp=1.8*EX.spd;EX.pt-=dt;var d=Math.hypot(P.x-EX.x,P.z-EX.z),hunt=EX.perm.atk&&EX.ai;
+ if(EX.ai){if(EX.pt<=0||!EX.path.length){EX.pt=hunt?.5:4;var c=hunt?[ce(P.x),ce(P.z)]:openCellNear(EX.x,EX.z,3,12);if(c)EX.path=bfs(ce(EX.x),ce(EX.z),c[0],c[1])||[]}
+  if(EX.path.length){var a=EX.path[0],dx=cc(a[0])-EX.x,dz=cc(a[1])-EX.z,q=Math.hypot(dx,dz);if(q<.3)EX.path.shift();else{EX.x+=dx/q*sp*(hunt?2.2:1)*dt;EX.z+=dz/q*sp*(hunt?2.2:1)*dt;EX.g.rotation.y=Math.atan2(dx,dz);EX.mv=1}}}
+ // by default the entity never attacks its own admin; with "can attack" on it only scares/damages, it never kills
+ if(hunt&&d<1.4&&(!EX.hitT||EX.hitT<performance.now())){EX.hitT=performance.now()+6000;if(EX.perm.scare)testScare(EX.id=='rem'?'boiled':EX.id);if(EX.perm.dmg)P.san=Math.max(10,P.san-15);eHist('AI entity reached you'+(EX.perm.dmg?' (−15 sanity, never below 10)':''));EX.path=[];EX.pt=3}}
+var oPF2=window.PFX;window.PFX=function(s,c){try{if(EX.on&&EX.g&&inGame()){var dt=1/60;
+  if(EX.mode=='player'){// speed: scale how far you moved this frame; walls still block
+   var dx=P.x-EX.lx,dz=P.z-EX.lz;if(EX.spd!=1&&(dx||dz)&&Math.hypot(dx,dz)<1){var nx=EX.lx+dx*EX.spd,nz=EX.lz+dz*EX.spd;if(!blocked(nx,nz,.3)){P.x=nx;P.z=nz}}EX.lx=P.x;EX.lz=P.z;EX.mv=Math.hypot(dx,dz)>.001;
+   EX.g.position.set(P.x,0,P.z);EX.g.rotation.y=P.yaw+Math.PI;
+   var yaw=P.yaw,fx=-Math.sin(yaw),fz=-Math.cos(yaw),hgt=2.6*EX.size+(EX.perm.fly?2:0),dist=Math.min(5,2.2+1.4*EX.size),k=0;for(var q=0;q<=dist;q+=.1){if(blocked(P.x-fx*q,P.z-fz*q,.2))break;k=q}
+   c.position.set(P.x-fx*k,Math.min(H-.15,hgt),P.z-fz*k);c.rotation.set(-.28-(EX.perm.fly?.2:0),yaw,0);EX.x=P.x;EX.z=P.z}
+  else{P.para=Math.max(P.para||0,.25);eAI(dt);EX.g.position.set(EX.x,0,EX.z);var ry=EX.g.rotation.y,bx=Math.sin(ry),bz=Math.cos(ry),k2=0;for(var q2=0;q2<=4;q2+=.1){if(blocked(EX.x-bx*q2,EX.z-bz*q2,.25))break;k2=q2}c.position.set(EX.x-bx*k2,Math.min(H-.2,2.4+EX.size*.4),EX.z-bz*k2);c.lookAt(EX.x+bx*2,1.3*EX.size,EX.z+bz*2)}
+  if(EX.sub>0){EX.sub-=dt;EX.g.position.y=-Math.min(1.6,EX.sub)*.8}
+  if(EX.perm.fly)EX.g.position.y+=.6+Math.sin(performance.now()/400)*.1;
+  var U=EX.g.userData,tt=performance.now()/1000*(EX.mv?8:2);(U.arms||U.l||[]).forEach(function(q,i){if(q&&q.rotation)q.rotation.x=Math.sin(tt+i*3.14)*(EX.mv?.6:.1)});
+  if(EX.light){EX.light.position.set(EX.x,1.6*EX.size,EX.z)}
+  if(EX.snd&&EX.mv){EX.stepT-=dt;if(EX.stepT<=0){EX.stepT=.6/EX.spd;try{if(AC&&!muted)burst({f:180,q:.8,d:.18,v:.12*EX.size})}catch(x){}}}}}catch(e){}if(oPF2)oPF2(s,c);else ren.render(s,c)};
+// no unintended death while transformed (the run, level and inventory are never touched)
+var oDieX=die;die=function(){if(EX.on){P.san=Math.max(P.san,30);try{if(lm)LM.st='cool';M.state='patrol'}catch(x){}msg('Entity form: death blocked for the admin.',true);return}return oDieX.apply(this,arguments)};
+addEventListener('keydown',function(e){if(!EX.on||!EX.hk||EX.mode!='player'||typeof started=='undefined'||!started)return;var n={Digit8:0,Digit9:1,Digit0:2}[e.code];if(n==null)return;e.preventDefault();guard('entity ability',EX.id,function(){var r=eAbility(n);try{say((r.msg||r.err),1.5)}catch(x){}return r})},true);
+// level change rule
+addEventListener('pagehide',function(){try{if(EX.on&&EX.rule=='keep')sessionStorage.setItem('brentx',JSON.stringify({id:EX.id,mode:EX.mode,size:EX.size,spd:EX.spd,perm:EX.perm,snd:EX.snd,fx:EX.fx}));else sessionStorage.removeItem('brentx')}catch(x){}});
+try{var kept=JSON.parse(sessionStorage.getItem('brentx')||'null');sessionStorage.removeItem('brentx');if(kept){EX.rule='keep';var wt=setInterval(function(){if(!authed()){clearInterval(wt);return}if(inGame()&&started){clearInterval(wt);EX.size=kept.size;EX.spd=kept.spd;EX.perm=kept.perm;EX.snd=kept.snd;EX.fx=kept.fx;var r=eStart(kept.id,kept.mode);audit('entity: kept after level change',kept.id,!r.err,r.msg||r.err)}},1000)}}catch(x){}
+function tg(k,l,warn){return '<label class="row" style="display:block;cursor:pointer"><span data-ad="ent:perm:'+k+'" style="color:'+(EX.perm[k]?'#3f3':'#888')+'">['+(EX.perm[k]?'ON ':'OFF')+'] '+l+'</span>'+(warn?' <span class="er" style="font-size:11px">⚠ '+warn+'</span>':'')+'</label>'}
+function entBody(q,ig){var L=ELIST().filter(function(e){return eCat(e)&&(!q||e.n.toLowerCase().indexOf(q)>=0||e.id.indexOf(q)>=0||e.home.toLowerCase().indexOf(q)>=0)}),s=eInfo(EX.sel)||ELIST()[0],cur=EX.on&&eInfo(EX.id);
+ var st='<div class="card" style="border-color:'+(EX.on?'#3f3':'#555')+'">CURRENT MODE: <b style="color:'+(EX.on?'#3f3':'#ff6')+'">'+eModeName()+'</b>'+(cur?' — '+esc2(cur.n):'')+(ig?'':'<br><span class="er">Start a level to transform.</span>')+'</div>';
+ var cats=[['all','ALL'],['early','LEVELS 0–2'],['mid','LEVELS 3–9'],['deep','LEVELS 10–20']].map(function(c){return '<span class="tab'+(EX.cat==c[0]?' on':'')+'" data-ad="ent:cat:'+c[0]+'">'+c[1]+'</span>'}).join('');
+ var list='<div style="max-height:250px;overflow:auto;border:1px solid #333">'+(L.length?L.map(function(e){var here=e.lv.indexOf(SV.lv)>=0;return '<div data-ad="ent:sel:'+e.id+'" style="cursor:pointer;padding:3px 6px;'+(e.id==s.id?'background:#132':'')+'">'+(EX.on&&EX.id==e.id?'▶ ':'')+esc2(e.n)+' <span class="dim">· '+esc2(e.home)+'</span>'+(here?' <span style="color:#3f3">(this level)</span>':'')+'</div>'}).join(''):'<div class="dim" style="padding:6px">No entity matches "'+esc2(q)+'".</div>')+'</div>';
+ var info='<div class="card"><b style="color:#f66">'+esc2(s.n)+'</b><br><span class="dim">Home:</span> '+esc2(s.home)+'<br><span class="dim">Movement:</span> '+esc2(s.mv)+'<br><span class="dim">Abilities:</span> '+esc2(s.ab.join(', '))+'<br><span class="dim">Status:</span> '+(EX.on&&EX.id==s.id?'<span style="color:#3f3">you are this entity</span>':s.lv.indexOf(SV.lv)>=0?'lives on this level':'from another level (admin copy)')+'<br><span class="dim" style="font-size:12px">'+esc2(s.d)+'</span></div>';
+ var dis=ig?'':'Start a level first',on=EX.on?'':'Transform first';
+ return '<h4>ENTITY TRANSFORMATION</h4><div class="dim">Admin-only. Every action is checked against your admin role, rate-limited and written to the AUDIT LOG. This build has no server, so these checks run in your browser only.</div>'+st+
+  '<div style="display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:10px"><div><h4>ENTITY BROWSER</h4><div class="tabs">'+cats+'</div><div class="dim" style="font-size:11px">Use the search box at the top to filter.</div>'+list+'</div><div><h4>MODEL PREVIEW</h4><div id="entprev" style="width:260px;height:220px;background:#000;border:1px solid #333"></div>'+info+'</div></div>'+
+  '<h4>TRANSFORMATION CONTROLS</h4>'+btn('ent:go','TRANSFORM INTO '+esc2(s.n.toUpperCase()),'',dis)+btn('ent:stop','RETURN TO NORMAL PLAYER','',on)+btn('ent:mode',EX.mode=='player'?'SWITCH TO AI-CONTROLLED':'SWITCH TO PLAYER-CONTROLLED','',on)+btn('ent:ai',EX.ai?'DISABLE ENTITY AI':'ENABLE ENTITY AI','',on)+btn('ent:reset','RESET ENTITY','',on)+btn('ent:spawn','RETURN TO PLAYER SPAWN','',dis)+
+  '<div class="row">Size ×'+EX.size.toFixed(1)+' '+btn('ent:size:-','−')+btn('ent:size:+','+')+' · Speed ×'+EX.spd.toFixed(1)+' '+btn('ent:spd:-','−')+btn('ent:spd:+','+')+' <span class="dim">(max ×'+eMax()+')</span></div>'+
+  '<div class="row">'+btn('ent:snd',EX.snd?'ENTITY SOUNDS: ON':'ENTITY SOUNDS: OFF')+btn('ent:fx',EX.fx?'ENTITY EFFECTS: ON':'ENTITY EFFECTS: OFF')+' On level change: '+btn('ent:rule',EX.rule=='keep'?'KEEP TRANSFORMATION':'RETURN TO NORMAL')+'</div>'+
+  '<h4>ENTITY ABILITIES</h4>'+(cur?cur.ab.map(function(a,i){return btn('ent:ab:'+i,a.toUpperCase(),a=='Jumpscare test'?'dg':'')}).join('')+btn('ent:hk',EX.hk?'HOTKEYS 8/9/0: ON':'HOTKEYS 8/9/0: OFF'):'<div class="dim">Transform to use abilities.</div>')+
+  '<h4>PERMISSION TOGGLES</h4>'+tg('atk','AI form can attack players','it will hunt you')+tg('dmg','Can cause damage','lowers sanity, never below 10')+tg('scare','Can trigger jumpscares','loud and flashing')+tg('ab','Can use abilities')+tg('vis','Visible to all players')+tg('invis','Invisible (model hidden)')+tg('fly','Fly (hover)','camera and body rise; walls still block, the map is flat')+tg('tp','Can teleport')+tg('fx','Can use special effects')+tg('limits','Ignore spawn limits','size and speed up to ×3')+
+  (EX.perm.tp&&EX.on?btn('ent:tpf','TELEPORT 6 M FORWARD'):'')+
+  '<h4>MULTIPLAYER VISIBILITY</h4><div class="dim">Only one player exists: this game has no multiplayer server yet, so no one else can see you transformed. "Visible to all" is saved for when a server exists, and it is shown here instead of pretending.</div>'+
+  '<h4>TRANSFORMATION HISTORY</h4>'+(EX.hist.length?EX.hist.slice(0,12).map(function(h){return '<div class="row dim">'+new Date(h.t).toLocaleTimeString()+' · '+esc2(h.a)+'</div>'}).join(''):'<div class="dim">Nothing yet this session. Older entries are in the AUDIT LOG.</div>')}
+var PRV=null;
+function entMount(){var el=$a('entprev');if(!el)return;try{if(!PRV){var r=new THREE.WebGLRenderer({antialias:true,alpha:false});r.setSize(260,220);r.domElement.style.width='260px';r.domElement.style.height='220px';var sc=new THREE.Scene();sc.background=new THREE.Color(0x050505);sc.add(new THREE.AmbientLight(0xffffff,.55));var dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(2,4,3);sc.add(dl);var cm=new THREE.PerspectiveCamera(40,260/220,.1,50);PRV={r:r,sc:sc,cam:cm,id:null,g:null};(function spin(){requestAnimationFrame(spin);if(!PRV.g||!document.body.contains(PRV.r.domElement))return;PRV.g.rotation.y+=.012;PRV.r.render(PRV.sc,PRV.cam)})()}
+ el.appendChild(PRV.r.domElement);if(PRV.id!==EX.sel){if(PRV.g)PRV.sc.remove(PRV.g);PRV.g=eModel(EX.sel);PRV.id=EX.sel;PRV.sc.add(PRV.g);var bb=new THREE.Box3().setFromObject(PRV.g),hh=Math.max(1,bb.max.y-bb.min.y);PRV.cam.position.set(0,bb.min.y+hh*.55,hh*1.9);PRV.cam.lookAt(0,bb.min.y+hh*.5,0)}PRV.r.render(PRV.sc,PRV.cam)}catch(e){el.textContent='Preview unavailable: '+e.message}}
+var DANGER={atk:'Let the AI entity hunt you? It will chase you around the level.',dmg:'Let the entity lower your sanity? (never below 10, you cannot die from it)',scare:'Allow jumpscares? They are loud and flash the screen.',limits:'Ignore spawn limits? Size and speed can go up to ×3.'};
+function entAct(v){var p=v.split(':'),k=p[0],a=p[1];
+ if(k=='cat'){EX.cat=a;render();return}if(k=='sel'){if(eInfo(a))EX.sel=a;render();return}
+ if(k=='go'){var e=eInfo(EX.sel);return guard('entity: transform',e?e.n:EX.sel,function(){return eStart(EX.sel,'player')},{confirm:'Transform into '+(e?e.n:EX.sel)+'? Your run, level and items stay as they are. You can return to normal at any time.'})}
+ if(k=='stop')return guard('entity: return to normal',EX.id,function(){return eStop()});
+ if(k=='mode')return guard('entity: switch mode',EX.id,function(){if(!EX.on)return {err:'Transform first.'};if(EX.mode=='player'){EX.mode='ai';EX.x=P.x;EX.z=P.z;EX.path=[];eHist('Switched to AI-controlled');eBadge();return {msg:'AI-CONTROLLED: the entity moves on its own and your body waits safely where it is. The camera follows the entity.'}}
+  var c=openCellNear(EX.x,EX.z,0,6);P.x=c?cc(c[0]):EX.x;P.z=c?cc(c[1]):EX.z;EX.lx=P.x;EX.lz=P.z;P.para=0;EX.mode='player';eHist('Switched to player-controlled');eBadge();return {msg:'PLAYER-CONTROLLED: you control the entity again.'}});
+ if(k=='ai')return guard('entity: AI '+(EX.ai?'off':'on'),EX.id,function(){EX.ai=!EX.ai;eHist('Entity AI '+(EX.ai?'enabled':'disabled'));return {msg:'Entity AI '+(EX.ai?'enabled':'disabled (it stands still in AI mode)')}});
+ if(k=='reset')return guard('entity: reset',EX.id,function(){if(!EX.on)return {err:'Transform first.'};EX.size=1;EX.spd=1;EX.sub=0;EX.g.scale.setScalar(1);if(EX.mode=='ai'){var c=openCellNear(P.x,P.z,1,6);if(c){EX.x=cc(c[0]);EX.z=cc(c[1])}EX.path=[]}eHist('Entity reset');eBadge();return {msg:'Entity reset: size ×1, speed ×1, position fixed.'}});
+ if(k=='spawn')return guard('entity: return to spawn',EX.id||'player',function(){if(!inGame())return {err:'Start a level first.'};P.x=cc(1);P.z=cc(1);EX.lx=P.x;EX.lz=P.z;if(EX.on&&EX.mode=='ai'){EX.x=P.x+.8;EX.z=P.z;EX.path=[]}eHist('Returned to player spawn');return {msg:'Moved to the player spawn.'}});
+ if(k=='size'||k=='spd')return guard('entity: '+(k=='size'?'size':'speed')+' '+a,EX.id||'',function(){var cur=k=='size'?EX.size:EX.spd,nv=Math.round(Math.max(k=='size'?.5:.5,Math.min(eMax(),cur+(a=='+'?.1:-.1)))*10)/10;if(k=='size'){EX.size=nv;if(EX.g)EX.g.scale.setScalar(nv)}else EX.spd=nv;eBadge();return {msg:(k=='size'?'Size':'Speed')+' ×'+nv}});
+ if(k=='snd'||k=='fx')return guard('entity: '+(k=='snd'?'sounds':'effects'),EX.id||'',function(){EX[k]=!EX[k];eFx();return {msg:'Entity '+(k=='snd'?'sounds':'effects')+' '+(EX[k]?'on':'off')}});
+ if(k=='rule')return guard('entity: level-change rule',EX.id||'',function(){EX.rule=EX.rule=='keep'?'return':'keep';return {msg:EX.rule=='keep'?'Your transformation stays when you change level (re-checked against your admin login).':'You return to normal when you change level.'}});
+ if(k=='hk')return guard('entity: hotkeys',EX.id||'',function(){EX.hk=!EX.hk;eBadge();return {msg:'Ability hotkeys 8 / 9 / 0 '+(EX.hk?'on':'off')}});
+ if(k=='ab')return guard('entity ability',EX.id||'',function(){return eAbility(+a)});
+ if(k=='tpf')return guard('entity: teleport',EX.id||'',function(){if(!EX.perm.tp)return {err:'Teleport is off.'};var x0=EX.mode=='player'?P.x:EX.x,z0=EX.mode=='player'?P.z:EX.z,yaw=EX.mode=='player'?P.yaw:EX.g.rotation.y+Math.PI,c=openCellNear(x0-Math.sin(yaw)*6,z0-Math.cos(yaw)*6,0,4);if(!c)return {err:'No valid spot there.'};if(EX.mode=='player'){P.x=cc(c[0]);P.z=cc(c[1]);EX.lx=P.x;EX.lz=P.z}else{EX.x=cc(c[0]);EX.z=cc(c[1]);EX.path=[]}eHist('Teleported');return {msg:'Teleported to a valid open spot.'}});
+ if(k=='perm'){var turnOn=!EX.perm[a];return guard('entity permission: '+a+' '+(turnOn?'on':'off'),EX.id||'',function(){EX.perm[a]=turnOn?1:0;if(!EX.perm.limits){EX.size=Math.min(EX.size,1.6);EX.spd=Math.min(EX.spd,1.6);if(EX.g)EX.g.scale.setScalar(EX.size)}eFx();eBadge();eHist('Permission '+a+' '+(turnOn?'ON':'OFF'));return {msg:'Permission "'+a+'" '+(turnOn?'on':'off')}},turnOn&&DANGER[a]?{confirm:DANGER[a]}:null)}
+ msg('Unknown entity action.',false)}
+
 // ---------------- phone app: only shows up for the account nathen ----------------
 var oPS=phScr;phScr=function(){var me=profileName().toLowerCase()===ADMIN_USER,i=APPS.findIndex(function(q){return q[1]=='adm'});if(me&&i<0)APPS.push(['🛡 ADMIN','adm']);if(!me&&i>=0)APPS.splice(i,1);return oPS.apply(this,arguments)};
 var oPA=phAct;phAct=function(a){if(a=='app:adm'){if(profileName().toLowerCase()!==ADMIN_USER)return;var ing=inGame()&&PHN.ing;try{closeP()}catch(e){}if(ing){ADM.wasStarted=true;try{started=false;document.exitPointerLock()}catch(e){}}show();setTimeout(function(){var u=$a('au');if(u)u.value=ADMIN_USER;var k=$a('ak');if(k)k.focus()},30);return}return oPA.apply(this,arguments)};
@@ -5710,7 +6049,7 @@ window.ORG={controls:controlsP};
 // =====================================================================
 // MAIN MENU: PLAY, then four tidy tabs
 // =====================================================================
-var GROUPS=[['MODES','▶ MODES','Ways to play.',['b-run','b-lvs','b-dc','b-end','b-stk']],
+var GROUPS=[['MODES','▶ MODES','Ways to play.',['b-run','b-lvs','b-dc','b-end','b-stk','b-hs']],
  ['PLAYER','👤 PLAYER','Your character, progress and saves.',['b-ch','b-ph','b-st','b-lb','b-sf']],
  ['SETTINGS','⚙ SETTINGS','Sound, controls and accessibility.',['b-acc','b-ctl','b-keys','b-vo']],
  ['INFO','ℹ INFO','How the game works.',['b-how','b-guide','b-mp','b-cr']]];

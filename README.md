@@ -34,10 +34,15 @@ A first-person survival horror game that runs in the browser: 20 levels, plus a 
 You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 
 ## Main menu
-- **▶ MODES:** Run & Difficulty, Level Select, Daily Challenges, Endless, Stalker, Multiplayer info.
+- **▶ MODES:** Run & Difficulty, Level Select, Daily Challenges, Endless, Stalker, Hide and Seek.
 - **👤 PLAYER:** Character, Phone, Stats & Levels, Leaderboard, Save Files.
 - **⚙ SETTINGS:** Accessibility, Controls, All Controls, Voice Effects.
 - **ℹ INFO:** How to Play, Game Guide, Credits.
+
+## Hide and Seek keys
+- **Hider:** E transform (or H) · J prop wheel · [ ] switch prop · Z / X rotate · 1–4 abilities.
+- **Seeker:** F or click to tag · Q Detection Pulse.
+- Other players are AI, because there is no online server yet.
 
 ## Phone apps
 - **Essentials:** Map, Scanner, Light, Gadgets, Drone, Emergency.

@@ -84,3 +84,24 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | New player model | **What it has:** a suited explorer built from many parts: helmet with a dark glass visor, mask filters, headlamp, air tank or your backpack, belt and pouches, reflective stripes, name tag with your username, boots, gloves and a flashlight in the right hand. **Customization:** it is coloured by your suit and shows your accessories (cap, glasses, mask, gloves, backpack). **Where else it's used:** the phone camera, previews and selfies. |
 | Third-person view (7) | **Views:** press 7 to cycle first-person, over-the-shoulder and far. **Movement:** the model walks, runs, crouches, leans and points the flashlight. **Walls:** the camera never goes through walls; with no room behind you it rises up near the ceiling. |
 | Drone aerial map (B) | **Opening it:** press B or use MAP on the phone. **With a Mapping Drone:** a real top-down photo of the level, with a scanning reveal when the drone launches. **Without one:** only the areas you've explored. **Icons:** exit, objectives, story clues, tapes, wanderers, generators, vents, doors, batteries and water. **Extras:** your trail, zoom and pan, and click to set a waypoint that shows on the compass. |
+
+
+## Hide and Seek mode + admin entity transformation
+
+| Feature | Status | Notes |
+|---|---|---|
+| Hide and Seek menu | ✅ | Quick Play, Create Lobby, Join Lobby, Private Match, Choose Map, Choose Rules, Character, How to Play, Stats, Back. |
+| Public matchmaking / joining other people | ⛔ | Needs an online server. Quick Play and lobbies fill every slot with AI players. Join Lobby explains why no lobby can be found. |
+| Private lobbies with join codes | 🟡 | A code is made and shown, but it only works locally. |
+| Ready check, host rules, map choice | ✅ | All AI players get ready over a few seconds. The host sets role, seekers, AI count, hiding time, round length, speed, abilities and all-props. |
+| Random seekers, head start, synced countdown | ✅ | The seeker is chosen at random, or set in the rules. Seekers see a black countdown screen and can't move. 🟡 "Synced" only means synced locally, since there is no server. |
+| Prop disguises (map props, all-props toggle) | ✅ | 35 props in 12 map sets. Prop wheel with icons. Rotate, cooldown, no transforming in walls. Pop sound and smoke. The player model, name tag and health bar are hidden while disguised. |
+| Seeker tag, detection pulse, timer, hiders left | ✅ | Tag checks range and line of sight, and a miss adds a cooldown. The pulse has 3 uses with a cooldown. The HUD shows the timer and how many hiders are left. |
+| Hider abilities | ✅ | Quick Transform, Silent Movement, Decoy Prop, Last Chance. Each can be used once per round and turned off by the host. |
+| Round flow, win checks, results, play again | ✅ | Seekers win if every hider is tagged, hiders win if any hider survives. |
+| Disconnects / late joiners | ⛔ | There are no other real players to disconnect or join. If you cancel or leave, the round simply ends. |
+| Rewards, daily challenge, stats, anti-farm | ✅ | Points, wallet cash, streaks and stats. Cash capped per round and per day. No cash for rounds under 1 minute. Each daily challenge can only be claimed once a day. |
+| Admin ENTITY tab (24 entities, Levels 0–20) | ✅ | Search, filters, model preview and info. Player-controlled and AI-controlled modes. Size, speed, sounds, effects, AI, reset, spawn, abilities. |
+| Permission toggles with warnings | ✅ | Attack, damage, jumpscares and ignore-limits ask for confirmation first. 🟡 Fly is a hover: the map is flat, so walls still block you. 🟡 "Visible to all" has no effect until there is a server. |
+| Safety | ✅ | No death while transformed. Objectives and items are never touched. Health is restored when you change back. Choose whether to keep or drop the transformation when you change level (keeping it is checked against your admin login again). |
+| Server-side admin checks | ⛔ | No server exists. The admin role, rate limit and audit log run in the browser. The admin key is stored only as a PBKDF2 hash. Nothing in the panel runs code typed by the user. |

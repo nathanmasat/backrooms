@@ -1,5 +1,22 @@
 # Changelog
 
+## Hide and Seek + admin entity transformation
+- **HIDE AND SEEK mode** (main menu → MODES):
+  - **Menu:** Quick Play, Create Lobby, Join Lobby, Private Match, Choose Map, Choose Rules, Character, How to Play, Stats.
+  - **Lobby:** ready check, a join code, and host rules: role, number of AI players (2–9), seekers (1–3), hiding time (default 30 s), round length (default 5 min), player speed, each ability on or off, and "every prop on every map".
+  - **Maps:** Levels 0, 1, 2, 3, 4, 5, 10, 11, 12, 13, 14 and 16. Each map has its own prop set (office, pool, party, hotel, school, airport…), and about 45 real copies of those props are scattered around so disguises blend in. Matches use a ring-shaped play area with extra light.
+  - **Hiders:** E transforms (H also works), J opens the prop wheel, [ ] switches prop, Z / X rotates. You can't transform inside walls or on top of other props. There is a cooldown, a "pop" sound and smoke when you transform. You move slowly while disguised, and the camera sits behind your prop.
+  - **Hider abilities** (once per round each): 1 Quick Transform, 2 Silent Movement, 3 Decoy Prop (a copy that wanders off), 4 Last Chance (a sprint burst).
+  - **Seekers:** locked behind a black countdown screen while the hiders hide. F or click tags the object in front of you (short range, no walls); tagging an empty object adds a short cooldown. Q is the Detection Pulse: 3 uses, 20 s cooldown, 14 m range.
+  - **Round end:** results screen with points, a streak, a daily Hide and Seek challenge, and stats (rounds, wins, tags, best survival time, favourite disguise). Cash is capped at $40 a round and $200 a day, and rounds shorter than 1 minute pay nothing.
+- **Admin panel → ENTITY tab:** transform into any of the 24 entities from Levels 0–20.
+  - **Browser:** search, category filters, a 3D model preview, home level, movement, abilities and status for each entity.
+  - **Two modes:** player-controlled (third-person) and AI-controlled (your body waits safely and the camera follows the entity).
+  - **Controls:** size, speed, sounds, effects, AI on/off, reset, return to spawn, ability buttons with optional hotkeys 8 / 9 / 0.
+  - **Permission toggles:** attack, damage, jumpscares, abilities, visibility, invisible, fly, teleport, effects, ignore limits. The dangerous ones ask for confirmation first.
+  - **Safety and logging:** every action is written to the audit log. You can't die while transformed, and nothing in your run is reset or duplicated.
+- **Limits:** no server exists. Lobbies, matchmaking and join codes are local, other players are AI, and the admin role check runs in the browser. All of this is labelled in the game.
+
 ## Cleanup update
 - **Phone home screen:** shrunk from 25 tiles to 18. Apps that belong together now open from one folder:
   - ARCHIVE: lore archive, VHS archive, found tapes and notes.
