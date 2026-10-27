@@ -1,5 +1,13 @@
 # Changelog
 
+## The Corrupted (custom monster)
+- **What he is:** a new monster made from a photo of a friend of the developer, used with his permission. His face is corrupted: grey skin, black tears, burning red eyes behind his glasses, and a jagged grin. His 3D model is a crouching boy in a dark hoodie with long arms.
+- **In the levels:** he rarely shows up crouched down a hallway, lit by a faint red glow. If you stare at him or walk up to him, he rushes you and jumpscares you (−20 sanity, but it can never kill you). If you ignore him, he gives up.
+- **Jumpscare:** his own full-screen scare with a static scream. It follows the "Reduce flashing lights" and "Reduce sudden loud sounds" settings.
+- **Phone camera:** after you meet him, the camera has an "Invite The Corrupted into the photo" option. He stands behind you in selfies and in front of you in "What I see". Photographing a wild one makes him rush you. You get $15 for his photo once a day.
+- **Opening car scene:** he replaces the Boiled One at the window and in the road.
+- **Also:** he is in the monster log and encyclopedia, and in the admin ENTITY tab.
+
 ## Hide and Seek + admin entity transformation
 - **HIDE AND SEEK mode** (main menu → MODES):
   - **Menu:** Quick Play, Create Lobby, Join Lobby, Private Match, Choose Map, Choose Rules, Character, How to Play, Stats.
