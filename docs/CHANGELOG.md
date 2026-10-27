@@ -1,5 +1,11 @@
 # Changelog
 
+## The Croucher
+- The custom monster now has a name: **The Croucher**.
+- **Every level:** he can appear in every level from 0 to 19. His first appearance is 35–70 seconds into a level, then about every 2–3 minutes. He picks a spot you can see, 7–28 m away.
+- **Sharper face:** the eyes line up with the glasses frames, and no photo background shows at the sides of his head.
+- **Portrait:** `docs/the_croucher.png`.
+
 ## Better Corrupted model + cutscene lighting fix
 - **The Corrupted** has a new, detailed model:
   - a round head that wears his corrupted face (it glows a little, so it can be seen in the dark), messy hair with bangs, ears and glasses frames
@@ -11,7 +17,7 @@
 - **The crash flash:** a short dark-red flash instead of a full white screen.
 - **Level 0 wall shading:** the secret control room rebuilds walls; they now get the correct brightness instead of keeping stale colours.
 
-## The Corrupted (custom monster)
+## The Corrupted (custom monster, now called The Croucher)
 - **What he is:** a new monster made from a photo of a friend of the developer, used with his permission. His face is corrupted: grey skin, black tears, burning red eyes behind his glasses, and a jagged grin. His 3D model is a crouching boy in a dark hoodie with long arms.
 - **In the levels:** he rarely shows up crouched down a hallway, lit by a faint red glow. If you stare at him or walk up to him, he rushes you and jumpscares you (−20 sanity, but it can never kill you). If you ignore him, he gives up.
 - **Jumpscare:** his own full-screen scare with a static scream. It follows the "Reduce flashing lights" and "Reduce sudden loud sounds" settings.
