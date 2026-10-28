@@ -1,5 +1,24 @@
 # Changelog
 
+## THE MOVIE: WHAT WENT DOWN
+- **A full movie inside the game:** 15 chapters, 28 minutes. Open it from the main menu with the 🎬 THE MOVIE: WHAT WENT DOWN button, under MODES. You can watch it any time. It never changes your saves, progress, trophies or items.
+- **How it's made:** the movie is rendered live in real time, not as a video file. It reuses the game's own wall, carpet and ceiling textures for every level, and the real monster models. On top of that it adds:
+  - camera moves, shadows from the flashlight, fog, dust, water with reflections, film grain, VHS and security-camera footage
+  - a new main character, THE WANDERER, with walking, running, crouching, hiding, breathing and fear on his face
+- **The story covers every level, 0 to 20:**
+  - the fall into Level 0 and the chase to the elevator
+  - the Poolrooms, the Party Rooms, the hotel register, the school drawing
+  - the Threshold Project files, the forest, the empty train, the hospital footage, the Void
+  - the mall and garage, the aquarium and library, the carnival and red hallways, the airport and flooded city
+  - the Dream Hotel, the Forgotten City tape, the final elevator below zero, and the ending at home
+- **Player:**
+  - play and pause, skip 10 seconds either way, skip a scene, previous and next chapter, a seek bar with chapter marks
+  - subtitles, full screen, return to the menu
+  - keys: Space, ←/→, C, F and Esc
+- **Movie menu:** WATCH MOVIE, CONTINUE WATCHING (only when you have stopped partway), CHAPTERS (all open, with thumbnails, descriptions, lengths and a watched mark), MOVIE SETTINGS, BACK.
+- **Settings:** separate music, dialogue and effects volume, subtitles, spoken dialogue, and Low/Medium/High quality. Low is for slower computers.
+- **Saving:** your viewing position is saved separately from your game saves. When the movie ends you can WATCH AGAIN, open CHAPTERS, or RETURN TO MAIN MENU.
+
 ## N4TH4N is now 14 - 1 - 20 - 8 - 1 - 14
 - **New name:** the monster is now called **14 - 1 - 20 - 8 - 1 - 14**. Those are the letters of NATHAN as numbers (N=14, A=1, T=20, H=8). The encyclopedia hints at it: "it spells a name when you count the letters of the alphabet".
 - **Portrait:** now `docs/14-1-20-8-1-14.png`.

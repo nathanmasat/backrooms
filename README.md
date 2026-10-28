@@ -34,7 +34,7 @@ A first-person survival horror game that runs in the browser: 20 levels, plus a 
 You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 
 ## Main menu
-- **▶ MODES:** Run & Difficulty, Level Select, Daily Challenges, Endless, Stalker, Hide and Seek.
+- **▶ MODES:** Run & Difficulty, Level Select, Daily Challenges, Endless, Stalker, Hide and Seek, and 🎬 THE MOVIE: WHAT WENT DOWN (a 28-minute film; Space pause, ←/→ skip, C subtitles, F full screen, Esc back).
 - **👤 PLAYER:** Character, Phone, Stats & Levels, Leaderboard, Save Files.
 - **⚙ SETTINGS:** Accessibility, Controls, All Controls, Voice Effects.
 - **ℹ INFO:** How to Play, Game Guide, Credits.

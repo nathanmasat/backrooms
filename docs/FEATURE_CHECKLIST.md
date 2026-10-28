@@ -105,3 +105,24 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | Permission toggles with warnings | ✅ | Attack, damage, jumpscares and ignore-limits ask for confirmation first. 🟡 Fly is a hover: the map is flat, so walls still block you. 🟡 "Visible to all" has no effect until there is a server. |
 | Safety | ✅ | No death while transformed. Objectives and items are never touched. Health is restored when you change back. Choose whether to keep or drop the transformation when you change level (keeping it is checked against your admin login again). |
 | Server-side admin checks | ⛔ | No server exists. The admin role, rate limit and audit log run in the browser. The admin key is stored only as a PBKDF2 hash. Nothing in the panel runs code typed by the user. |
+
+
+## THE MOVIE: WHAT WENT DOWN
+
+| Feature | Status | Notes |
+|---|---|---|
+| Movie section on the main menu | ✅ | 🎬 button with an animated poster, under PLAY in MODES. The movie menu shows the explorer with a flashlight, the yellow hallway, a watching silhouette, flickering lights and VHS lines. |
+| WATCH / CONTINUE / CHAPTERS / SETTINGS / BACK | ✅ | CONTINUE only shows up when you have a saved position. The movie's description text is included. |
+| Optional, separate from saves | ✅ | Tested: every game save key is unchanged after watching. The movie progress is stored in its own key (`brmovieP`). |
+| Real playback, not a fake player | ✅ | A sequenced real-time cinematic: 15 chapters, 180 shots. Every frame is worked out from the time on the playhead, so seeking, chapters and resume always land on the right picture. |
+| Runtime under 30 minutes | ✅ | 28:00 exactly. |
+| Every level 0–20 | ✅ | Ch1–2: Level 0 · Ch3: 1 · Ch4: 2 · Ch5: 3–4 · Ch6: 5–6 · Ch7: 7–8 · Ch8: 9 · Ch9: 10–11 · Ch10: 12–13 · Ch11: 14–15 · Ch12: 16–17 · Ch13: 18–19 · Ch14: 20. |
+| All the cutscenes in the spec | ✅ | The fall, the first sighting, the Level 0 chase, the elevator escape, the Poolrooms creature, the hotel register, the Threshold report, the Boiled One on tape, the Void doorways, the final VHS, the final elevator, waking at home, the window. |
+| Shot types | ✅ | First person, third-person tracking, wide, close-up, over the shoulder, security camera, VHS footage, slow pans, orbits and dolly-zoom. |
+| The Wanderer | ✅ | Everyday jacket, hoodie, jeans and backpack, with a flashlight. Walks, runs, crouches, hides, kneels, holds things, presses buttons and lies down. His breathing, shaking hands, brows, eyes and mouth react to fear. 🟡 The face is simple and low-poly, like the rest of the game's art. |
+| Graphics | 🟡 | Real-time shadows from the flashlight (High), fog, dust, water with mirrored reflections, film grain, vignette, VHS and camera overlays, ACES tone mapping. **Not possible in this engine:** true depth of field and volumetric light. Light beams are faked with glowing planes. |
+| Sound | ✅ | All sound is generated live: fluorescent hum, footsteps that change with the floor, breathing, a music pad, stings, room tones, radio static, elevator machinery, a train, bells, and the final horror sound. No audio files are used, so there is nothing that needs a licence. |
+| Dialogue | 🟡 | Subtitles are always available. Spoken lines use the browser's built-in voice when it has one, and can be turned off. It never imitates a real person's voice. |
+| Player controls | ✅ | Play/pause, ±10 s, skip scene, previous/next chapter, seek bar, subtitles, full screen, volume per channel, quality, and back to the menu. |
+| End screen | ✅ | WATCH AGAIN · CHAPTERS · RETURN TO MAIN MENU. It never sends you into the game. |
+| Performance | ✅ | Only one chapter is in memory at a time, and it is freed when you leave it. While the movie plays, the game stops drawing frames. Low quality uses fewer lights, no shadows, a lower resolution and no grain. |
