@@ -1,5 +1,10 @@
 # Changelog
 
+## Title screen
+- **New first screen:** before the opening cutscene you now see the Backrooms: Don't Look Back title art, gently floating and flickering, with a glowing **▶ START HERE** button.
+- **Starting:** clicking the button, or anywhere on the screen, starts the opening car scene, the same as before.
+- **Phones:** the layout fits phone screens too.
+
 ## Easier levels: never more than three
 - No level asks for more than **3** items to escape.
   - Level 2 now needs 3 party favors, Level 14 needs 3 ride tokens, and Level 15 needs 3 hidden symbols. All three used to need 4.
