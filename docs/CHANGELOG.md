@@ -1,5 +1,23 @@
 # Changelog
 
+## The lore of 14 - 1 - 20 - 8 - 1 - 14 · no more spoken voices
+- **Who he is:** 14 - 1 - 20 - 8 - 1 - 14 is what is left of Nathan when his sanity reaches zero. Count the letters of the alphabet and the numbers spell NATHAN.
+- **His file:** five pages of the Threshold Project's FILE 14-1-20-8-1-14 are hidden on Levels 0, 3, 8, 13 and 19, and you collect them into the lore archive.
+  - Page 1: entry at 100% sanity.
+  - Page 2: counting the same six numbers at 64%.
+  - Page 3: crouching in Ward 8 at 31%.
+  - Page 4: his warning at 9%.
+  - File closed: 0%. "The family reports that Nathan came home. The Project disagrees."
+- **Encyclopedia:** a full entry with appearance, behaviour, detection, weaknesses and the lore.
+- **Gameplay:** he comes more often the lower your sanity is, up to about 4× as often near 0%. Below 35% sanity you hear him counting when he appears.
+- **The movie:**
+  - a sanity meter in the corner drains from 100% to 0% over the film
+  - in the Void, the Wanderer's double turns into 14 - 1 - 20 - 8 - 1 - 14 for a moment
+  - the elevator ride counts the numbers
+  - the news ticker mentions him crouching and counting
+  - the credits list him as "Nathan, at zero sanity"
+- **Voices:** all spoken (text-to-speech) voice lines are gone from both the game and the movie. Captions and subtitles still show every line.
+
 ## THE MOVIE: WHAT WENT DOWN
 - **A full movie inside the game:** 15 chapters, 28 minutes. Open it from the main menu with the 🎬 THE MOVIE: WHAT WENT DOWN button, under MODES. You can watch it any time. It never changes your saves, progress, trophies or items.
 - **How it's made:** the movie is rendered live in real time, not as a video file. It reuses the game's own wall, carpet and ceiling textures for every level, and the real monster models. On top of that it adds:

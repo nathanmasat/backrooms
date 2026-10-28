@@ -122,7 +122,7 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | The Wanderer | ✅ | Everyday jacket, hoodie, jeans and backpack, with a flashlight. Walks, runs, crouches, hides, kneels, holds things, presses buttons and lies down. His breathing, shaking hands, brows, eyes and mouth react to fear. 🟡 The face is simple and low-poly, like the rest of the game's art. |
 | Graphics | 🟡 | Real-time shadows from the flashlight (High), fog, dust, water with mirrored reflections, film grain, vignette, VHS and camera overlays, ACES tone mapping. **Not possible in this engine:** true depth of field and volumetric light. Light beams are faked with glowing planes. |
 | Sound | ✅ | All sound is generated live: fluorescent hum, footsteps that change with the floor, breathing, a music pad, stings, room tones, radio static, elevator machinery, a train, bells, and the final horror sound. No audio files are used, so there is nothing that needs a licence. |
-| Dialogue | 🟡 | Subtitles are always available. Spoken lines use the browser's built-in voice when it has one, and can be turned off. It never imitates a real person's voice. |
+| Dialogue | ✅ | Subtitles only. Spoken text-to-speech lines were removed at the player's request. |
 | Player controls | ✅ | Play/pause, ±10 s, skip scene, previous/next chapter, seek bar, subtitles, full screen, volume per channel, quality, and back to the menu. |
 | End screen | ✅ | WATCH AGAIN · CHAPTERS · RETURN TO MAIN MENU. It never sends you into the game. |
 | Performance | ✅ | Only one chapter is in memory at a time, and it is freed when you leave it. While the movie plays, the game stops drawing frames. Low quality uses fewer lights, no shadows, a lower resolution and no grain. |
