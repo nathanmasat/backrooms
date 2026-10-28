@@ -126,3 +126,16 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 | Player controls | ✅ | Play/pause, ±10 s, skip scene, previous/next chapter, seek bar, subtitles, full screen, volume per channel, quality, and back to the menu. |
 | End screen | ✅ | WATCH AGAIN · CHAPTERS · RETURN TO MAIN MENU. It never sends you into the game. |
 | Performance | ✅ | Only one chapter is in memory at a time, and it is freed when you leave it. While the movie plays, the game stops drawing frames. Low quality uses fewer lights, no shadows, a lower resolution and no grain. |
+
+## The Forgotten Security Office
+- [x] Secret SECURITY door on Level 0 and Level 5; enter with E; leave by the entry door or the emergency exit (unlocked after the letter)
+- [x] Open office with cubicles, desks, chairs, monitors, keyboards, phones, cups, papers, printer, filing cabinets
+- [x] Security control room with a 12-screen wall (live, one small feed refreshed at a time), ceiling and wall cameras
+- [x] Flickering fluorescent light that sometimes goes out; buzzing, distant footsteps, static
+- [x] Broken elevator, locked emergency exit, clock stopped at 3:33, THRESHOLD PROJECT computer, map of all levels, locked NATHAN office
+- [x] Nathan's letter: exact text, big HELP, stains, folds, red fingerprint; [E] READ LETTER close-up; saved as NATHAN'S LAST MESSAGE
+- [x] Camera system: numbered feeds, switch, zoom, vanishing figure, Hallway 7-B, stand-in of the player, CAMERA 20 (approaching figure, view from behind, IT KNOWS YOU ARE WATCHING), rare signal loss
+- [x] Rare events: printer with username, NATHAN IS STILL HERE, disconnected phone whisper (caption), future feed, Wanderer reports, DO NOT SHOW NATHAN corrupted footage
+- [x] Final event: live desk view, NATHAN DIDN'T WRITE THIS, SO WHO DID?, black, quiet footsteps, no jumpscare
+- [x] Movie chapter 7 using the same layout and the same letter drawing (FSO.build / FSO.drawLetter)
+- [ ] Multiplayer sync: not possible, the game has no server

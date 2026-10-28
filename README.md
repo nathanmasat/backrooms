@@ -51,6 +51,9 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 - **Style & money:** Shop, Wallet, Suits, Rare Suits.
 - **Photos & fun:** Camera, My Files, Images, Minigames.
 
+## Secrets
+- **The Forgotten Security Office:** look for a door marked SECURITY on Level 0 or Level 5 and press E. Inside are security cameras (E at the security computer; 1–8 or ←/→ to switch, W/S to zoom, E to close) and a letter from Nathan.
+
 ## Notes
 - **Saves:** progress is saved in your browser, with separate save slots.
 - **Multiplayer:** the game has no online server, so multiplayer features are not available. Stalker mode uses AI teammates instead.

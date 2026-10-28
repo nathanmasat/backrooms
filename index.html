@@ -3659,10 +3659,10 @@ function pocket(def){if(PK.cur)return null;var ws=typeof started!='undefined'&&s
   if(def.tick)try{def.tick(C,dt)}catch(e){console.error('pocket tick',e);C.exit('error')}
   if(C.done)return;
   if(C.msgT>0){C.msgT-=dt;if(C.msgT<=0)ms.textContent=''}
-  var a=nearAct();pr.textContent=a?'[F] '+a.label:'';
+  var a=nearAct();pr.textContent=a?'['+(a.key||'F')+'] '+a.label:'';
   o.hint.textContent=(!window.TOUCHMOVE&&document.pointerLockElement!==o.cv&&C.t>1)?'CLICK TO LOOK AROUND':'';
   hud.innerHTML='SANITY '+bar(P.san,'#a6c')+'<br>BATTERY '+bar(P.bat,'#8c8')+'<br>STAMINA '+bar(P.st,'#cc9');
-  cm.position.set(C.x,C.h+Math.sin(C.bob)*.035,C.z);cm.rotation.set(C.pit,C.yaw,0)});
+  if(C.camOv)C.camOv(cm);else{cm.position.set(C.x,C.h+Math.sin(C.bob)*.035,C.z);cm.rotation.set(C.pit,C.yaw,0)}});
  return C}
 function bar(v,c){var n=Math.round(Math.max(0,Math.min(100,v))/10);return '<span style="color:'+c+'">'+'█'.repeat(n)+'</span><span style="opacity:.3">'+'█'.repeat(10-n)+'</span>'}
 HU.pocket=pocket;
@@ -4629,6 +4629,7 @@ var WAN={
 // E = Experiment theory, D = Discovery theory, O = Observation theory, B = the Boiled One
 // =====================================================================
 var L=[
+{id:'nlm',lv:'0 or 5',k:'doc',t:"NATHAN'S LAST MESSAGE",x:"HELP\n\nIf you are reading this, I don't know if you can hear me.\n\nMy name is Nathan.\n\nI've been watching these cameras for hours. Something is moving through the hallways, but it isn't showing up where it should.\n\nI saw myself on one of the screens.\n\nI don't remember writing these notes, but I found my handwriting on the walls.\n\nThe elevator keeps returning to this floor. The doors open, but it never takes me home.\n\nIf you find this letter, don't trust the cameras.\n\nDon't trust the elevator.\n\nAnd whatever you do...\n\nDON'T LOOK BACK.\n\n— Nathan\n\n[ARCHIVE NOTE: found on a desk in the Forgotten Security Office. The security footage from that room may have been altered.]",cl:'Nathan wrote for help from the Forgotten Security Office. Someone may have changed the camera footage.',th:''},
 // ---------- FILE 14-1-20-8-1-14: what happened to Nathan (one page on each of five levels) ----------
 {id:'nf1',lv:0,k:'doc',t:'FILE 14-1-20-8-1-14 — PAGE 1',x:'THRESHOLD PROJECT — SUBJECT FILE 14-1-20-8-1-14\nSubject: NATHAN, 19. Entered through Level 0.\nSanity on entry: 100%.\n\nObserver note: "He carries a flashlight and refuses to look back. Good instincts. He will last longer than most."',cl:'The Project opened a file on someone named Nathan. The file number is strange.',th:''},
 {id:'nf2',lv:3,k:'note',t:'FILE 14-1-20-8-1-14 — PAGE 2',x:'(handwritten, shaky)\n"Day 6. Sanity 64%. I found my own name in the hotel register.\nI count things to stay calm. Fourteen doors. One elevator. Twenty lights. Eight steps. One. Fourteen.\nI always get the same numbers. Why do I always get the same numbers?"',cl:'Nathan counts to stay calm — and always counts the same six numbers.',th:''},
@@ -5692,7 +5693,7 @@ function apply(lt,dt){var B=MV.B,si=shotAt(B,lt),s=B.shots[si],st=clamp(lt-s.t0,
  var cd=s.card?val(s.card,k,st):null;if(cd){UI.card.style.display='flex';UI.card.innerHTML='<div style="font-size:'+(cd.size||4)+'vh;letter-spacing:.2em;color:'+(cd.col||'#e4d56a')+'">'+e2(cd.a||'')+'</div>'+(cd.b?'<div style="margin-top:2vh;font-size:2vh;letter-spacing:.4em;opacity:.8">'+e2(cd.b)+'</div>':'');UI.card.style.opacity=cd.o==null?1:cd.o}else UI.card.style.display='none';
  var subs=(s.sub||[]).filter(function(l){return st>=l[0]&&st<l[1]});UI.sub.style.display=MS.sub&&subs.length?'block':'none';if(subs.length)UI.sub.innerHTML=subs.map(function(l){return (l[3]&&l[3].who?'<span style="color:#e4d56a">'+e2(l[3].who)+':</span> ':'')+e2(l[2])}).join('<br>');
  if(s.credits&&CUR.credits){if(!UI.cred.dataset.on){UI.cred.innerHTML=CUR.credits.map(function(l){return '<div style="margin:1.2vh 0;'+(/^[A-Z0-9 :\'\.\-]+$/.test(l)&&l.length<40?'color:#e4d56a;font-weight:bold;letter-spacing:.15em':'')+'">'+(e2(l)||'&nbsp;')+'</div>'}).join('');UI.cred.dataset.on=1}UI.cred.style.display='block';UI.cred.style.transform='translateY('+lerp(UI.stage.clientHeight,-UI.cred.scrollHeight,k)+'px)'}else{UI.cred.style.display='none';UI.cred.dataset.on=''}
- var gT=chOff(B.i)+lt,sv=Math.max(0,Math.round(lerp(100,0,clamp(gT/chOff(14),0,1))));if(B.i<14&&!s.black&&!s.card&&s.ov!='vhs'){UI.san.style.display='block';UI.san.textContent='SANITY '+sv+'%';UI.san.style.color=sv<15?'#ff3a2a':sv<40?'#ffb040':'rgba(228,213,106,.75)';UI.san.style.opacity=sv<15?(.6+.4*Math.abs(Math.sin(lt*5))):.7}else UI.san.style.display='none';
+ var gT=chOff(B.i)+lt,sv=Math.max(0,Math.round(lerp(100,0,clamp(gT/chOff(CH.length-1),0,1))));if(B.i<CH.length-1&&!s.black&&!s.card&&s.ov!='vhs'){UI.san.style.display='block';UI.san.textContent='SANITY '+sv+'%';UI.san.style.color=sv<15?'#ff3a2a':sv<40?'#ffb040':'rgba(228,213,106,.75)';UI.san.style.opacity=sv<15?(.6+.4*Math.abs(Math.sin(lt*5))):.7}else UI.san.style.display='none';
  setLoops(s,k,dt);
  UI.scene.textContent=CH[B.i].n+'. '+CH[B.i].title;}
 function fire(B,a,b){B.shots.forEach(function(s){if(s.t1<a||s.t0>b)return;(s.cue||[]).forEach(function(c){var tt=s.t0+c[0];if(tt>a&&tt<=b)try{c[1](CUR)}catch(e){console.warn(e)}});(s.sub||[]).forEach(function(l){var tt=s.t0+l[0];if(tt>a&&tt<=b&&l[3]&&l[3].v)speak({text:l[2],v:l[3].v})})})}
@@ -6007,6 +6008,100 @@ build:function(C){
  {d:10,set:'B',fp:1,cam:{fov:50},w:{x:-1.6,z:-21.2,yaw:PI,pose:'idle',fear:.9,look:function(k){return Math.sin(k*2.2)*.35}},m:[TS({path:[[9,-33],[-7,-37]]})],fx:function(){crec.visible=false},fog:[0x020604,.06],bed:[.45,450],mus:function(k){return .2+k*.5},cue:[[2.5,function(){SFX.creak();SFX.sting(.6)}],[6,function(){noise({f:300,ft:'lowpass',d:1.5,v:.25})}]]},
  {d:14,set:'B',fo:1.5,fadeCol:'#fff',cam:fol(-.5,1.6,-2.4,0,1.3,3),w:wk([[-1.6,-21.2],[-.4,-34],[0,-46.6]],'run',{fear:1}),m:[TS({path:[[-7,-37],[-4,-42]],anim:'run'})],bed:[.5,500],mus:.9,shake:.014,surf:'grass'}
  ]}});
+// ============================================================================ CHAPTER 7 — THE FORGOTTEN SECURITY OFFICE (Nathan writes the letter the player finds in the game)
+CH.push({office:1,title:'THE FORGOTTEN SECURITY OFFICE',dur:119,root:49,desc:'An office nobody has worked in for years, a wall of cameras that show the wrong things, and the letter he left on the desk.',pal:['#3a3e3a','#0e100e','#f0f4e0'],
+build:function(C){
+ var F=window.FSO;if(!F){console.warn('movie: FSO missing');return [{d:119,set:'A',black:1}]}
+ var A0=newSet('A',0,0,{fog:[0x040504,.05],ai:.07,hemi:[0xeef4e8,0x101210,.1]}),g=A0.g;var HEMI=g.children.find(function(q){return q.isHemisphereLight});
+ var M={wall:mat(0xffffff,{map:ltex(5,'wall')}),floor:mat(0xffffff,{map:ltex(5,'floor')}),ceil:mat(0xffffff,{map:ltex(5,'ceil')}),desk:mat(0x9a8a70),part:mat(0x5a5e64),dark:mat(0x1a1c1e),key:mat(0x2a2a2e),cup:mat(0xe8e2d4),paper:mat(0xeee8d8),chair:mat(0x2a2a30),cab:mat(0x7a7e82,{metalness:.3,roughness:.6}),door:mat(0x5a4a3c),elev:mat(0x8a8c90,{metalness:.5,roughness:.4}),elevf:mat(0x3a3a3a),folder:mat(0xc8a040)};
+ var screens=[],lampsQ=[],letterTex=null,blackTex=ctex(8,8,function(x){x.fillStyle='#000';x.fillRect(0,0,8,8)});
+ var A={floor:function(x0,z0,x1,z1,k){pl(g,x1-x0,z1-z0,M[k],3,(x0+x1)/2,0,(z0+z1)/2,-PI/2,0)},ceil:function(x0,z0,x1,z1,y,k){pl(g,x1-x0,z1-z0,M[k],3,(x0+x1)/2,y,(z0+z1)/2,PI/2,0)},
+  box:function(x0,z0,x1,z1,y0,y1,k){return bx(g,Math.max(.01,x1-x0),Math.max(.01,y1-y0),Math.max(.01,z1-z0),(x0+x1)/2,(y0+y1)/2,(z0+z1)/2,M[k]||mat(0x888888),k=='wall'?2.8:0)},
+  sign:function(t,x,y,z,ry,w,h,fg,bg,font){var tx=ctex(Math.round(384*w/Math.max(w,h)),Math.round(384*h/Math.max(w,h)),function(c,W,H){if(bg){c.fillStyle=bg;c.fillRect(0,0,W,H)}var f=font||'bold 30px monospace',fs=+((f.match(/(\d+)px/)||[0,30])[1]);while(fs>8){c.font=f.replace(/\d+px/,fs+'px');if(c.measureText(t).width<W*.94)break;fs-=2}c.fillStyle=fg||'#fff';c.textAlign='center';c.textBaseline='middle';c.fillText(t,W/2,H/2)});var m=pl(g,w,h,bg?bmat(0xffffff,{map:tx}):mat(0xffffff,{map:tx,transparent:true}),0,x,y,z,0,ry);return m},
+  screen:function(x,y,z,ry,w,h,kind){var cw=kind=='map'?1024:256,tx=ctex(cw,Math.round(cw*h/w),function(c,W,H){F.drawScreen(c,W,H,kind)});var m=pl(g,w,h,bmat(0x9aa49a,{map:tx}),0,x,y,z,0,ry);m.userData.tx=tx;m.userData.kind=kind;screens.push(m);return m},
+  letter:function(x,y,z,ry){letterTex=ctex(512,700,function(c,W,H){F.drawLetter(c,W,H,0)});var m=pl(g,.3,.41,mat(0xffffff,{map:letterTex}),0,x,y+.003,z,0,0);m.rotation.set(-PI/2,0,PI+ry);return m},
+  note2:function(x,y,z){var m=new T.Group();m.visible=false;return m},
+  cam:function(x,y,z,ry){var G=new T.Group();add(g,G,x,y,z);G.rotation.y=ry;var b=bx(G,.16,.12,.3,0,-.12,.08,M.cab);var l=new T.Mesh(new T.CircleGeometry(.04,12),bmat(0x111111));add(G,l,0,-.12,.235);var r=sp(G,.012,.05,-.07,.2,bmat(0xff2010));G.userData.led=r;return G},
+  lamp:function(x,y,z,fl){var q={x:x,y:y,z:z,fl:fl};lampsQ.push(q);return q}};
+ var o=F.build(A);
+ // lamps: the rooms the story uses get real lights first
+ var pri=[5,4,0,2,6,1,3,7,8];pri.forEach(function(i){var q=lampsQ[i];if(!q)return;q.L=lamp(g,q.x,q.y,q.z,{w:1.2,d:.3,col:0xf2f6e6,lc:0xeef4dc,li:i==5?.8:.62,r:10,flick:q.fl})});
+ var LAMPS=pri.map(function(i){return lampsQ[i].L});var ctrl=LAMPS[0];
+ var glow=new T.PointLight(0x9fc0ff,.5,7,1.6);add(g,glow,-7,1.7,-16.6);var deskL=new T.PointLight(0xbcd0ff,0,3,1.6);add(g,deskL,-8.3,1.3,-8.6);
+ // the screens of the monitor wall (same order as the game)
+ var wall=screens.filter(function(m){return Math.abs(m.position.z+17.83)<.02});var kinds=['l0','pool','party','hall','hotel','red','office','l0','hall','pool','red','hallfig'];
+ var drawK=function(m,k){if(m.userData.kind==k)return;m.userData.kind=k;var tx=m.userData.tx,c=tx.userData.c;F.drawScreen(tx.userData.x,c.width,c.height,k);tx.needsUpdate=true};
+ wall.forEach(function(m,i){drawK(m,kinds[i])});var crt=o.crt;
+ // live cameras (only the shots that need them render them; small render targets)
+ var rt=function(){return new T.WebGLRenderTarget(320,180)},RT={a:rt(),b:rt(),c:rt(),d:rt(),e:rt()},rc=new T.PerspectiveCamera(56,16/9,.05,60);
+ var live=function(r,p,l,fov,show){rc.position.set(p[0],p[1],p[2]);rc.lookAt(l[0],l[1],l[2]);rc.fov=fov||56;rc.updateProjectionMatrix();(show||[]).forEach(function(q){q.visible=true});var old=MV.R.getRenderTarget();MV.R.setRenderTarget(r);MV.R.render(CUR.sc,rc);MV.R.setRenderTarget(old);(show||[]).forEach(function(q){q.visible=false})};
+ // what only the cameras can see: a tall figure, and Nathan sitting at the desk while he is standing
+ var shade=function(h){var G=new T.Group(),b=bmat(0x020203);bx(G,.46,.95,.26,0,1.4,0,b);sp(G,.15,0,2.02,0,b);bx(G,.13,1.0,.14,-.12,.5,0,b);bx(G,.13,1.0,.14,.12,.5,0,b);bx(G,.09,.95,.1,-.31,1.25,0,b);bx(G,.09,.95,.1,.31,1.25,0,b);G.scale.setScalar(h/2.2);G.visible=false;g.add(G);return G};
+ var figB=shade(2.15);figB.position.set(-8.45,0,-10.05);var figD=shade(2.5);figD.position.set(-4,0,-6.75);figD.rotation.y=PI;var figH=shade(1.9);figH.visible=false;
+ var W2=mkWanderer();g.add(W2.g);W2.g.visible=false;W2.g.position.set(-8,0,-9.25);
+ function sitW(W,k){k=clamp(k,0,1);if(k<=0)return;W.root.position.y=lerp(W.root.position.y,.56,k);W.legs.forEach(function(L,i){L.rotation.x=lerp(L.rotation.x,-1.48,k);W.shin[i].rotation.x=lerp(W.shin[i].rotation.x,1.5,k)});W.spine.rotation.x=lerp(W.spine.rotation.x,.12,k)}
+ // the letter being written (the same drawing the game uses), the pen and his hand
+ var LT=o.letter,pen=new T.Group();add(g,pen,0,0,0);var pb=cy(pen,.006,.004,.14,0,.07,0,mat(0x101014),8);var hand=bx(pen,.045,.026,.065,.02,.1,-.035,mat(0xc89878));pen.rotation.x=.5;o.pen.visible=false;
+ var lastP=-1,penAt=null,V=new T.Vector3(),WANT=0;
+ function writeTo(p){WANT=p}
+ function flushWrite(){var p=WANT,q=Math.round(p*900);if(p>0&&p<1)o.pen.visible=false;if(q!==lastP){lastP=q;penAt=F.drawLetter(letterTex.userData.x,512,700,p);letterTex.needsUpdate=true}
+  if(penAt&&p>0&&p<1){V.set((penAt.x/512-.5)*.3,(.5-penAt.y/700)*.41,0);LT.localToWorld(V);pen.visible=true;pen.position.set(V.x+.004,.776,V.z+.004);if(MV.playing&&Math.random()<.18)noise({f:5200,q:2.5,d:.05,v:.03})}else pen.visible=false}
+ var flat=pl(g,.3,.41,bmat(0xffffff,{map:letterTex,transparent:true,opacity:0}),0,LT.position.x,LT.position.y+.002,LT.position.z,0,0);flat.rotation.copy(LT.rotation);
+ // how much of the letter is HELP
+ var helpK=(function(){var tot=F.LETTER.join('').length;return F.LETTER[0].length/tot})();
+ var mount=o.camMount,clock=0;
+ CUR.reset=function(){A0.amb.intensity=.07;if(HEMI)HEMI.intensity=.1;figB.visible=figD.visible=false;W2.g.visible=false;mount.rotation.set(0,0,0);wall.forEach(function(m,i){m.material.map=m.userData.tx;drawK(m,kinds[i])});crt.material.map=crt.userData.tx;glow.intensity=.5;deskL.intensity=0;pen.visible=false;flat.material.opacity=0;o.pen.visible=true;o.pen.position.set(-7.475,.7825,-7.99);o.pen.rotation.set(0,0,0);WANT=0};
+ var W0={x:-8,z:-9.25,yaw:0,pose:'idle',light:false};
+ var lampsOff=function(L,k){var i=LAMPS.indexOf(L);if(i<0)return 1;var at=[.78,.6,.08,.18,.44,.28,.34,.52,.68][i];return k>at?0:1};
+ var NAT={who:'NATHAN'};
+ var SH=[
+ // 1. the door marked STAFF ONLY; the lights buzz
+ {d:7,set:'A',fi:3,cam:cam([2.6,1.25,8.6],[0,1.4,13],[2.2,1.3,8.9],[0,1.45,12.4],52),w:wk([[0,13.5],[0,10.6]],'walk',{fear:.3,light:false}),card:function(k,st){return st<4?{a:'THE FORGOTTEN SECURITY OFFICE',b:'LEVEL 0 · LEVEL 5',o:st<.5?st*2:st>3?4-st:1}:null},hum:.35,mus:.12,surf:'carpet',cue:[[.4,function(){SFX.creak()}]]},
+ // 2. slowly past the empty desks
+ {d:8,set:'A',cam:cam([-3.1,1.55,11.2],[0,1.3,9],[-3.1,1.45,4.2],[0,1.3,2.8]),w:wk([[0,10.6],[0,3.6]],'walk',{fear:.32,light:false,look:function(k){return Math.sin(k*5)*.35}}),hum:.35,mus:.14,surf:'carpet'},
+ // 3. dusty computers, cold coffee
+ {d:5,set:'A',cam:cam([-1.7,1.05,7.1],[-5,.9,6.1],[-1.6,1.1,6.9],[0,1.2,2.4],40),w:wk([[0,3.6],[0,-1.6]],'walk',{fear:.35,light:false}),hum:.35,mus:.14,surf:'carpet'},
+ // 4. the corridor and the control room door
+ {d:8,set:'A',cam:fol(-.4,1.75,-2.1,0,1.4,3),w:wk([[0,-1.6],[0,-5.4],[-4,-5.7],[-4,-8.6],[-6.3,-10.8]],'walk',{fear:.4,light:false}),hum:.4,mus:.16,surf:'tile',lamps:function(L,k){return L===LAMPS[1]?(Math.sin(k*90)>.3?1:.15):1}},
+ // 5. the wall of screens: Backrooms levels, and someone at the end of a hallway
+ {d:6,set:'A',cam:cam([-5.7,1.78,-9.7],[-7,1.5,-17.8],[-5.9,1.74,-10.1],[-6.4,1.45,-17.8],50),w:{x:-6.4,z:-11,yaw:PI,pose:'idle',fear:.45,light:false,pitch:.05},hum:.3,bed:[.25,2200],mus:.1,cue:[[.2,function(){SFX.static(.5)}]]},
+ // 6. he looks away for a moment
+ {d:3,set:'A',cam:cam([-6.55,1.6,-12.25],[-6.4,1.62,-11],[-6.55,1.6,-12.15],[-6.4,1.62,-11],40),w:{x:-6.4,z:-11,yaw:PI,pose:'idle',fear:.5,light:false,look:function(k){return sm(seg(k,.1,.5))*1.1-sm(seg(k,.7,1))*1.1}},hum:.3,bed:[.25,2200],mus:.08},
+ // 7. ...and the figure is gone
+ {d:4,set:'A',cam:cam([-3.95,1.0,-16.85],[-3.9,1.01,-17.83],[-3.92,1.0,-17.08],[-3.9,1.01,-17.83],44),w:{x:-6.4,z:-11,hide:true},fx:function(){drawK(wall[11],'hall')},hum:.2,bed:[.3,2200],mus:0,cue:[[.4,function(){SFX.heart()}]]},
+ // 8. a screen shows him sitting at a desk — but he is standing over here
+ {d:6,set:'A',cam:cam([-6.4,1.7,-12.4],[-6.1,1.63,-17.8],[-6.2,1.65,-15.6],[-6.1,1.63,-17.83],50),w:{x:-6.4,z:-11,yaw:PI,pose:'idle',fear:.6,light:false},fx:function(k,st){drawK(wall[11],'hall');W2.g.visible=true;poseW(W2,{pose:'idle',pitch:-.5,reach:.4,light:false,hide:false},st+40);sitW(W2,1);W2.g.position.set(-8,0,-9.25);W2.g.rotation.y=0;live(RT.a,[-8,2.55,-10.4],[-8,.9,-8.2],60);W2.g.visible=false;wall[6].material.map=RT.a.texture},hum:.15,bed:[.35,2200],mus:0,cue:[[3.6,function(){SFX.sting(.5)}]]},
+ // 9. "That's not possible."
+ {d:5,set:'A',cam:cam([-6.1,1.55,-14.9],[-6.4,1.55,-11],[-6.15,1.55,-14.6],[-6.5,1.5,-10.2],44),w:function(k){return {x:-6.4-sm(k)*.4,z:-11+sm(k)*1.2,yaw:PI,pose:k<.8?'walk':'idle',ph:k*6,fear:.9,light:false,silent:true}},fx:function(k,st){drawK(wall[11],'hall');W2.g.visible=true;poseW(W2,{pose:'idle',pitch:-.5,reach:.4,light:false,hide:false},st+46);sitW(W2,1);W2.g.position.set(-8,0,-9.25);live(RT.a,[-8,2.55,-10.4],[-8,.9,-8.2],60);W2.g.visible=false;wall[6].material.map=RT.a.texture},hum:.12,bed:[.3,2200],mus:.05,sub:[[1.2,4.2,"That's not possible.",NAT]],cue:[[1.1,function(){SFX.whisper()}]]},
+ // 10. paper and a pen on the desk
+ {d:5,set:'A',cam:cam([-7.45,1.45,-7.75],[-8.05,.78,-8.35],[-7.55,1.38,-7.85],[-8.05,.78,-8.3],42),w:{x:-8.1,z:-9.15,yaw:0,pose:'idle',fear:.55,light:false,pitch:-.6,reach:function(k){return sm(seg(k,.35,.75))*.7}},fx:function(){drawK(wall[11],'hall')},hum:.2,mus:.08},
+ // 11. he sits down
+ {d:4,set:'A',cam:cam([-5.7,1.55,-8.6],[-8,1.0,-8.9],[-5.9,1.5,-8.7],[-8,.95,-8.9],46),w:{x:-8,z:-9.25,yaw:0,pose:'idle',fear:.5,light:false,pitch:function(k){return -.2-k*.4}},fx:function(k){sitW(CUR.W,sm(seg(k,.15,.75)));drawK(wall[11],'hall')},hum:.2,mus:.08},
+ // 12. HELP
+ {d:6,set:'A',cam:cam([-8.0,1.22,-8.68],[-8,.775,-8.16],[-8.0,1.12,-8.6],[-8,.775,-8.12],34),w:Object.assign({},W0,{pitch:-.8,reach:.75}),fx:function(k){sitW(CUR.W,1);writeTo(helpK*sm(seg(k,.08,.9)))},hum:.15,mus:.06,cue:[[.5,function(){SFX.heart()}]]},
+ // 13. the rest of the letter, all the way to DON'T LOOK BACK
+ {d:8,set:'A',cam:function(k){return k<.5?cam([-7.75,1.05,-8.5],[-8,.775,-8.12],[-7.8,1.02,-8.45],[-8,.775,-8.1],30):cam([-8.25,1.0,-8.55],[-8,.775,-8.25],[-8.2,.98,-8.5],[-8,.775,-8.27],28)},w:Object.assign({},W0,{pitch:-.8,reach:.75}),fx:function(k){sitW(CUR.W,1);writeTo(helpK+(1-helpK)*sm(seg(k,0,.97)));if(k>.985)writeTo(1)},hum:.15,mus:.05},
+ // 14. the ceiling camera turns toward him
+ {d:5,set:'A',cam:cam([-7.15,2.15,-9.85],[-8,2.5,-10.6],[-7.25,2.2,-9.95],[-8,2.52,-10.6],38),w:Object.assign({},W0,{pitch:-.7,reach:.7}),fx:function(k){sitW(CUR.W,1);writeTo(1);var e=sm(seg(k,.1,.95));mount.rotation.set(e*.55,1.35*(1-e),0);mount.userData.led.material.color.setHex(Math.sin(k*40)>0?0xff2010:0x300404)},hum:.1,mus:.04,cue:[[.5,function(){tone({t:'square',f:120,f2:150,d:1.6,v:.025,lp:800})}]]},
+ // 15. every screen shows the office now, from different angles
+ {d:4,set:'A',cam:cam([-6.8,1.75,-12.6],[-7,1.6,-17.8],[-6.9,1.7,-13.6],[-7,1.6,-17.8],56),w:Object.assign({},W0,{pitch:-.7,reach:.7}),fx:function(k,st){sitW(CUR.W,1);writeTo(1);mount.rotation.set(.55,0,0);var f=(st*30|0)%3;if(f==0)live(RT.b,[-11.4,2.55,-7.6],[-8,1,-9.2],60);else if(f==1)live(RT.c,[-2.6,2.55,-17.3],[-8,1,-9],50);else live(RT.d,[-8,2.55,-10.45],[-8,.9,-8.2],62);[0,2,4,5,7,9].forEach(function(i,j){wall[i].material.map=[RT.b,RT.c,RT.d][j%3].texture})},hum:.12,bed:[.3,2200],mus:.1},
+ // 16. the small monitor on his desk: someone is standing right behind him
+ {d:5,set:'A',cam:cam([-8.15,1.2,-8.92],[-8.62,.99,-7.99],[-8.3,1.13,-8.6],[-8.62,.99,-7.99],40),w:Object.assign({},W0,{pitch:-.3,fear:.8}),fx:function(k){sitW(CUR.W,1);writeTo(1);mount.rotation.set(.55,0,0);live(RT.e,[-8,2.55,-10.45],[-8,.9,-8.4],64,[figB]);crt.material.map=RT.e.texture;deskL.intensity=.25},hum:.05,bed:[.4,2200],mus:0,cue:[[3.4,function(){SFX.heart()}]]},
+ // 17. he turns around. Nothing is there.
+ {d:5,set:'A',cam:cam([-7.55,1.25,-7.95],[-8.2,1.2,-9.6],[-7.6,1.25,-8.0],[-8.4,1.25,-10.4],46),w:function(k){var e=sm(seg(k,.1,.7));return Object.assign({},W0,{yaw:-e*1.9,look:-e*.6,pitch:0,fear:1})},fx:function(){sitW(CUR.W,1);writeTo(1);mount.rotation.set(.55,0,0);crt.material.map=crt.userData.tx},hum:0,mus:0,bed:[.2,2200]},
+ // 18. all the screens die except one: CAMERA 20
+ {d:4,set:'A',cam:cam([-4.6,1.7,-10.2],[-7,1.55,-17.8],[-4.8,1.7,-10.6],[-6.6,1.55,-17.8],54),w:Object.assign({},W0,{yaw:-1.9,look:-.6,fear:1}),fx:function(k){sitW(CUR.W,1);writeTo(1);mount.rotation.set(.55,0,0);wall.forEach(function(m,i){if(i!=7&&k>[.1,.5,.3,.7,.2,.6,.4,.8,.15,.55,.35,.75][i])m.material.map=blackTex});live(RT.b,[-9.6,2.35,-12.6],[-5.6,1.3,-7.2],54,[figD]);wall[7].material.map=RT.b.texture;glow.intensity=.5*(1-k*.7)},hum:0,bed:[.3,2200],mus:0,cue:[[.4,function(){SFX.static(.3)}],[1.6,function(){SFX.static(.2)}],[2.8,function(){SFX.static(.2)}]]},
+ // 19. CAMERA 20: him, from behind — and something tall in the doorway
+ {d:5,set:'A',cam:cam([-3.92,1.6,-16.5],[-3.9,1.62,-17.83],[-3.91,1.61,-17.0],[-3.9,1.62,-17.83],40),w:Object.assign({},W0,{yaw:-.3,fear:1}),fx:function(k){sitW(CUR.W,1);writeTo(1);wall.forEach(function(m,i){if(i!=7)m.material.map=blackTex});live(RT.b,[-9.6,2.35,-12.6],[-5.6,1.3,-7.2],54,[figD]);wall[7].material.map=RT.b.texture;glow.intensity=.15},hum:0,bed:[.4,2200],mus:.25,cue:[[1.2,function(){SFX.sting(.7)}]]},
+ // 20. the lights go out, one by one
+ {d:5,set:'A',cam:cam([-11.2,2.3,-16.6],[-6,1,-8],[-11.1,2.25,-16.4],[-6.4,1,-8.4],62),w:function(k){return Object.assign({},W0,{yaw:-.3+sm(seg(k,.2,.6))*.3,fear:1,light:k>.85})},lamps:lampsOff,fx:function(k){sitW(CUR.W,1);writeTo(1);wall.forEach(function(m,i){m.material.map=blackTex});glow.intensity=0;deskL.intensity=.08;A0.amb.intensity=.07*(1-k)+.012;if(HEMI)HEMI.intensity=.1*(1-k)+.015},hum:0,mus:.12,cue:[[.4,function(){SFX.click()}],[.9,function(){SFX.click()}],[1.4,function(){SFX.click()}],[2.2,function(){SFX.click()}],[3.0,function(){SFX.click()}],[3.9,function(){SFX.click();SFX.thud()}]]},
+ // 21. he drops the pen and runs
+ {d:4,set:'A',cam:cam([-10.6,1.55,-11.4],[-6,1.2,-7.6],[-10.4,1.55,-11.2],[-4.5,1.2,-6.8],60),w:function(k){if(k<.18)return Object.assign({},W0,{fear:1,light:true});return wk([[-8,-9.25],[-5.4,-8],[-4,-7.2],[-4,-5.6],[0,-5.4]],'run',{fear:1,k:function(kk){return seg(kk,.18,1)}})},fx:function(k){if(k<.18)sitW(CUR.W,1-k/.18);writeTo(1);wall.forEach(function(m){m.material.map=blackTex});glow.intensity=0;deskL.intensity=.08;A0.amb.intensity=.012;if(HEMI)HEMI.intensity=.015;var f=sm(seg(k,.05,.25));o.pen.visible=true;o.pen.position.y=.7825-f*.005;o.pen.rotation.set(0,0,f*1.4);o.pen.position.x=-7.47+f*.1},lamps:function(){return 0},hum:0,mus:.6,shake:.006,surf:'tile',cue:[[.3,function(){SFX.drip()}]]},
+ // 22. the letter is left on the desk — the same letter you can find in the game
+ {d:7,set:'A',fo:2.2,cam:cam([-8.0,1.35,-8.95],[-8,.775,-8.2],[-8.0,1.42,-8.38],[-8,.775,-8.2],34),w:{x:0,z:-5.4,hide:true},lamps:function(){return 0},fx:function(k){writeTo(1);wall.forEach(function(m){m.material.map=blackTex});glow.intensity=0;deskL.intensity=.35;A0.amb.intensity=.012;if(HEMI)HEMI.intensity=.015;o.pen.visible=true;o.pen.position.set(-7.37,.776,-8.0);o.pen.rotation.set(0,0,1.4);flat.material.opacity=sm(seg(k,.45,.8))},hum:0,mus:.15,sub:[[3.2,6.8,'This letter is still on the desk — in the Forgotten Security Office (Level 0 · Level 5).',{who:''}]],cue:[[5.5,function(){for(var i=0;i<5;i++)noise({f:280,q:1.2,d:.14,v:.04,at:.2+i*.6})}]]}
+ ];
+ SH.forEach(function(s){var f=s.fx;s.fx=function(k,st,c){if(f)f(k,st,c);flushWrite()}});
+ return SH}});
 // ============================================================================ CHAPTER 7 — THE STATION AND THE HOSPITAL (LEVELS 7–8)
 function train(g,x,z){var G=new T.Group();add(g,G,x,-1.0,z);var body=mat(0x5a6a78,{metalness:.5,roughness:.45}),win=bmat(0xd8f0ff),dk=mat(0x1a2026),seat=mat(0x4a2a2a);var doors=[];
  for(var c=0;c<2;c++){var cz=-c*14.6;bx(G,2.8,3,14,0,1.6,cz,body);bx(G,2.82,.3,14.02,0,.25,cz,dk);for(var i=-3;i<=3;i++){if(i==0)continue;pl(G,1.2,.8,win,0,-1.415,2.1,cz+i*1.9,0,-PI/2)}
@@ -6342,6 +6437,8 @@ build:function(C){
  {d:4,set:'B',black:1,w:{x:0,z:16,hide:true},hum:0,mus:0},
  {d:30,set:'B',black:1,credits:1,w:{x:0,z:16,hide:true},hum:0,mus:.25,root:41.2}
  ]}});
+// chapter numbers follow their order (a chapter can be added anywhere)
+CH.forEach(function(c,i){c.n=i+1});
 // ============================================================================ MAIN MENU: poster, movie menu, chapters
 var HUB=null;
 function drawPoster(x,w,h,t){var vx=w*.5,vy=h*.47;x.fillStyle='#0a0800';x.fillRect(0,0,w,h);
@@ -6409,6 +6506,238 @@ var IMG="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAUEBAQEAwUEBAQG
 function dress(){var g=[].slice.call(document.querySelectorAll('div')).find(function(d){return d.style.zIndex=='12'&&/CLICK TO BEGIN/.test(d.textContent)});if(!g||g.dataset.ts)return !!g;g.dataset.ts=1;
  g.style.lineHeight='normal';g.innerHTML='<div id="ts-wrap"><img id="ts-img" alt="Backrooms: Don\'t Look Back" src="'+IMG+'"><button id="ts-start">▶ START HERE</button><div id="ts-note">HEADPHONES RECOMMENDED</div></div>';return true}
 if(!dress()){var n=0,iv=setInterval(function(){if(dress()||++n>40)clearInterval(iv)},100)}
+})();
+</script>
+<!-- ===== FORGOTTEN SECURITY OFFICE — secret door on Levels 0 and 5, cameras, Nathan's letter (shared with THE MOVIE) ===== -->
+<script>
+(function(){
+if(typeof THREE=='undefined')return;
+var T=THREE,PI=Math.PI,RND=Math.random,HU=window.HU||{},HD=HU.data||{};
+// =====================================================================
+// SHARED BY THE GAME AND THE MOVIE: Nathan's letter and the office layout
+// =====================================================================
+var LETTER=["HELP","If you are reading this, I don't know if you can hear me.","My name is Nathan.","I've been watching these cameras for hours. Something is moving through the hallways, but it isn't showing up where it should.","I saw myself on one of the screens.","I don't remember writing these notes, but I found my handwriting on the walls.","The elevator keeps returning to this floor. The doors open, but it never takes me home.","If you find this letter, don't trust the cameras.","Don't trust the elevator.","And whatever you do...","DON'T LOOK BACK.","— Nathan"];
+function wrap(x,t,maxW){var w=t.split(' '),out=[],cur='';w.forEach(function(q){var tst=cur?cur+' '+q:q;if(x.measureText(tst).width>maxW&&cur){out.push(cur);cur=q}else cur=tst});if(cur)out.push(cur);return out}
+// draws the letter onto a canvas; prog 0..1 shows it being written (for the movie)
+function drawLetter(x,w,h,prog,second){prog=prog==null?1:prog;var r=(function(s){return function(){s=s*16807%2147483647;return (s-1)/2147483646}})(77);
+ x.clearRect(0,0,w,h);x.save();var g=x.createLinearGradient(0,0,w,h);g.addColorStop(0,'#e9dfc2');g.addColorStop(1,'#d6c69e');x.fillStyle=g;x.fillRect(0,0,w,h);
+ for(var i=0;i<1600;i++){x.fillStyle='rgba(90,60,20,'+r()*.06+')';x.fillRect(r()*w,r()*h,2,2)}
+ for(var i=0;i<4;i++){var gx=r()*w,gy=r()*h,rr=40+r()*90,gg=x.createRadialGradient(gx,gy,0,gx,gy,rr);gg.addColorStop(0,'rgba(120,80,30,.16)');gg.addColorStop(1,'rgba(120,80,30,0)');x.fillStyle=gg;x.fillRect(gx-rr,gy-rr,rr*2,rr*2)}
+ x.strokeStyle='rgba(60,40,10,.18)';x.lineWidth=2;x.beginPath();x.moveTo(0,h*.5);x.lineTo(w,h*.5);x.stroke();x.beginPath();x.moveTo(w*.5,0);x.lineTo(w*.5,h);x.stroke();
+ x.fillStyle='#c8b88e';x.beginPath();x.moveTo(w,0);x.lineTo(w-w*.09,0);x.lineTo(w,w*.09);x.fill();x.fillStyle='rgba(0,0,0,.12)';x.beginPath();x.moveTo(w-w*.09,0);x.lineTo(w,w*.09);x.lineTo(w-w*.09,w*.09);x.fill();
+ if(second){x.fillStyle='#4a0a0a';x.font='bold '+(w*.085|0)+'px "Comic Sans MS",cursive';x.textAlign='center';wrap(x,"NATHAN DIDN'T WRITE THIS.",w*.84).forEach(function(l,i){x.fillText(l,w/2,h*.45+i*w*.1)});x.restore();return}
+ var total=0,parts=[];x.textAlign='left';var y=h*.12;
+ LETTER.forEach(function(l,i){var head=i==0,warn=l=="DON'T LOOK BACK.",sig=i==LETTER.length-1;var fs=head?w*.2:warn?w*.06:w*.036;x.font=(head||warn?'bold ':'')+(fs|0)+'px "Comic Sans MS","Segoe Print",cursive';
+  var lines=head?[l]:wrap(x,l,w*.84);lines.forEach(function(t){parts.push({t:t,y:y+(head?fs*.85:0),fs:fs,font:x.font,head:head,warn:warn,sig:sig});total+=t.length;y+=head?fs*1.05:fs*1.32});y+=head?w*.02:w*.018});
+ var show=Math.floor(total*prog),used=0,pt=null;parts.forEach(function(p){if(used>=show)return;var n=Math.min(p.t.length,show-used);used+=p.t.length;x.font=p.font;x.fillStyle=p.head?'#14100a':p.warn?'#5a0a0a':'#1e1a12';var ox=p.head?w*.5-x.measureText(p.t).width/2:w*.08+(p.sig?w*.4:0);var jit=(p.t.length%3)*.6;x.save();x.translate(ox,p.y);x.rotate((p.y%7-3.5)*.0016);x.fillText(p.t.slice(0,n),0,jit);x.restore();pt={x:ox+x.measureText(p.t.slice(0,n)).width,y:p.y,head:p.head}});
+ if(prog>=1){x.fillStyle='rgba(120,10,10,.55)';x.beginPath();x.ellipse(w*.86,h*.9,w*.035,w*.045,.4,0,7);x.fill();x.strokeStyle='rgba(80,0,0,.35)';x.lineWidth=1;for(var i=0;i<6;i++){x.beginPath();x.ellipse(w*.86,h*.9,w*.008*i,w*.011*i,.4,0,7);x.stroke()}x.fillStyle='rgba(40,25,10,.4)';x.beginPath();x.ellipse(w*.18,h*.06,w*.05,w*.02,-.3,0,7);x.fill()}
+ x.restore();return pt}
+// a dusty clock that is always stopped at 3:33
+function drawClock(x,w,h){x.fillStyle='#d8d0bc';x.beginPath();x.arc(w/2,h/2,w*.46,0,7);x.fill();x.strokeStyle='#2a2a2a';x.lineWidth=w*.04;x.stroke();x.fillStyle='#222';for(var i=0;i<12;i++){var a=i/12*PI*2;x.fillRect(w/2+Math.sin(a)*w*.37-2,h/2-Math.cos(a)*w*.37-2,4,4)}
+ var hand=function(a,l,t){x.strokeStyle='#111';x.lineWidth=t;x.beginPath();x.moveTo(w/2,h/2);x.lineTo(w/2+Math.sin(a)*l,h/2-Math.cos(a)*l);x.stroke()};hand((3+33/60)/12*PI*2,w*.22,w*.04);hand(33/60*PI*2,w*.33,w*.025);x.fillStyle='rgba(140,130,110,.35)';x.fillRect(0,0,w,h)}
+function drawMap(x,w,h,maxLv){var u=w/640;x.fillStyle='#ece4cc';x.fillRect(0,0,w,h);x.fillStyle='#222';x.font='bold '+(22*u|0)+'px monospace';x.fillText('THRESHOLD PROJECT — KNOWN LEVELS',20*u,34*u);x.font=(14*u|0)+'px monospace';
+ var names=(typeof LV!='undefined'?LV:[]).map(function(l){return l.n.split('— ')[1]||l.n});names.push('THE PLACE THAT REMEMBERS');
+ names.forEach(function(n,i){var col=i%2,row=i>>1,X=24*u+col*(w/2-10*u),Y=64*u+row*((h-80*u)/11);var seen=i<=maxLv;x.fillStyle=seen?'#1a3a1a':'#7a1a1a';x.fillText((i<10?'0':'')+i+'  '+n.slice(0,26),X,Y);if(!seen){x.font='bold '+(10*u|0)+'px monospace';x.fillText('NOT YET VISITED — WE KNOW YOU WILL',X+16*u,Y+13*u);x.font=(14*u|0)+'px monospace'}});
+ x.strokeStyle='rgba(120,0,0,.6)';x.lineWidth=3*u;x.beginPath();x.arc(w*.5,h*.55,60*u,0,7);x.stroke();x.fillStyle='#7a0a0a';x.font='bold '+(16*u|0)+'px "Comic Sans MS",cursive';x.fillText('YOU ARE HERE?',w*.5-60*u,h*.55+80*u)}
+// the office layout. A is an adapter with box/sign/screen/light/lamp functions for either the game or the movie.
+function build(A){var H=2.8,o={screens:[],lamps:[],cams:[]};
+ A.floor(-12,-18,12,14,'floor');A.ceil(-12,-18,12,14,H,'ceil');
+ var wall=function(x0,z0,x1,z1){A.box(x0,z0,x1,z1,0,H,'wall',true)},wallX=function(z,x0,x1,gaps){var cur=x0;(gaps||[]).forEach(function(g){if(g[0]-g[1]/2>cur)wall(cur,z-.15,g[0]-g[1]/2,z+.15);A.box(g[0]-g[1]/2,z-.15,g[0]+g[1]/2,z+.15,2.2,H,'wall',false);cur=g[0]+g[1]/2});if(x1>cur)wall(cur,z-.15,x1,z+.15)},
+  wallZ=function(x,z0,z1,gaps){var cur=z0;(gaps||[]).forEach(function(g){if(g[0]-g[1]/2>cur)wall(x-.15,cur,x+.15,g[0]-g[1]/2);A.box(x-.15,g[0]-g[1]/2,x+.15,g[0]+g[1]/2,2.2,H,'wall',false);cur=g[0]+g[1]/2});if(z1>cur)wall(x-.15,cur,x+.15,z1)};
+ wallX(14,-12,12,[[0,1.3]]);wallX(-18,-12,12,[]);wallZ(-12,-18,14,[[-5.5,1.3]]);wallZ(12,-18,14,[[-5.5,1.4]]);
+ wallX(-4,-12,12,[[-6,2.2],[6,2.2]]);wallX(-7,-12,12,[[-4,1.4],[0,1.3],[4.5,1.2],[9.5,1.4]]);wallZ(-2,-18,-7,[]);wallZ(2,-18,-7,[]);wallZ(7,-18,-7,[]);wallX(-13,2,7,[]);
+ // doors: entry (south), emergency exit (west), elevator (east), Nathan's office (locked)
+ o.entry=A.box(-.6,13.82,.6,13.9,0,2.2,'door',false);A.sign('STAFF ONLY',0,2.45,13.8,PI,1.2,.26,'#ddd','#2a2a2a','bold 40px monospace');
+ o.emerg=A.box(-11.9,-6.1,-11.82,-4.9,0,2.2,'door',true);A.sign('EMERGENCY EXIT',-11.8,2.45,-5.5,PI/2,1.3,.26,'#3f3','#020','bold 40px monospace',true);
+ o.elevL=A.box(11.84,-6.2,11.9,-5.5,0,2.2,'elev',true);o.elevR=A.box(11.84,-5.5,11.9,-4.8,0,2.2,'elev',true);A.box(12.3,-6.2,14.4,-4.8,0,.05,'elevf',false);A.box(12.3,-6.2,14.4,-4.8,2.5,2.55,'elev',false);A.box(14.3,-6.2,14.4,-4.8,0,2.5,'elev',false);A.box(12.3,-6.3,14.4,-6.2,0,2.5,'elev',false);A.box(12.3,-4.8,14.4,-4.7,0,2.5,'elev',false);
+ A.sign('OUT OF ORDER',11.82,1.4,-5.5,-PI/2,1,.3,'#111','#e8c020','bold 44px monospace');
+ o.ndoor=A.box(3.9,-7.08,5.1,-6.92,0,2.2,'door',true);A.sign('NATHAN',4.5,1.75,-6.88,0,.8,.22,'#f4f0e0','#3a2a1a','bold 54px "Comic Sans MS",cursive');
+ // open office: cubicles with desks, chairs, monitors, keyboards, phones, cups and papers
+ var desks=[];[-9,-5,5,9].forEach(function(x){[10,6,2].forEach(function(z){A.box(x-.85,z-.42,x+.85,z+.42,.72,.77,'desk',true);A.box(x-.9,z-.47,x+.9,z-.42,0,1.35,'part',true);A.box(x+.85,z-.47,x+.9,z+.6,0,1.35,'part',false);A.box(x-.28,z-.36,x+.28,z-.3,.8,1.18,'dark',false);var sc=A.screen(x,.99,z-.295,0,.5,.32,'off');o.screens.push({s:sc,x:x,z:z,kind:'off'});A.box(x-.25,z-.1,x+.25,z+.05,.77,.79,'key',false);A.box(x+.45,z-.2,x+.7,z+.05,.77,.84,'dark',false);A.box(x-.7,z,x-.6,z+.1,.77,.88,'cup',false);A.box(x+.1,z+.12,x+.45,z+.36,.771,.776,'paper',false);A.box(x-.25,z+.55,x+.25,z+1.05,.42,.47,'chair',false);A.box(x-.25,z+1.0,x+.25,z+1.05,.47,1.0,'chair',false);desks.push([x,z])})});
+ for(var z=11;z>0;z-=1.7){A.box(-11.85,z-.4,-11.25,z+.4,0,1.35,'cab',true);A.box(-11.26,z-.3,-11.24,z+.3,1.05,1.08,'dark',false);A.box(-11.26,z-.3,-11.24,z+.3,.6,.63,'dark',false)}
+ A.sign('RECORDS — LOCKED',-11.2,1.6,6,PI/2,1.2,.22,'#a00','#ddd','bold 36px monospace');
+ o.printer=[2.6,12.2];A.box(1.9,11.7,3.3,12.7,0,.75,'desk',true);A.box(2.15,11.85,3.05,12.55,.75,1.05,'cab',false);o.sheet=A.box(2.3,12.0,2.9,12.4,1.06,1.065,'paper',false);
+ o.phone=[-2.6,12.2];A.box(-3.3,11.7,-1.9,12.7,0,.75,'desk',true);A.box(-2.85,12.0,-2.35,12.35,.75,.85,'dark',false);A.box(-2.4,12.05,-2.3,12.1,.75,.77,'dark',false);
+ // the corridor: the map of levels, a flickering fluorescent light
+ o.map=A.screen(0,1.55,-4.16,PI,2.4,1.5,'map');
+ // security control room: a wall of 12 screens, a console, the letter desk, the stopped clock
+ for(var r=0;r<3;r++)for(var c=0;c<4;c++){var sx=-10.5+c*2.2,sy=2.25-r*.62;A.box(sx-1,-17.88,sx+1,-17.84,sy-.28,sy+.28,'dark',false);var ss=A.screen(sx,sy,-17.83,0,.94,.52,'off');o.screens.push({s:ss,x:sx,z:-17.8,wall:1,i:r*4+c,kind:'off'})}
+ A.sign('CAM 20 — DO NOT WATCH',-3.9,1.335,-17.82,0,.9,.07,'#f44','#100','bold 30px monospace');A.box(-11.5,-17.7,-2.6,-16.9,0,.78,'desk',true);A.box(-7.4,-17.4,-6.6,-17.1,.78,.8,'key',false);A.sign('SECURITY',-7,.55,-16.88,0,.9,.18,'#ccc','#222','bold 40px monospace');A.box(-7.6,-17.45,-6.4,-17.38,.85,1.6,'dark',false);o.cmon=A.screen(-7,1.22,-17.37,0,1.1,.66,'off');
+ o.letterDesk=[-8,-8.2];A.box(-8.9,-8.65,-7.1,-7.75,.72,.77,'desk',true);A.box(-8.85,-8.6,-8.75,-7.8,0,.72,'desk',false);A.box(-7.25,-8.6,-7.15,-7.8,0,.72,'desk',false);A.box(-8.25,-9.55,-7.75,-9.05,.42,.47,'chair',false);A.box(-8.25,-9.6,-7.75,-9.55,.47,1.0,'chair',false);
+ A.box(-8.85,-7.98,-8.4,-7.66,.77,1.15,'dark',false);o.crt=A.screen(-8.62,.99,-7.99,PI,.36,.27,'office');o.letter=A.letter(-8.0,.775,-8.2,.1);o.note2=A.note2(-8.0,.773,-8.2,.1);o.pen=A.box(-7.55,-8.0,-7.4,-7.98,.775,.79,'dark',false);
+ o.clock=A.screen(-11.83,2.1,-12.5,PI/2,.5,.5,'clock');
+ o.camMount=A.cam(-8,2.65,-10.6,0);A.cam(-11.4,2.65,13.4,PI*.75);A.cam(11.4,2.65,-3.7,-PI*.6);A.cam(-2.4,2.65,-17.4,PI*.2);A.cam(6.6,2.65,-12.6,-PI*.3);
+ // server alcove: the Threshold computer
+ A.box(-1.6,-17.8,1.6,-17.0,0,.78,'desk',true);A.box(-.4,-17.6,.4,-17.54,.8,1.3,'dark',false);o.thr=A.screen(0,1.05,-17.53,0,.74,.46,'thr');A.sign('THRESHOLD PROJECT — INTERNAL ACCESS ONLY',0,1.65,-17.84,0,1.9,.16,'#f44','#100','bold 28px monospace');[-9,-11,-13,-15].forEach(function(z){A.box(-1.85,z-.4,-1.3,z+.4,0,2.1,'cab',true);A.box(1.3,z-.4,1.85,z+.4,0,2.1,'cab',true)});
+ // Nathan's office: his handwriting on every wall
+ A.box(3,-12.6,4.2,-12.0,.72,.77,'desk',true);A.box(5.6,-12.2,6.2,-11.6,.42,.47,'chair',false);for(var i=0;i<8;i++)A.sign(i%2?"DON'T LOOK BACK":'I WAS HERE',2.18+(i<4?0:4.64),.8+i%4*.42,-8.2-(i%4)*1.1,i<4?PI/2:-PI/2,1.2,.22,'#2a1a10',null,'bold 38px "Comic Sans MS",cursive',false);
+ A.sign("DON'T TRUST THE CAMERAS",4.5,1.9,-12.85,0,2.2,.3,'#5a0a0a',null,'bold 40px "Comic Sans MS",cursive',false);
+ // records room: locked cabinets and the folder
+ for(var z=-8.5;z>-17.5;z-=1.6){A.box(11.25,z-.4,11.85,z+.4,0,1.35,'cab',true)}o.folder=A.box(8.6,-16.6,9.4,-16.1,.77,.8,'folder',false);A.box(8,-16.9,10,-15.9,0,.75,'desk',true);
+ // ceiling lights (the corridor one flickers)
+ [[-7,8],[7,8],[-7,2],[7,2],[0,-5.5],[-7,-12.5],[0,-12],[4.5,-10],[9.5,-12]].forEach(function(p,i){o.lamps.push(A.lamp(p[0],H,p[1],i==4))});
+ o.desks=desks;return o}
+try{var nl=(HU.LORE||[]).find(function(q){return q.id=='nlm'});if(nl){nl.x=LETTER.concat(['[ARCHIVE NOTE: found on a desk in the Forgotten Security Office. The security footage from that room may have been altered.]']);nl.where='The Forgotten Security Office'}}catch(e){}
+window.FSO={LETTER:LETTER,drawLetter:drawLetter,drawClock:drawClock,drawMap:drawMap,build:build};
+// =====================================================================
+// THE GAME: entrances on Level 0 and Level 5, the explorable office
+// =====================================================================
+// screens: what the monitors show (static images, never live renders, so it stays fast)
+function drawScreen(x,w,h,kind,t){t=t||0;x.fillStyle='#000';x.fillRect(0,0,w,h);var lv=function(c1,c2){var f=[w*.4,h*.32,w*.6,h*.62];x.fillStyle=c1;x.beginPath();x.moveTo(0,0);x.lineTo(f[0],f[1]);x.lineTo(f[0],f[3]);x.lineTo(0,h);x.fill();x.beginPath();x.moveTo(w,0);x.lineTo(f[2],f[1]);x.lineTo(f[2],f[3]);x.lineTo(w,h);x.fill();x.fillStyle=c2;x.beginPath();x.moveTo(0,h);x.lineTo(w,h);x.lineTo(f[2],f[3]);x.lineTo(f[0],f[3]);x.fill();x.fillStyle='#000';x.fillRect(f[0],f[1],f[2]-f[0],f[3]-f[1])};
+ if(kind=='off'){x.fillStyle='#050607';x.fillRect(0,0,w,h);return}
+ if(kind=='l0')lv('#8a7a30','#4a4018');else if(kind=='pool')lv('#8ab8c0','#2b8fb0');else if(kind=='party')lv('#b07a8a','#6a2a4a');else if(kind=='hotel')lv('#5a2a20','#3a1414');else if(kind=='hall')lv('#4a4a48','#2a2a28');else if(kind=='red')lv('#6a0a0a','#3a0606');
+ if(kind=='hallfig'){lv('#4a4a48','#2a2a28');x.fillStyle='#000';x.fillRect(w*.495,h*.42,w*.012,h*.2);x.beginPath();x.arc(w*.501,h*.41,w*.01,0,7);x.fill()}
+ if(kind=='office'||kind=='behind'||kind=='sitting'){x.fillStyle='#2a2c2a';x.fillRect(0,0,w,h);x.fillStyle='#3a3c38';x.fillRect(0,h*.62,w,h*.38);for(var i=0;i<4;i++){x.fillStyle='#55534c';x.fillRect(w*(.08+i*.24),h*.5,w*.16,h*.1);x.fillStyle='#1a1a1a';x.fillRect(w*(.12+i*.24),h*.38,w*.08,h*.1)}
+  if(kind!='office'){x.fillStyle='#0a0a0a';x.beginPath();x.arc(w*.5,h*.42,w*.045,0,7);x.fill();x.fillRect(w*.46,h*.46,w*.08,h*.2);x.fillStyle='#3a2515';x.beginPath();x.arc(w*.5,h*.405,w*.04,PI,0);x.fill()}
+  if(kind=='behind'){x.fillStyle='rgba(0,0,0,.92)';x.fillRect(w*.56,h*.12,w*.06,h*.55);x.beginPath();x.arc(w*.59,h*.1,w*.03,0,7);x.fill()}}
+ if(kind=='cam20'){x.fillStyle='#030303';x.fillRect(0,0,w,h);lv('#151515','#0a0a0a');x.fillStyle='rgba(0,0,0,.95)';x.fillRect(w*.47,h*.25,w*.06,h*.42)}
+ if(kind=='thr'||kind=='still'){x.fillStyle='#020a06';x.fillRect(0,0,w,h);x.fillStyle=kind=='still'?'#f44':'#3f6';x.font='bold '+(h*.09|0)+'px monospace';(kind=='still'?['','NATHAN IS STILL HERE.','','NATHAN IS STILL HERE.']:['THRESHOLD PROJECT','INTERNAL ACCESS ONLY','> login: ********','> subject 14-1-20-8-1-14','> status: WATCHING','> _']).forEach(function(l,i){x.fillText(l,w*.05,h*(.15+i*.14))})}
+ if(kind=='map'){drawMap(x,w,h,typeof SV!='undefined'?(SV.max|0):0);return}
+ if(kind=='clock'){drawClock(x,w,h);return}
+ x.fillStyle='rgba(255,255,255,.05)';for(var y=0;y<h;y+=3)x.fillRect(0,y,w,1);if(kind!='thr'&&kind!='still'){x.fillStyle='#fff';x.font='bold '+(h*.07|0)+'px monospace';x.fillText('● REC',w*.05,h*.1)}}
+FSO.drawScreen=drawScreen;
+if(typeof SV=='undefined'||typeof scene=='undefined'||!HU.pocket)return;
+var LVL=SV.lv|0;HU.ofx=HU.ofx||{};HD.office=HD.office||{read:0,key:0,fin:0,ev:{},cam20:0};var OF=HD.office;
+function hsave(){try{localStorage.setItem('brhu',JSON.stringify(HD))}catch(e){}}
+function snd(f){if(typeof AC!='undefined'&&AC&&!muted)try{f()}catch(e){}}function tn(o){snd(function(){tone(o)})}function bs(o){snd(function(){burst(o)})}
+function e2(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+function cvTex2(w,h,f){var c=document.createElement('canvas');c.width=w;c.height=h;var x=c.getContext('2d');if(f)f(x,w,h);var t=new T.CanvasTexture(c);t.userData={c:c,x:x};return t}
+function lvTex(lv,kind){var c=document.createElement('canvas');c.width=c.height=512;var x=c.getContext('2d'),o1=SV.lv,o2=CF.c;try{SV.lv=lv;CF.c=(LV[lv]||LV[0]).c;GFX[kind](x,512,512)}catch(e){x.fillStyle='#777';x.fillRect(0,0,512,512)}finally{SV.lv=o1;CF.c=o2}var t=new T.CanvasTexture(c);t.wrapS=t.wrapT=T.RepeatWrapping;return t}
+function uvBox(w,h,d,m,tile){var g=new T.BoxGeometry(w,h,d);if(tile){var uv=g.attributes.uv,f=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];for(var fc=0;fc<6;fc++)for(var v=0;v<4;v++){var i=fc*4+v;uv.setXY(i,uv.getX(i)*f[fc][0]/tile,uv.getY(i)*f[fc][1]/tile)}}return new T.Mesh(g,m)}
+// ----- the secret doors in Level 0 and Level 5 -----
+if(LVL!==0&&LVL!==5)return;
+var DOOR=null;
+(function place(){try{var cand=[];for(var i=2;i<W-2;i++)for(var j=2;j<W-2;j++){if(g[i][j])continue;var d=Math.abs(i-1)+Math.abs(j-1);if(d<12||d>26)continue;if(Math.abs(i-EL.i)+Math.abs(j-EL.j)<4)continue;var R0=HU.room;if(R0&&i>=R0.i0-2&&i<=R0.i0+4&&j>=R0.j0-2&&j<=R0.j0+4)continue;if(DOORS.some(function(d){return Math.abs(d.ci-i)+Math.abs(d.cj-j)<2}))continue;[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(q){var wi=i+q[0],wj=j+q[1];if(wi>0&&wj>0&&wi<W-1&&wj<W-1&&g[wi][wj])cand.push([i,j,q])})}
+ if(!cand.length)return;var seed=(SV.lv*7919+(HD.run&&HD.run.id||1)*31)%cand.length,c=cand[(seed+cand.length)%cand.length],q=c[2];
+ var G=new T.Group(),x=cc(c[0])+q[0]*(S/2-.06),z=cc(c[1])+q[1]*(S/2-.06);G.position.set(x,0,z);G.rotation.y=Math.atan2(-q[0],-q[1]);scene.add(G);
+ var dm=new T.MeshLambertMaterial({color:0x4a4038});var d1=new T.Mesh(new T.BoxGeometry(1.1,2.2,.06),dm);d1.position.y=1.1;G.add(d1);var fr=new T.MeshLambertMaterial({color:0x2a2420});[[-.6,1.1,.08,2.3],[.6,1.1,.08,2.3]].forEach(function(p){var m=new T.Mesh(new T.BoxGeometry(p[2],p[3],.1),fr);m.position.set(p[0],p[1],0);G.add(m)});
+ var sg=new T.Mesh(new T.PlaneGeometry(.9,.22),new T.MeshBasicMaterial({map:cvTex2(256,64,function(x,w,h){x.fillStyle='#d8d4c8';x.fillRect(0,0,w,h);x.fillStyle='#222';x.font='bold 30px monospace';x.textAlign='center';x.fillText('SECURITY',w/2,42)})}));sg.position.set(0,1.75,.04);G.add(sg);
+ var kn=new T.Mesh(new T.SphereGeometry(.04,8,6),new T.MeshLambertMaterial({color:0xb0a070}));kn.position.set(.4,1.0,.05);G.add(kn);var lt=new T.PointLight(0xfff0d0,.35,4);lt.position.set(0,2.4,.5);G.add(lt);
+ DOOR={g:G,x:x+q[0]*.0,z:z,fx:x-q[0]*.9,fz:z-q[1]*.9};try{FURN.push({x:x,z:z,r:.4})}catch(e){}}catch(e){console.error('office door',e)}})();
+HU.officeDoor=DOOR;
+var hintT=0;(function tick(){requestAnimationFrame(tick);if(!DOOR||typeof started=='undefined'||!started||P.dead||(HU.PK&&HU.PK.cur))return;var d=Math.hypot(P.x-DOOR.fx,P.z-DOOR.fz);if(d<1.9&&msgT<=0)say('[E] Enter the door marked SECURITY',.15)})();
+addEventListener('keydown',function(e){if(e.code!='KeyE'||!DOOR||typeof started=='undefined'||!started||P.dead||(HU.PK&&HU.PK.cur))return;if(Math.hypot(P.x-DOOR.fx,P.z-DOOR.fz)>1.9)return;e.stopImmediatePropagation();e.preventDefault();enterOffice()},true);
+// ----- the office (a pocket area: it pauses the level and returns you to the same door) -----
+function enterOffice(){var UI=null,sw20=-1,feeds,cur=0,zoom=1,fig20=0,sw=0,watch20=0,lost=0,lostT=50+RND()*40,evT=40+RND()*50,finT=-1,fin=null,reading=false;
+ var C=HU.pocket({title:'THE FORGOTTEN SECURITY OFFICE',bg:0x050505,fd:.035,amb:.2,ambc:0xe8f0e0,x:0,z:12.6,yaw:0,spd:.95,
+ build:function(C){var sc=C.sc,M={},tw=lvTex(5,'wall'),tf=lvTex(5,'floor'),tc=lvTex(5,'ceil');
+  var mk=function(c,map){return new T.MeshLambertMaterial({color:c,map:map||null})};M.wall=mk(0xffffff,tw);M.floor=mk(0xffffff,tf);M.ceil=mk(0xffffff,tc);M.desk=mk(0x9a8a70);M.part=mk(0x5a5e64);M.dark=mk(0x1a1c1e);M.key=mk(0x2a2a2e);M.cup=mk(0xe8e2d4);M.paper=mk(0xeee8d8);M.chair=mk(0x2a2a30);M.cab=mk(0x7a7e82);M.door=mk(0x5a4a3c);M.elev=mk(0x8a8c90);M.elevf=mk(0x3a3a3a);M.folder=mk(0xc8a040);
+  var A={floor:function(x0,z0,x1,z1,k){var m=new T.Mesh(new T.PlaneGeometry(x1-x0,z1-z0),M[k]);var uv=m.geometry.attributes.uv;for(var i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*(x1-x0)/3,uv.getY(i)*(z1-z0)/3);m.rotation.x=-PI/2;m.position.set((x0+x1)/2,0,(z0+z1)/2);sc.add(m)},
+   ceil:function(x0,z0,x1,z1,y,k){var m=new T.Mesh(new T.PlaneGeometry(x1-x0,z1-z0),M[k]);var uv=m.geometry.attributes.uv;for(var i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*(x1-x0)/3,uv.getY(i)*(z1-z0)/3);m.rotation.x=PI/2;m.position.set((x0+x1)/2,y,(z0+z1)/2);sc.add(m)},
+   box:function(x0,z0,x1,z1,y0,y1,k,solid){var m=uvBox(Math.max(.01,x1-x0),Math.max(.01,y1-y0),Math.max(.01,z1-z0),M[k]||mk(0x888888),k=='wall'?2.8:0);m.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);sc.add(m);if(solid)C.boxes.push({x0:x0,x1:x1,z0:z0,z1:z1,m:m,on:true});return m},
+   sign:function(t,x,y,z,ry,w,h,fg,bg,font,basic){return C.sign(t,x,y,z,ry,w,h,fg,bg,font,basic)},
+   screen:function(x,y,z,ry,w,h,kind){var cw=kind=='map'?1024:256;var tx=cvTex2(cw,Math.round(cw*h/w),function(c,W2,H2){drawScreen(c,W2,H2,kind)});var m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tx}));m.position.set(x,y,z);m.rotation.y=ry;sc.add(m);m.userData.tx=tx;m.userData.kind=kind;return m},
+   letter:function(x,y,z,ry){var tx=cvTex2(512,700,function(c,W2,H2){drawLetter(c,W2,H2,1)});var m=new T.Mesh(new T.PlaneGeometry(.3,.41),new T.MeshLambertMaterial({map:tx}));m.rotation.set(-PI/2,0,PI+ry);m.position.set(x,y+.003,z);sc.add(m);return m},
+   note2:function(x,y,z,ry){var tx=cvTex2(512,512,function(c,W2,H2){drawLetter(c,W2,H2,1,true)});var m=new T.Mesh(new T.PlaneGeometry(.26,.26),new T.MeshLambertMaterial({map:tx}));m.rotation.set(-PI/2,0,PI+ry);m.position.set(x,y,z);sc.add(m);return m},
+   cam:function(x,y,z,ry){var G=new T.Group();G.position.set(x,y,z);G.rotation.y=ry;var b=new T.Mesh(new T.BoxGeometry(.16,.12,.3),M.cab);b.position.set(0,-.12,.08);G.add(b);var l=new T.Mesh(new T.CircleGeometry(.04,10),new T.MeshBasicMaterial({color:0x111111}));l.position.set(0,-.12,.235);G.add(l);var r=new T.Mesh(new T.SphereGeometry(.012,6,4),new T.MeshBasicMaterial({color:0xff2010}));r.position.set(.05,-.07,.2);G.add(r);G.userData.led=r;sc.add(G);return G},
+   lamp:function(x,y,z,fl){var m=C.bulb(x,y-.02,z,0xf4f8e8);m.scale.set(2.4,1,1);var l=C.light(x,y-.4,z,0xf0f4e0,.85,9);return {m:m,l:l,fl:fl,base:.85}}};
+  var o=build(A);C.o2=o;
+  // remote places that only exist on the camera feeds
+  var R={},rq=function(nm,ox,lv,col){var g2=new T.Group();g2.position.set(ox,0,0);sc.add(g2);var wm=new T.MeshLambertMaterial({color:0xffffff,map:lv!=null?lvTex(lv,'wall'):null}),fm=new T.MeshLambertMaterial({color:col||0xffffff,map:lv!=null?lvTex(lv,'floor'):null}),cm2=new T.MeshLambertMaterial({color:0xffffff,map:lv!=null?lvTex(lv,'ceil'):null});
+   [[-1.8,0,.3,3,40,-20],[1.8,0,.3,3,40,-20]].forEach(function(q){var m=uvBox(q[2],q[3],q[4],wm,3);m.position.set(q[0],1.5,q[5]);g2.add(m)});var f=new T.Mesh(new T.PlaneGeometry(3.6,40),fm);f.rotation.x=-PI/2;f.position.set(0,0,-20);g2.add(f);var c2=new T.Mesh(new T.PlaneGeometry(3.6,40),cm2);c2.rotation.x=PI/2;c2.position.set(0,3,-20);g2.add(c2);
+   for(var z=-3;z>-40;z-=7){var lb=new T.Mesh(new T.BoxGeometry(1,.05,.4),new T.MeshBasicMaterial({color:0xfff6d8}));lb.position.set(0,2.97,z);g2.add(lb)}var L=new T.PointLight(0xfff0d0,1,24);L.position.set(0,2.6,-8);g2.add(L);R[nm]=g2;return g2};
+  rq('l0',300,0);rq('pool',360,1);var h7=rq('h7',420,5);C.sign('HALLWAY 7-B',420,2.4,-12,0,1.6,.3,'#111','#ddd','bold 40px monospace');var dk=rq('c20',480,null,0x0a0a0a);dk.children.forEach(function(q){if(q.isLight){q.intensity=.55;q.distance=40;q.position.z=-30}if(q.material&&q.material.color&&q.material.type!='MeshBasicMaterial')q.material.color.setHex(0x4a4a4a);if(q.material&&q.material.type=='MeshBasicMaterial')q.material.color.setHex(0x222222)});var bw=new T.Mesh(new T.PlaneGeometry(3.6,3),new T.MeshBasicMaterial({color:0x3a3a36}));bw.position.set(480,1.5,-39.5);sc.add(bw);
+  try{C.boiled=MART.boiled(STM,GFX.monCore);C.boiled.position.set(300,0,-24);sc.add(C.boiled)}catch(e){}
+  C.cfig=C.human(0x040404,0x040404,420.4,-5,0,1.95);C.cfig.visible=false;C.walker=C.human(0x0c0c0c,0x0c0c0c,360,-22,0,1.8);C.fig1=C.human(0x050505,0x050505,-5,-1.6,PI,1.8);C.fig1.visible=false;C.fig20=C.human(0x030303,0x030303,480,-36,0,2.05);
+  var suit=(function(){try{var s=SUITS.find(function(q){return q.id==SUIT});return s?s.c:'#3a3d44'}catch(e){return '#3a3d44'}})();C.me=C.human(0x2a2d33,0xd7a888,-4,-12,PI*.6,1.75);try{var hr=new T.Mesh(new T.BoxGeometry(.26,.1,.27),C.mat(0x3b2515));hr.position.y=1.77;C.me.add(hr)}catch(e){}C.me.visible=false;
+  // the remote feed camera object (used for the in-world live monitor in the final event)
+  C.rt=new T.WebGLRenderTarget(512,320);C.fcam=new T.PerspectiveCamera(50,1.6,.05,80);C.fcam.rotation.order='YXZ';sc.add(C.fcam);
+  // the screens: random level images on the wall, a few on the desks
+  var kinds=['l0','pool','party','hall','hotel','red','office','l0','hall','pool','red','hallfig'];o.screens.forEach(function(s,i){var k=s.wall?kinds[i%12]:(i%3==0?'office':'off');s.kind=k;drawScreen(s.s.userData.tx.userData.x,256,s.s.userData.tx.userData.c.height,k);s.s.userData.tx.needsUpdate=true});
+  // interactions
+  C.act({x:0,z:12.9,r:1.6,label:'LEAVE (back to Level '+LVL+')',fn:function(C){C.exit('left')}});
+  C.act({x:-8,z:-9.3,r:1.4,key:'E',label:'READ LETTER',fn:function(){readLetter()}});
+  C.act({x:-7,z:-16.2,r:1.6,key:'E',label:'USE THE SECURITY COMPUTER',fn:function(){openCams()}});
+  C.act({x:0,z:-16.3,r:1.5,label:'USE THE THRESHOLD COMPUTER',fn:function(C){C.say('THRESHOLD PROJECT — INTERNAL ACCESS ONLY. Subject 14-1-20-8-1-14: status WATCHING. Your login is already typed in.',6)}});
+  C.act({x:-11,z:-5.5,r:1.7,label:'EMERGENCY EXIT',fn:function(C){if(!OF.read){C.say('It will not open. Something is holding the bar from the other side.',4);bs({f:300,t:'lowpass',d:.4,v:.4});return}C.say('The bar gives. Cold air.',2);setTimeout(function(){C.exit('left')},900)}});
+  C.act({x:11,z:-5.5,r:1.7,label:'CALL THE ELEVATOR',fn:function(C){C.elev=6;tn({f:880,d:.8,v:.12});C.say('The doors open. The car is empty. The panel has one button: THIS FLOOR.',5)}});
+  C.act({x:4.5,z:-6.3,r:1.4,label:'NATHAN\'S OFFICE',fn:function(C,a){if(!OF.key){C.say('Locked. NATHAN is written on the door in marker.',3);return}var b=C.solid(o.ndoor);if(b)b.on=false;o.ndoor.visible=false;a.on=false;bs({f:500,t:'lowpass',d:.5,v:.4});C.say('The key from the letter fits. The walls are covered in his handwriting.',4)}});
+  C.act({x:-10.8,z:6,r:1.7,label:'RECORDS CABINETS',fn:function(C){if(!OF.key){C.say('Locked. RECORDS — AUTHORIZED STAFF ONLY.',3);return}C.say('Reports about Wanderers: R. COLE — missing. D. REYES — missing. M. HALE — "do not send him back down". NATHAN — "still on site".',8)}});
+  C.act({x:9,z:-15.6,r:1.4,label:'FOLDER: DO NOT SHOW NATHAN',fn:function(C){if(!OF.key){C.say('The folder is inside a locked drawer.',3);return}openCams('corrupt')}});
+  C.act({x:0,z:-4.6,r:1.6,label:'LOOK AT THE MAP',fn:function(C){C.say('Every level is on it — even the ones you have not found yet. Someone wrote: WE KNOW YOU WILL.',5)}});
+  C.act({x:-11.4,z:-12.5,r:1.5,label:'THE CLOCK',fn:function(C){C.say('Stopped at 3:33. The dust on it is thick, but the second hand is still trembling.',4)}});
+  C.phoneAct=C.act({x:-2.6,z:11.4,r:1.4,label:'ANSWER THE PHONE',on:false,fn:function(C,a){a.on=false;C.ring=0;C.say(OF.read?'[a distorted whisper] "You found the letter."':'[a distorted whisper] "...find the letter..."',5);bs({f:2600,q:5,d:1.5,v:.06})}});
+  C.printAct=C.act({x:2.6,z:11.4,r:1.4,label:'READ THE PRINTOUT',on:false,fn:function(C,a){a.on=false;var u=(typeof UN!='undefined'&&UN)||'WANDERER';C.say(('VISITOR LOG: '+u.toUpperCase()+' — CHECKED IN — '+u.toUpperCase()+' — CHECKED IN — '+u.toUpperCase()+' — NEVER CHECKED OUT'),6)}});
+  C.tip('Explore the office · [E]/[F] use · T flashlight · C crouch · Shift sprint');
+  o.note2.visible=!!OF.fin;if(OF.fin)o.note2.position.set(-7.79,.774,-8.43);
+  C.amb2=function(){};
+ },
+ tick:function(C,dt){var o=C.o2,t=C.t;
+  // lights: the corridor fluorescent flickers and sometimes goes out
+  o.lamps.forEach(function(L,i){var f=1;if(L.fl){f=(Math.sin(t*13)*Math.sin(t*3.7)>.75)?.1:1;if((t%23)<1.4)f=0}if(fin&&fin.t>0&&i>=0)f*=1;L.l.intensity=L.base*f;L.m.material.color.setScalar(.15+.85*f)});
+  if(C.walker){C.walker.position.x=360+Math.sin(t*.35)*1.3;C.walker.visible=Math.sin(t*.13)>-.2;C.walker.rotation.y=Math.cos(t*.35)>0?PI/2:-PI/2}if(C.boiled)C.boiled.visible=Math.sin(t*.09+1)>0;
+  // live wall monitors: ONE small feed is refreshed every other frame (never all at full quality)
+  if(feeds&&!fin&&!UI&&C.x<-2&&C.z<-7){if(!C.wl){C.wl=o.screens.filter(function(q){return q.wall}).map(function(q,k){var rt=new T.WebGLRenderTarget(192,108);q.s.material.map=rt.texture;q.s.material.color.setHex(0xffffff);q.s.material.needsUpdate=true;return {q:q,rt:rt,f:[4,5,6,0,2,7,3,8,4,5,6,1][k]}});C.wc=0;C.fcam2=new T.PerspectiveCamera(60,1.78,.05,80);C.sc.add(C.fcam2)}
+   C.wc++;if(C.wc%2==0){var W2=C.wl[(C.wc/2|0)%C.wl.length],f=feeds[W2.f],p=f.p,l=f.l;C.fcam2.position.set(p[0],p[1],p[2]);C.fcam2.lookAt(l[0],l[1],l[2]);C.fcam2.translateZ(-.35);if(C.fig1)C.fig1.visible=W2.f==0&&Math.sin(t*.21)>.85;C.o.r.setRenderTarget(W2.rt);C.o.r.render(C.sc,C.fcam2);C.o.r.setRenderTarget(null);if(C.fig1)C.fig1.visible=false}}
+  // the elevator doors open and close on their own after being called
+  if(C.elev>0){C.elev-=dt;var op=C.elev>5?(6-C.elev):C.elev<1?C.elev:1;o.elevL.position.z=-5.85-op*.6;o.elevR.position.z=-5.15+op*.6}
+  // ambient: buzzing, far footsteps, camera static
+  C.snT=(C.snT||3)-dt;if(C.snT<=0){C.snT=6+RND()*10;var r=RND();if(r<.4)tn({f:120,d:2,v:.03,t:'sawtooth',lp:500});else if(r<.7){for(var i=0;i<4;i++)setTimeout(function(){bs({f:350,q:1,d:.15,v:.05})},i*480)}else bs({f:3000,q:.5,d:.4,v:.05})}
+  if(C.ring>0){C.ring-=dt;if((t*2|0)%2==0&&(C.rlast|0)!=(t*2|0)){C.rlast=t*2|0;tn({f:880,d:.18,v:.08});tn({f:1100,d:.18,v:.06,at:.05})}if(C.ring<=0)C.phoneAct.on=false}
+  // rare office events (one at a time, never all at once)
+  if(!UI&&!reading&&!fin){evT-=dt;if(evT<=0){evT=55+RND()*70;var ev=['print','still','phone'].filter(function(k){return !OF.ev[k]});if(C.want){ev=[C.want];C.want=null}if(ev.length){var e=ev[RND()*ev.length|0];OF.ev[e]=1;hsave();
+   if(e=='print'){C.say('[behind you, the printer starts printing]',4);var n=0,iv=setInterval(function(){bs({f:1800,q:4,d:.08,v:.05});if(++n>8){clearInterval(iv);o.sheet.position.x=2.3+.3;o.sheet.position.y=1.0;C.printAct.on=true}},200)}
+   if(e=='still'){var sl=[{s:o.thr,kind:'thr'}].concat(o.screens.filter(function(q){return !q.wall}));sl.forEach(function(q){drawScreen(q.s.userData.tx.userData.x,256,q.s.userData.tx.userData.c.height,'still');q.s.userData.tx.needsUpdate=true});tn({f:60,d:1,v:.05});C.say('[every computer in the office switches on at once]',4);setTimeout(function(){sl.forEach(function(q){drawScreen(q.s.userData.tx.userData.x,256,q.s.userData.tx.userData.c.height,q.kind);q.s.userData.tx.needsUpdate=true})},8000)}
+   if(e=='phone'){C.ring=14;C.phoneAct.on=true;C.say('[a telephone is ringing — its cable is not plugged in]',4)}}}}
+  if(C.forceEv){evT=0;C.forceEv=0}
+  // camera UI: signal losses, camera 20 watching
+  if(UI){lostT-=dt;if(lostT<=0){lostT=45+RND()*45;lost=1.3}if(lost>0){lost-=dt}UI.st.style.opacity=lost>0?.95:0;
+   if(feeds[cur].id==20&&!UI.black){watch20+=dt;if(watch20>12){UI.black=3.2;UI.blk.style.display='flex';tn({f:60,d:2,v:.2});fig20=0;sw20=-1;OF.ev.watch=1;hsave()}}else watch20=0;
+   if(UI.black>0){UI.black-=dt;if(UI.black<=0){UI.blk.style.display='none';setFeed(0)}}
+   var sec=(C.t+(feeds[cur].fut?6:0))|0;UI.ts.textContent='03:33:'+('0'+sec%60).slice(-2)+' AM  ·  DAY '+(1+(sec/60|0))+(feeds[cur].fut?'   (+6s?)':'');if(C.walkMe){C.walkMe.t+=dt;C.me.position.x=lerp2(-9,9,Math.min(1,C.walkMe.t/7));C.me.position.z=-5.5;C.me.rotation.y=PI/2}}
+  // the final event after reading the letter
+  if(finT>0){finT-=dt;if(finT<=0)startFinal()}
+  if(fin){var near=Math.hypot(C.x+7,C.z+17)<6;if(fin.wait){fin.w+=dt;if((near&&fin.w>2)||fin.w>28){fin.wait=0;fin.t=0}}else fin.t+=dt;var tt=fin.wait?0:fin.t,sc2=fin.sc,np=o.note2.position;
+   if(tt>2&&tt<7){var k=(tt-2)/5;k=k*k*(3-2*k);o.note2.visible=true;np.set(-8.0+k*.21,.774,-8.2-k*.23)}
+   var zk=Math.min(1,Math.max(0,(tt-6.5)/2.5));zk=zk*zk*(3-2*zk);C.fcam.position.set(-8,2.3,-9.6);C.fcam.lookAt(-8+(np.x+8)*zk,.78,-8.2+(np.z+8.2)*zk);C.fcam.fov=40-30*zk;C.fcam.updateProjectionMatrix();
+   fin.fr=(fin.fr||0)+1;if(tt<15&&fin.fr%2==0){C.o.r.setRenderTarget(C.rt);C.o.r.render(C.sc,C.fcam);C.o.r.setRenderTarget(null)}
+   var flick=tt>11&&tt<12.4&&Math.sin(tt*37)>.2;sc2.material.map=tt>=15||flick?fin.black:C.rt.texture;sc2.material.needsUpdate=true;
+   fin.ov.visible=tt>12.4&&tt<15;fin.ov.material.opacity=fin.ov.visible?(Math.sin(tt*29)>-.6?1:.4):0;
+   if(tt>11&&!fin.fl){fin.fl=1;bs({f:3000,q:.4,d:1.2,v:.05})}
+   if(tt>15&&!fin.steps){fin.steps=1;tn({f:50,d:.3,v:.05});for(var i=0;i<7;i++)setTimeout(function(){bs({f:280,q:1.2,d:.14,v:.045})},900+i*650)}
+   if(tt>22){fin=null;if(C.wl)C.wl.forEach(function(w){w.q.s.material.map=w.rt.texture;w.q.s.material.needsUpdate=true})}}
+ },
+ key:function(C,c){if(performance.now()-(C.opened||0)<250)return;if(UI){if(/^Digit[1-8]$/.test(c))setFeed(+c.slice(5)-1);else if(c=='Digit0'||c=='Digit9')setFeed(feeds.length-1);else if(c=='ArrowRight'||c=='KeyD')setFeed((cur+1)%feeds.length);else if(c=='ArrowLeft'||c=='KeyA')setFeed((cur+feeds.length-1)%feeds.length);else if(c=='KeyE'||c=='KeyQ'||c=='Backspace')closeCams();else if(c=='Equal'||c=='KeyW')zoom=Math.min(3,zoom+.25);else if(c=='Minus'||c=='KeyS')zoom=Math.max(1,zoom-.25)}
+  else if(reading&&(c=='KeyE'||c=='KeyF'||c=='KeyQ'))closeLetter()},
+ onExit:function(){if(UI)closeCams(true);if(reading)closeLetter(true);hsave()}});
+ if(!C)return;HU.ofx.C=C;HU.ofx.api={read:function(){readLetter()},close:function(){closeLetter()},cams:function(m){openCams(m)},feed:function(i){setFeed(i)},closeCams:function(){closeCams(true)},ev:function(k){C.want=k;C.forceEv=1},final:function(){finT=.01}};
+ function lerp2(a,b,k){return a+(b-a)*k}
+ // ----- the camera system -----
+ feeds=[{id:1,n:'OPEN OFFICE',p:[-11.2,2.5,13.2],l:[0,1,2]},{id:2,n:'SECURITY ROOM',p:[-8,2.55,-10.6],l:[-7,1,-15]},{id:3,n:'NORTH CORRIDOR',p:[11.3,2.55,-4.5],l:[-6,1.2,-5.8]},{id:4,n:'OFFICE — N.',p:[6.6,2.55,-12.6],l:[3,1,-8]},{id:5,n:'LEVEL 0 — B12',p:[300,2.6,-1],l:[300,1.3,-30]},{id:6,n:'LEVEL 1 — POOL 3',p:[360,2.6,-1],l:[360,1.0,-25]},{id:7,n:'HALLWAY 7-B',p:[420,2.6,-1],l:[420,1.2,-30]},{id:8,n:'ELEVATOR LOBBY',p:[9,2.5,-4.4],l:[12,1.1,-5.5]},{id:20,n:'CAMERA 20 — DO NOT WATCH',p:[480,2.4,-1],l:[480,1.2,-30]}];
+ function hud(on){try{C.o.hint.parentNode.style.visibility=on?'':'hidden';[].forEach.call(document.body.children,function(d){if(d.style&&d.style.zIndex=='9'&&d.style.pointerEvents=='none')d.style.visibility=on?'':'hidden'})}catch(e){}}
+ function openCams(mode){if(UI)return;UI={};hud(0);sw20=-1;C.opened=performance.now();C.fov0=C.cm.fov;C.freeze=1e9;C.acts.forEach(function(a){a.was=a.on;a.on=false});var d=document.createElement('div');d.style.cssText='position:fixed;inset:0;z-index:9;pointer-events:auto;font:bold 14px monospace;color:#e8e8e8;text-shadow:0 0 4px #000';
+  d.innerHTML='<div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.04) 0 1px,rgba(0,0,0,.2) 1px 3px);border:3vh solid #0a0b0c;box-sizing:border-box;box-shadow:inset 0 0 12vh rgba(0,0,0,.9)"></div><div data-k=lab style="position:absolute;left:5vh;top:5vh;font-size:20px"></div><div style="position:absolute;right:5vh;top:5vh;color:#f33">● REC</div><div data-k=ts style="position:absolute;left:5vh;bottom:12vh"></div>'+
+   '<div data-k=st style="position:absolute;inset:3vh;opacity:0;background:repeating-radial-gradient(circle at 30% 40%,#777 0 1px,#111 1px 3px);display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff">NO SIGNAL</div><div data-k=blk style="position:absolute;inset:3vh;background:#000;display:none;align-items:center;justify-content:center;font-size:28px;color:#e33;letter-spacing:.2em">IT KNOWS YOU ARE WATCHING</div>'+
+   '<div data-k=list style="position:absolute;left:5vh;right:5vh;bottom:4.5vh;display:flex;gap:6px;flex-wrap:wrap"></div><div style="position:absolute;right:5vh;bottom:12vh;font-size:12px;opacity:.8">1–8 / ← → switch · W/S zoom · E close</div>';
+  document.body.appendChild(d);UI.d=d;['lab','ts','st','blk','list'].forEach(function(k){UI[k]=d.querySelector('[data-k='+k+']')});
+  UI.list.innerHTML=feeds.map(function(f,i){return '<span data-f="'+i+'" style="cursor:pointer;padding:3px 7px;border:1px solid '+(f.id==20?'#a22':'#556')+';background:rgba(0,0,0,.6);color:'+(f.id==20?'#f55':'#ddd')+'">'+(f.id<10?'0':'')+f.id+'</span>'}).join('');
+  UI.list.onclick=function(e){var el=e.target.closest('[data-f]');if(el)setFeed(+el.dataset.f)};
+  d.addEventListener('wheel',function(e){zoom=Math.max(1,Math.min(3,zoom-e.deltaY*.002));e.preventDefault()},{passive:false});try{document.exitPointerLock()}catch(e){}
+  C.mode=mode;C.camOv=function(cm){var f=feeds[cur],p=f.p,l=f.l;if(f.id==20&&f.behind){p=[C.x+Math.sin(C.yaw)*1.6,2.3,C.z+Math.cos(C.yaw)*1.6];l=[C.x-Math.sin(C.yaw)*3,1.2,C.z-Math.cos(C.yaw)*3]}var dx=l[0]-p[0],dy=l[1]-p[1],dz=l[2]-p[2],dl=Math.hypot(dx,dy,dz)||1;cm.position.set(p[0]+dx/dl*.35,p[1]+dy/dl*.35,p[2]+dz/dl*.35);cm.lookAt(l[0],l[1],l[2]);var fv=60/zoom;if(cm.fov!=fv){cm.fov=fv;cm.updateProjectionMatrix()}
+   if(C.mode=='corrupt'){cm.rotation.z=Math.sin(C.t*31)*.04;C.o.cv.style.filter='hue-rotate('+(C.t*200%360|0)+'deg) contrast(1.6)'}else C.o.cv.style.filter='grayscale(.85) contrast(1.15) brightness(1.05)'};
+  setFeed(mode=='corrupt'?6:0);tn({f:60,f2:900,d:.4,v:.05})}
+ function setFeed(i){var prev=cur;if(prev!==i&&UI)sw++;cur=i;var f=feeds[i];C.fig1.visible=false;C.me.visible=false;C.walkMe=null;f.fut=false;
+  if(f.id==1){C.fig1.visible=RND()<.4&&!C.figWas;C.figWas=C.fig1.visible}
+  if(f.id==2){C.me.visible=true;C.me.position.set(-6,0,-13.2);C.me.rotation.y=Math.atan2(-2,2.6)}
+  if(f.id==3&&RND()<.25){C.me.visible=true;C.walkMe={t:0};f.fut=true}
+  if(f.id==20&&sw20<0)sw20=sw;fig20=sw20<0?0:Math.min(8,sw-sw20);if(f.id==20){OF.cam20=(OF.cam20||0)+1;f.behind=fig20>=8;C.fig20.position.z=-37+Math.min(7,fig20)*4.2;if(f.behind){C.me.visible=true;C.me.position.set(C.x,0,C.z);C.me.rotation.y=C.yaw+PI}}
+  if(C.boiled)C.boiled.position.z=-26+(RND()*6);if(C.cfig)C.cfig.visible=C.mode=='corrupt'&&f.id==7;
+  UI.lab.innerHTML='CAM '+(f.id<10?'0':'')+f.id+' — '+e2(f.n)+(C.mode=='corrupt'?' <span style="color:#f55">[CORRUPTED FILE: DO NOT SHOW NATHAN]</span>':'');UI.lab.style.color=f.id==20?'#f55':'#e8e8e8';
+  [].forEach.call(UI.list.children,function(el,k){el.style.outline=k==i?'2px solid #fff':''});lost=.25;bs({f:3000,q:.4,d:.2,v:.04})}
+ function closeCams(silent){if(!UI)return;hud(1);UI.d.remove();UI=null;C.camOv=null;C.freeze=0;C.fig1.visible=false;C.me.visible=false;C.walkMe=null;C.o.cv.style.filter='';C.cm.fov=C.fov0||70;C.cm.updateProjectionMatrix();C.acts.forEach(function(a){if(a.was!=null){a.on=a.was;a.was=null}});C.mode=null;if(!silent)try{C.o.cv.requestPointerLock()}catch(e){}}
+ // ----- the letter -----
+ function readLetter(){if(reading)return;hud(0);C.opened=performance.now();reading=document.createElement('div');reading.style.cssText='position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.82);display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:auto';var cv=document.createElement('canvas');cv.width=720;cv.height=984;cv.style.cssText='height:min(86vh,1100px);max-width:94vw;box-shadow:0 0 40px #000;transform:rotate(-1.2deg)';drawLetter(cv.getContext('2d'),720,984,1);reading.appendChild(cv);
+  var n=document.createElement('div');n.style.cssText='margin-top:1.4vh;font:13px monospace;color:#bbb';n.textContent=(OF.read?'':'A small key is taped to the back. ')+'[E] or click to put it down';reading.appendChild(n);reading.onclick=function(){closeLetter()};document.body.appendChild(reading);
+  C.freeze=1e9;C.acts.forEach(function(a){a.was=a.on;a.on=false});try{document.exitPointerLock()}catch(e){}bs({f:2500,q:2,d:.3,v:.06})}
+ function closeLetter(silent){if(!reading)return;hud(1);reading.remove();reading=null;C.freeze=0;C.acts.forEach(function(a){if(a.was!=null){a.on=a.was;a.was=null}});var first=!OF.read;
+  if(first){OF.read=1;OF.key=1;try{HD.lore.got.nlm=Date.now()}catch(e){}hsave();var seen=false;try{var mp=JSON.parse(localStorage.getItem('brmovieP')||'{}');seen=(mp.watched||[]).some(function(i){return window.MOVIE&&MOVIE.CH[i]&&MOVIE.CH[i].office})}catch(e){}
+   C.say(seen?'You have seen this letter before. You watched him write it.  (Story archive: NATHAN\'S LAST MESSAGE)':'Who was Nathan? Who was watching him?  (Story archive: NATHAN\'S LAST MESSAGE)',6);if(!OF.fin)finT=6}
+  if(!silent)try{C.o.cv.requestPointerLock()}catch(e){}}
+ function startFinal(){if(OF.fin)return;OF.fin=1;hsave();var o=C.o2,sc2=o.cmon;o.note2.visible=false;var ov=new T.Mesh(new T.PlaneGeometry(1.1,.66),new T.MeshBasicMaterial({map:cvTex2(320,192,function(x,w,h){x.clearRect(0,0,w,h);x.fillStyle='rgba(0,0,0,.55)';x.fillRect(0,h*.36,w,h*.34);x.fillStyle='#f2efe6';x.font='bold 40px "Comic Sans MS","Segoe Print",cursive';x.textAlign='center';x.fillText('SO WHO DID?',w/2,h*.62)}),transparent:true,opacity:0}));ov.position.copy(sc2.position);ov.position.z+=.01;ov.visible=false;C.sc.add(ov);
+  var blk=cvTex2(8,8,function(x){x.fillStyle='#000';x.fillRect(0,0,8,8)});fin={t:0,w:0,wait:1,ov:ov,black:blk,sc:sc2};HU.ofx.fin=fin;
+  o.screens.forEach(function(q){if(q.wall){q.s.material.map=blk;q.s.material.needsUpdate=true}});tn({f:60,f2:200,d:.6,v:.06});bs({f:2600,q:.4,d:.5,v:.05});C.say('[behind you, the security computer switches on by itself]',5)}
+}
+HU.enterOffice=function(){if(typeof started!='undefined')enterOffice()};
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->

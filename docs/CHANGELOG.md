@@ -1,5 +1,54 @@
 # Changelog
 
+## The Forgotten Security Office
+- **Where:** a door marked **SECURITY** is hidden in a wall on **Level 0** and on **Level 5**. Walk up to it and press **E**. It is never required, you can always leave, and leaving puts you back at the same door.
+  - Leave through the STAFF ONLY door you came in by, or through the emergency exit once you have read the letter.
+- **The office:**
+  - an open office with 12 cubicles: desks, rolling chairs, monitors, keyboards, phones, coffee cups, papers, a printer and a phone desk
+  - a corridor with a flickering fluorescent light and a map of every level, including the ones you have not found yet
+  - a **security control room** with a wall of 12 camera screens and the security computer
+  - ceiling cameras with red lights
+  - a dusty clock stopped at **3:33**
+  - a server alcove with the **THRESHOLD PROJECT — INTERNAL ACCESS ONLY** computer
+  - a locked records room and locked filing cabinets
+  - a locked office with **NATHAN** on the door; inside, his handwriting covers the walls
+  - a broken elevator: you can call it, but it only ever opens on this floor
+  - a locked emergency exit
+- **Nathan's letter:** on a desk in the control room. **[E] READ LETTER** opens a close-up of the old, stained, folded paper, with a big HELP at the top and a red fingerprint. Press E or click to put it down.
+  - Reading it adds **NATHAN'S LAST MESSAGE** to the story archive, with the full text and a note that the footage may have been altered. It is saved, so you never have to find it again in that save.
+  - A key is taped to the back. It opens the cabinets, the records, the DO NOT SHOW NATHAN folder and Nathan's office.
+  - If you have already watched the office chapter of the movie, the game says you have seen this letter before.
+- **Security cameras:** press **E** at the security computer.
+  - Feeds CAM 01–08 plus **CAMERA 20 — DO NOT WATCH**. Switch with 1–8 or the arrow keys, open Camera 20 with 9 or 0, zoom with W/S or the mouse wheel.
+  - Some feeds show empty rooms. Others show movement far away.
+  - A figure sometimes appears on CAM 01 and is gone when you come back.
+  - **HALLWAY 7-B** does not exist on the office map.
+  - CAM 02 shows you standing in the security room.
+  - **Camera 20:** a dark hallway with a figure at the far end that comes closer every time you switch feeds. After enough switches, Camera 20 shows the office from behind you. Watch it too long and the screen goes black: **IT KNOWS YOU ARE WATCHING**.
+  - The signal drops now and then, but rarely.
+  - Only one small monitor on the wall is refreshed at a time, so the cameras stay fast.
+- **Rare events:** each one happens at most once per save, one at a time, at random times.
+  - The printer prints a visitor log with your in-game username.
+  - Every computer shows **NATHAN IS STILL HERE**.
+  - A phone with no cable rings. Answering it gives a whisper as a caption: "You found the letter."
+  - CAM 03 sometimes shows you walking down the corridor six seconds in the future.
+  - The records cabinet has reports about earlier Wanderers.
+  - The **DO NOT SHOW NATHAN** folder plays corrupted footage.
+- **After the letter:** a few seconds after you put it down, the security computer behind you switches on by itself and shows a live view of the letter desk. When you come close, a second note slides out from under the letter: **NATHAN DIDN'T WRITE THIS.** The screen flickers, **SO WHO DID?** appears, and then it cuts to black. Quiet footsteps follow behind you. There is no jumpscare.
+- **The movie:** a new chapter, **THE FORGOTTEN SECURITY OFFICE** (chapter 7, 1:59), uses the same office layout and draws the same letter as the game.
+  - Nathan walks in under buzzing lights, past the desks, into the control room.
+  - A monitor shows someone at the end of a hallway. He looks away, and the figure is gone.
+  - Another monitor shows him sitting at the desk while he is standing. He whispers "That's not possible."
+  - He sits down and writes HELP, then the rest of the letter down to DON'T LOOK BACK.
+  - The ceiling camera turns toward him, and the screens start showing him from different angles.
+  - His desk monitor shows someone standing right behind him. He turns, and nothing is there.
+  - Every screen dies except Camera 20, which shows him from behind with something tall in the doorway.
+  - The lights go out one by one. He drops the pen and runs.
+  - It ends on the letter, which fades into the flat letter you read in the game.
+  - The monster is only ever a dark shape on a monitor.
+  - The movie is now 29:59 long. Chapter numbers update by themselves.
+- **Multiplayer:** there is still no game server, so the office, the cameras and the letter are single-player on your device. They are not synced between players.
+
 ## Title screen
 - **New first screen:** before the opening cutscene you now see the Backrooms: Don't Look Back title art, gently floating and flickering, with a glowing **▶ START HERE** button.
 - **Starting:** clicking the button, or anywhere on the screen, starts the opening car scene, the same as before.
