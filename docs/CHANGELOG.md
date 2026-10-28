@@ -1,5 +1,11 @@
 # Changelog
 
+## Easier levels: never more than three
+- No level asks for more than **3** items to escape.
+  - Level 2 now needs 3 party favors, Level 14 needs 3 ride tokens, and Level 15 needs 3 hidden symbols. All three used to need 4.
+  - Level 19 has 3 transmitters instead of 5.
+- Levels that already needed fewer than 3 are unchanged.
+
 ## The lore of 14 - 1 - 20 - 8 - 1 - 14 · no more spoken voices
 - **Who he is:** 14 - 1 - 20 - 8 - 1 - 14 is what is left of Nathan when his sanity reaches zero. Count the letters of the alphabet and the numbers spell NATHAN.
 - **His file:** five pages of the Threshold Project's FILE 14-1-20-8-1-14 are hidden on Levels 0, 3, 8, 13 and 19, and you collect them into the lore archive.
