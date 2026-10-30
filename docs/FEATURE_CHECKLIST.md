@@ -139,3 +139,11 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [x] Final event: live desk view, NATHAN DIDN'T WRITE THIS, SO WHO DID?, black, quiet footsteps, no jumpscare
 - [x] Movie chapter 7 using the same layout and the same letter drawing (FSO.build / FSO.drawLetter)
 - [ ] Multiplayer sync: not possible, the game has no server
+
+## Newcomer help (first Level 0)
+- [x] Active only on Level 0 until the first escape; not in Nightmare / Don't Look Back; H turns it off
+- [x] Casual + mutations off preselected for brand-new players (still changeable)
+- [x] 45 s sleeping Boiled One, then 30% slower
+- [x] Guide with keycard count, arrow and distance; then elevator (or fuse)
+- [x] Light beams over keycards / fuse
+- [x] Half sanity and battery drain; no blackouts; 14-1-20-8-1-14 kept away; 2 starter Almond Waters; step-by-step tips

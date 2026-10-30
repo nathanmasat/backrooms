@@ -51,6 +51,9 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 - **Style & money:** Shop, Wallet, Suits, Rare Suits.
 - **Photos & fun:** Camera, My Files, Images, Minigames.
 
+## New players
+- Your first Level 0 is easier: a guide arrow to the keycards and the elevator, glowing beams over keycards, a sleeping Boiled One for 45 seconds, then a slower one, and half-speed sanity and battery drain. Press H to turn it off. It ends after your first escape.
+
 ## Secrets
 - **The Forgotten Security Office:** look for a door marked SECURITY on Level 0 or Level 5 and press E. Inside are security cameras (E at the security computer; 1–8 or ←/→ to switch, W/S to zoom, E to close) and a letter from Nathan.
 

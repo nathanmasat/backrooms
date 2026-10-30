@@ -3319,7 +3319,7 @@ function applyRun(){if(applied)return;var r=run();if(!r)return;applied=true;var 
  if(md.extra&&LVL<10&&CF.k>=1&&cards.length==CF.k&&!CF.tile&&!CF.bal){var c2=pickCell(cc(1),cc(1),40,999,R2)||pickCell(cc(1),cc(1),16,999,R2);if(c2){mkItem('card',0x44ff88,[.3,.02,.2],cc(c2[0]),cc(c2[1]),.05);CF.k++;HU.extraCard=1}}
  // broken elevators: an elevator fuse
  if(has('elev')&&LVL<19){var fc=pickCell(cc(1),cc(1),30,999,R2)||pickCell(cc(1),cc(1),12,999,R2);if(fc){var fm=new T.Group(),b1=new T.Mesh(new T.CylinderGeometry(.07,.07,.26,10),new T.MeshBasicMaterial({color:0xffcc33})),b2=new T.Mesh(new T.CylinderGeometry(.075,.075,.05,10),new T.MeshBasicMaterial({color:0x888888}));b2.position.y=.13;var b3=b2.clone();b3.position.y=-.13;fm.add(b1,b2,b3);fm.rotation.z=Math.PI/2;fm.position.set(cc(fc[0]),.3,cc(fc[1]));scene.add(fm);var got=r.fuse&&r.fuse[LVL]==SEED;fm.visible=!got;XI.push({k:'fuse',m:fm,x:cc(fc[0]),z:cc(fc[1]),got:got,i:fc[0],j:fc[1]})}}
- HU.fuse=function(){var f=XI.find(function(q){return q.k=='fuse'});return f?f.got:true};
+ HU.fuse=function(){var f=XI.find(function(q){return q.k=='fuse'});return f?f.got:true};HU.XI=XI;
 }
 HU.applyRun=applyRun;
 if(run())applyRun();else SET.diff=1;
@@ -3510,10 +3510,10 @@ setTimeout(metaShow,600);
 // menu drone (music change after a major secret)
 var drone=null;function droneTick(){var want=MENU&&MEV=='music'&&typeof AC!='undefined'&&AC&&!muted;if(want&&!drone){try{var g=AC.createGain();g.gain.value=0;g.connect(SFXB);var o1=AC.createOscillator(),o2=AC.createOscillator();o1.type='sine';o2.type='triangle';o1.frequency.value=41.2;o2.frequency.value=61.9;o1.connect(g);o2.connect(g);o1.start();o2.start();drone={g:g,o:[o1,o2]}}catch(e){}}if(drone){drone.g.gain.value+=((want?.09:0)-drone.g.gain.value)*.02;if(!want&&drone.g.gain.value<.002){drone.o.forEach(function(o){o.stop()});drone.g.disconnect();drone=null}}}
 // ================= RUN SETUP / LOBBY / PAUSE UI =================
-var SU={mode:'normal',mut:true,seed:(Date.now()^(RND()*1e9))>>>0,cb:null};
+var SU={mode:'normal',mut:true,seed:(Date.now()^(RND()*1e9))>>>0,cb:null};var NEWP=(SV.max|0)===0;if(NEWP){SU.mode='casual';SU.mut=false}// brand-new players start on the easiest settings (they can still pick any)
 function mutList(ids){return ids.length?ids.map(function(id){var m=mut(id);return '<span class="hu-tag" title="'+e2(m[2])+'" style="border-color:'+['#7a6a2a','#a8742a','#c33'][m[3]]+'">'+e2(m[1])+'</span>'}).join(''):'<span style="opacity:.6">none</span>'}
 function setupP(cb){if(cb)SU.cb=cb;var md=MODES[SU.mode],forced=SU.mode=='nightmare'||SU.mode=='dlb',mo=forced||SU.mut,ms=mo?rollMuts(SU.seed,SU.mode):[];
- pnl('<b>NEW RUN — CHOOSE YOUR DIFFICULTY</b><br><small style="opacity:.75">The difficulty and mutations stay locked for the whole run. A run lasts until you finish the game'+(SU.mode=='dlb'?' or die':'')+', or abandon it.</small>'+MORD.map(function(k){var m=MODES[k];return '<div class="hu-m'+(SU.mode==k?' on':'')+'" data-hu="mode:'+k+'"><b style="color:'+m.c+'">'+m.n+'</b><br><small>'+e2(m.d)+'</small></div>'}).join('')+
+ pnl('<b>NEW RUN — CHOOSE YOUR DIFFICULTY</b><br><small style="opacity:.75">The difficulty and mutations stay locked for the whole run. A run lasts until you finish the game'+(SU.mode=='dlb'?' or die':'')+', or abandon it.</small>'+MORD.map(function(k){var m=MODES[k];return '<div class="hu-m'+(SU.mode==k?' on':'')+'" data-hu="mode:'+k+'"><b style="color:'+m.c+'">'+m.n+'</b>'+(NEWP&&k=='casual'?' <small style="color:#9f9">★ recommended for your first time</small>':'')+'<br><small>'+e2(m.d)+'</small></div>'}).join('')+
  '<div style="margin:8px 0"><b>RUN MUTATIONS</b> '+(forced?'<small>(always on in '+md.n+')</small>':'<span class="ch" data-hu="mut">['+(SU.mut?'ON':'OFF')+'] toggle</span>')+'<br>'+mutList(ms)+'<br><small style="opacity:.75">'+ms.map(function(id){var m=mut(id);return '• '+e2(m[1])+': '+e2(m[2])}).join('<br>')+'</small>'+(ms.length?'<br><small style="color:#fc6">Bonus: extra cash for every level escaped with mutations, +$100 for 3 or more.</small>':'')+'</div>'+
  '<div class="bt pl" data-hu="start">START RUN</div>')}
 function runInfoHTML(){var r=run();if(!r)return '<span style="opacity:.7">No run in progress. Pick a difficulty when you press PLAY.</span>';var m=MODES[r.mode];return 'RUN: <b style="color:'+m.c+'">'+m.n+'</b> · escaped '+r.esc+' · deaths '+r.deaths+'<br>MUTATIONS: '+mutList(r.mutOn!==false?r.muts:[])}
@@ -6738,6 +6738,50 @@ function enterOffice(){var UI=null,sw20=-1,feeds,cur=0,zoom=1,fig20=0,sw=0,watch
   o.screens.forEach(function(q){if(q.wall){q.s.material.map=blk;q.s.material.needsUpdate=true}});tn({f:60,f2:200,d:.6,v:.06});bs({f:2600,q:.4,d:.5,v:.05});C.say('[behind you, the security computer switches on by itself]',5)}
 }
 HU.enterOffice=function(){if(typeof started!='undefined')enterOffice()};
+})();
+</script>
+<!-- ===== NEWCOMER HELP — an easier first Level 0 for brand-new players ===== -->
+<script>
+(function(){
+if(typeof SV=='undefined'||typeof THREE=='undefined'||!window.HU)return;
+var T=THREE,HU=window.HU;
+// Who counts as new: you are on Level 0 and have never escaped it, and you are not playing a hard mode on purpose.
+var OFF=false;try{OFF=localStorage.getItem('brnewbie')=='off'}catch(e){}
+var md=(HU.mode&&HU.mode())||{},hard=HU.MODES&&(md===HU.MODES.nightmare||md===HU.MODES.dlb);
+var NEW=(SV.lv|0)===0&&(SV.max|0)===0&&!OFF&&!hard&&!(window.HS&&HS.on);
+HU.newbie={on:NEW,off:function(){try{localStorage.setItem('brnewbie','off')}catch(e){}NB.on=false;HU.newbie.on=false;box.style.display='none';beams.forEach(function(b){b.visible=false})},again:function(){try{localStorage.removeItem('brnewbie')}catch(e){}}};
+if(!NEW)return;
+var NB={on:true,t:0,grace:45,tip:0,lastS:null,lastB:null,done:false};
+// 1) The Boiled One moves slower, and waits a while before it starts wandering
+var oWalk=walkPath;walkPath=function(dt,spd){return oWalk(dt,NB.on?spd*.7:spd)};
+var oUpd=updMon;updMon=function(dt){if(NB.on&&NB.t<NB.grace){try{mon.position.set(M.x,0,M.z)}catch(e){}return}return oUpd(dt)};
+// 2) Helpful glowing beams over every keycard (seen through the fog)
+var beams=[];items.forEach(function(it){if(it.type!='card')return;var b=new T.Mesh(new T.CylinderGeometry(.18,.18,14,10,1,true),new T.MeshBasicMaterial({color:0x7fe6ff,transparent:true,opacity:.28,fog:false,depthWrite:false,blending:T.AdditiveBlending}));b.position.set(it.x,7,it.z);scene.add(b);b.userData.it=it;beams.push(b)});
+// 3) A guide at the top of the screen: what to do next and an arrow pointing the way
+var box=document.createElement('div');box.id='nbguide';box.style.cssText='position:fixed;left:50%;top:96px;transform:translateX(-50%);z-index:6;pointer-events:none;font:bold 15px monospace;color:#bff3ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.5';document.body.appendChild(box);
+function arrow(x,z){var dx=x-P.x,dz=z-P.z,a=Math.atan2(Math.sin(Math.atan2(-dx,-dz)-P.yaw),Math.cos(Math.atan2(-dx,-dz)-P.yaw));return Math.abs(a)<.4?'▲':Math.abs(a)>2.7?'▼':a>0?'◀':'▶'}
+var TIPS=[[2,'WELCOME! Find '+CF.k+' KEYCARDS, then take the ELEVATOR out. Follow the arrow at the top and the blue light beams.'],[13,'W A S D to walk · hold SHIFT to sprint · T turns your flashlight on and off.'],[26,'The Boiled One is asleep for now. If you hear giggling or it chases you: sprint, turn corners, and break its line of sight.'],[40,'Lockers save lives: stand next to one and press F to hide. Press F again to come out.'],[54,'Low sanity or battery? Press I to drink Almond Water or swap batteries.']];
+var lastSay=0;
+(function tick(){requestAnimationFrame(tick);if(!NB.on)return;var play=typeof started!='undefined'&&started&&!P.dead&&!(typeof MENU!='undefined'&&MENU)&&!(HU.PK&&HU.PK.cur);box.style.display=play?'block':'none';if(!play){NB.lastS=null;NB.lastB=null;return}
+ var now=performance.now(),dt=Math.min(.1,(now-(NB.lt||now))/1000);NB.lt=now;NB.t+=dt;
+ // 4) Gentler sanity and battery: they drain at half speed
+ if(NB.lastS!=null&&P.san<NB.lastS&&NB.lastS-P.san<3)P.san+= (NB.lastS-P.san)*.5;if(NB.lastB!=null&&P.bat<NB.lastB&&NB.lastB-P.bat<3)P.bat+=(NB.lastB-P.bat)*.5;NB.lastS=P.san;NB.lastB=P.bat;
+ // 5) No extra surprises on your first try: no blackouts, and 14-1-20-8-1-14 stays away
+ try{if(HU.LO&&HU.LO.ph==0)HU.LO.cd=Math.max(HU.LO.cd,60)}catch(e){}try{if(HU.kid&&HU.kid.E&&!HU.kid.E.on)HU.kid.E.next=Math.max(HU.kid.E.next||0,60)}catch(e){}
+ // tips, one at a time
+ if(NB.tip<TIPS.length&&NB.t>=TIPS[NB.tip][0]&&msgT<=0){say(TIPS[NB.tip][1],7);NB.tip++}
+ if(NB.t>=NB.grace&&!NB.woke){NB.woke=1;say('Somewhere far away, the Boiled One wakes up. Keep moving.',5)}
+ beams.forEach(function(b){var it=b.userData.it;b.visible=!it.got;b.material.opacity=.2+.1*Math.sin(NB.t*3)});
+ var html='<span style="color:#ffe07a">NEWCOMER HELP</span> <span style="opacity:.6;font-size:11px">(first Level 0 only · H to turn off)</span><br>';
+ if(P.cards<CF.k){var best=null,bd=1e9;items.forEach(function(it){if(it.type!='card'||it.got)return;var d=Math.hypot(it.x-P.x,it.z-P.z);if(d<bd){bd=d;best=it}});
+  html+='KEYCARDS '+P.cards+'/'+CF.k+(best?'  ·  nearest '+arrow(best.x,best.z)+' '+Math.round(bd)+'m':'')}
+ else if(HU.fuse&&!HU.fuse()&&HU.XI){var fu=HU.XI.find(function(q){return q.k=='fuse'});if(!NB.fb&&fu){NB.fb=new T.Mesh(new T.CylinderGeometry(.18,.18,14,10,1,true),new T.MeshBasicMaterial({color:0xffcc33,transparent:true,opacity:.3,fog:false,depthWrite:false,blending:T.AdditiveBlending}));NB.fb.position.set(fu.x,7,fu.z);scene.add(NB.fb)}var d3=Math.hypot(fu.x-P.x,fu.z-P.z);html+='KEYCARDS DONE!  ·  this elevator is broken: find the ELEVATOR FUSE '+arrow(fu.x,fu.z)+' '+Math.round(d3)+'m (yellow beam)';if(!NB.fuMsg){NB.fuMsg=1;say('This run has BROKEN ELEVATORS: grab the ELEVATOR FUSE first. Follow the arrow and the yellow beam.',7)}}
+ else{if(NB.fb)NB.fb.visible=false;var ex2=EL&&(EL.x||EL.z)?{x:EL.x,z:EL.z}:{x:cc(ex[0]),z:cc(ex[1])},d2=Math.hypot(ex2.x-P.x,ex2.z-P.z);html+='ALL KEYCARDS FOUND!  ·  ELEVATOR '+arrow(ex2.x,ex2.z)+' '+Math.round(d2)+'m'+(d2<4?'  ·  press F':'');if(!NB.allMsg){NB.allMsg=1;say('You have all the keycards! Follow the arrow to the ELEVATOR and press F.',6)}}
+ if(NB.t<NB.grace)html+='<br><span style="font-size:12px;color:#9fdc9f">the Boiled One is asleep: '+Math.ceil(NB.grace-NB.t)+'s</span>';
+ box.innerHTML=html})();
+addEventListener('keydown',function(e){if(e.code!='KeyH'||!NB.on||typeof started=='undefined'||!started||(typeof MENU!='undefined'&&MENU))return;HU.newbie.off();say('Newcomer help is off. Good luck.',3)});
+// a starter gift: two Almond Waters
+try{if(INV.length<=3){INV.push('water');INV.push('water')}}catch(e){}
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->

@@ -1,5 +1,17 @@
 # Changelog
 
+## Easier first Level 0 for new players
+- **Who gets it:** anyone on Level 0 who has never escaped it. It switches off by itself after your first escape. Press **H** to turn it off sooner. It does not apply to Nightmare or Don't Look Back runs.
+- **New-run screen:** brand-new players start with **CASUAL** selected (marked "★ recommended for your first time") and mutations **OFF**. You can still pick anything.
+- **On your first Level 0:**
+  - The Boiled One sleeps for the first 45 seconds (a countdown shows it). After that it moves 30% slower.
+  - A guide at the top of the screen shows how many keycards you have, with an arrow and the distance to the nearest one. Once you have them all, it points to the elevator, or to the elevator fuse if the run has Broken Elevators.
+  - Blue light beams above each keycard (a yellow one above the fuse) show through the fog.
+  - Sanity and flashlight battery drain at half speed.
+  - No blackouts, and 14 - 1 - 20 - 8 - 1 - 14 stays away.
+  - You start with 2 Almond Waters.
+  - Short tips appear one at a time: the goal, moving and sprinting, the flashlight, escaping a chase, hiding in lockers, using items.
+
 ## The Forgotten Security Office
 - **Where:** a door marked **SECURITY** is hidden in a wall on **Level 0** and on **Level 5**. Walk up to it and press **E**. It is never required, you can always leave, and leaving puts you back at the same door.
   - Leave through the STAFF ONLY door you came in by, or through the emergency exit once you have read the letter.
