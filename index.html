@@ -666,9 +666,10 @@ const say=(t,s=4)=>{$('msg').textContent=window.keyHint?keyHint(t):t;msgT=s};
 // ---------- audio ----------
 function initAudio(){AC=new(window.AudioContext||window.webkitAudioContext)();master=AC.createGain();master.gain.value=SET.vol;master.connect(AC.destination);SFXB=AC.createGain();AMBB=AC.createGain();MUSB=AC.createGain();SFXB.connect(master);AMBB.connect(master);MUSB.connect(master);
 nb=AC.createBuffer(1,AC.sampleRate*2,AC.sampleRate);const d=nb.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=R()*2-1;
-const lp=AC.createBiquadFilter();lp.frequency.value=1100;lp.connect(AMBB);A.hum=AC.createGain();A.hum.gain.value=.1;A.hum.connect(lp);
+A.hg=AC.createGain();A.hg.gain.value=SET.hum?1:0;A.hg.connect(AMBB);// the light hum is off unless turned on in SOUND
+const lp=AC.createBiquadFilter();lp.frequency.value=1100;lp.connect(A.hg);A.hum=AC.createGain();A.hum.gain.value=.1;A.hum.connect(lp);
 [[100,'sawtooth'],[100.8,'sawtooth'],[120,'square'],[50,'sine']].forEach(([f,t])=>{const o=AC.createOscillator();o.type=t;o.frequency.value=f;o.connect(A.hum);o.start()});
-const ns=AC.createBufferSource();ns.buffer=nb;ns.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3300;bp.Q.value=9;A.wh=AC.createGain();A.wh.gain.value=.05;ns.connect(bp);bp.connect(A.wh);A.wh.connect(AMBB);ns.start();
+const ns=AC.createBufferSource();ns.buffer=nb;ns.loop=true;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=3300;bp.Q.value=9;A.wh=AC.createGain();A.wh.gain.value=.05;ns.connect(bp);bp.connect(A.wh);A.wh.connect(A.hg);ns.start();
 A.mp=P3(0,0);A.mg=AC.createGain();A.mg.gain.value=0;A.mg.connect(A.mp);A.mp.removeAttribute;const o=AC.createOscillator();o.type='sawtooth';o.frequency.value=42;const lf=AC.createBiquadFilter();lf.frequency.value=160;o.connect(lf);lf.connect(A.mg);o.start();
 const o2=AC.createBufferSource();o2.buffer=nb;o2.loop=true;const f2=AC.createBiquadFilter();f2.type='bandpass';f2.frequency.value=2800;f2.Q.value=.6;A.rg=AC.createGain();A.rg.gain.value=0;o2.connect(f2);f2.connect(A.rg);A.rg.connect(A.mp);o2.start()}
 const A={};
@@ -7812,7 +7813,7 @@ function pct(v){return Math.round(v*100)+'%'}
 function sl(k,l){return '<div class="sl"><span>'+l+'</span><input type="range" data-k="'+k+'" min="0" max="100" value="'+Math.round(SET[k]*100)+'"><span id="pv-'+k+'">'+pct(SET[k])+'</span></div>'}
 function panel(){var h='<div class="snd"><h3>&#127925; MUSIC &amp; SOUND</h3>'+sl('vol','Master volume')+sl('mus','Music')+sl('sfx','Sound effects')+sl('amb','Light hum')+
  '<div style="margin-top:10px">Music track:</div><div class="trk">'+Object.keys(TR).map(function(k){return '<div class="tb2'+(SET.trk==k?' on':'')+'" data-snd="trk:'+k+'">'+TR[k].n+'<small>'+TR[k].d+'</small></div>'}).join('')+'<div class="tb2'+(SET.trk=='off'?' on':'')+'" data-snd="trk:off">Off<small>no music</small></div></div>'+
- '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div><div class="row2"><div class="tb2" data-snd="song" style="border-color:#e4d56a">&#127908; THE BACKROOMS SONG: &quot;DON&#39;T LOOK BACK&quot; (2:00)<small>an original song about the game and its lore, with on-screen lyrics</small></div></div></div>';
+ '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div><div class="row2"><div class="tb2'+(SET.hum?' on':'')+'" data-snd="hum">'+(SET.hum?'&#128161; LIGHT HUM: ON (tap to turn off)':'&#128161; LIGHT HUM: OFF (tap to turn on)')+'<small>the buzzing of the fluorescent lights</small></div></div><div class="row2"><div class="tb2" data-snd="song" style="border-color:#e4d56a">&#127908; THE BACKROOMS SONG: &quot;DON&#39;T LOOK BACK&quot; (2:00)<small>an original song about the game and its lore, with on-screen lyrics</small></div></div></div>';
  pnl(h)}
 window.openSound=function(){if(!AC){try{initAudio();applyS()}catch(e){}}try{AC&&AC.resume()}catch(e){}panel()};
 if(btn){btn.onclick=function(e){e.stopPropagation();openSound()};paintBtn()}
@@ -7821,6 +7822,7 @@ mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest
  if(v.indexOf('trk:')==0){sv('trk',v.slice(4))}
  else if(v=='mute'){muted=!muted;SET.muted=muted?1:0;sv('muted',SET.muted);paintBtn()}
  else if(v=='song'){if(window.SONG)SONG.open();return}
+ else if(v=='hum'){SET.hum=SET.hum?0:1;sv('hum',SET.hum);try{A.hg.gain.setTargetAtTime(SET.hum?1:0,AC.currentTime,.1)}catch(x){}}
  else if(v=='test'){if(AC){try{AC.resume();tone({f:520,f2:780,d:.25,v:.35});burst({f:1800,q:3,d:.12,v:.4})}catch(x){}}}
  panel()});
 // pause menu gets a SOUND button too (works on phones from the pause button)

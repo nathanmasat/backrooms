@@ -1,5 +1,10 @@
 # Changelog
 
+## The hum is gone
+- The constant fluorescent-light hum (a low electrical drone plus a high buzz) is now **off by default**.
+- If you ever want it back: **SOUND → 💡 LIGHT HUM: OFF (tap to turn on)**. The choice is remembered.
+- Everything else (music, monster sounds, footsteps, effects) is unchanged. The movie keeps its own sound.
+
 ## Co-op: OPEN GAMES list
 - The co-op menu now shows **🌐 OPEN GAMES**: every public game being hosted right now, with the host's name, the level, and how many players are in (for example 2/4). Tap **JOIN** to hop in; full games say FULL.
 - Hosting now has two choices:
