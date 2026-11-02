@@ -1,5 +1,14 @@
 # Changelog
 
+## Co-op elevator TV
+- A TV on the left wall of the co-op starting elevator (co-op only) shows:
+  - **HOST:** the host's name
+  - **PLAYERS:** how many players are in the elevator (for example 2 / 4), with a light for each one
+  - For the host: **PRESS ENTER TO OPEN THE DOORS** (on a phone: **TAP ACT TO OPEN THE DOORS**). For everyone else: **WAITING FOR THE HOST TO OPEN THE DOORS**.
+  - Once the doors open: **DOORS OPEN — STAY TOGETHER. DON'T LOOK BACK.**
+- A host playing on a phone can now open the doors by tapping ACT (there's no ENTER key on a phone).
+- The on-screen elevator message moved lower so it doesn't cover the TV.
+
 ## Cleaner phone screen
 - **Scanner moved:** on phones, the scanner now opens in the top-left corner (in place of the mini-map while it's on) instead of sitting under the ACT / CROUCH buttons.
 - **Stats tidied:** stamina, battery, sanity, imprint and keycards are a small panel next to the mini-map instead of big bars across the middle of the top of the screen.

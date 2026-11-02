@@ -7050,13 +7050,36 @@ function buildCar(){if(CAR||typeof buildElev!='function'||typeof scene=='undefin
  var ci=ce(P.x),cj=ce(P.z),dirs=[[1,0],[-1,0],[0,1],[0,-1]],free=function(a,b){return a>=0&&b>=0&&a<W&&b<W&&!g[a][b]},best=null,bs=-1;
  dirs.forEach(function(d){if(!free(ci+d[0],cj+d[1]))return;var sc=(free(ci-d[0],cj-d[1])?0:2)+(free(ci+d[1],cj+d[0])?0:1)+(free(ci-d[1],cj-d[0])?0:1)+(free(ci+2*d[0],cj+2*d[1])?1:0);try{var fx=cc(ci)+d[0]*3.2,fz=cc(cj)+d[1]*3.2;(typeof FURN!='undefined'?FURN:[]).forEach(function(f){if(Math.hypot(f.x-fx,f.z-fz)<2.4)sc-=3})}catch(e){}if(sc>bs){bs=sc;best=d}});if(!best)best=[1,0];
  var cx=cc(ci),cz=cc(cj),G=new T.Group();scene.add(G);var E=buildElev(G);var th=Math.atan2(-best[0],-best[1]);G.rotation.y=th;G.position.set(cx+best[0]*1.25,0,cz+best[1]*1.25);
- CAR={G:G,E:E,th:th,ox:G.position.x,oz:G.position.z,d:best,k:waiting()?0:1,inside:true,lx:0,lz:0};E.doors(CAR.k);try{E.floor(String(curLv()),'#3f6');E.light.intensity=.7;E.light.distance=6}catch(e){}
+ CAR={G:G,E:E,th:th,ox:G.position.x,oz:G.position.z,d:best,k:waiting()?0:1,inside:true,lx:0,lz:0};try{CAR.tv=makeTV(G)}catch(e){}E.doors(CAR.k);try{E.floor(String(curLv()),'#3f6');E.light.intensity=.7;E.light.distance=6}catch(e){}
  // stand in your own spot in the car, facing the doors
  var slot=NET.isHost()?0:(ST.slot|0),sp=[[-.45,1.55],[.45,1.55],[-.45,2.1],[.45,2.1]][slot]||[0,1.8],w=toWorld(sp[0],sp[1]);P.x=w.x;P.z=w.z;P.yaw=Math.atan2(-best[0],-best[1]);P.pit=0;CAR.px=P.x;CAR.pz=P.z;if(CAR.k<1){CAR.flWas=P.fl;P.fl=false}}
+// a TV on the elevator wall: who the host is, how many players are in, and how to open the doors (co-op only)
+function makeTV(G){var c=document.createElement('canvas');c.width=512;c.height=300;var x=c.getContext('2d'),t=new T.CanvasTexture(c);
+ var B=new T.Group();B.position.set(-.8,1.78,.8);B.rotation.y=Math.PI/2-.35;G.add(B);
+ var bez=new T.Mesh(new T.BoxGeometry(.9,.56,.06),new T.MeshLambertMaterial({color:0x1b1b1e}));bez.position.z=-.035;B.add(bez);
+ var arm=new T.Mesh(new T.BoxGeometry(.08,.08,.12),new T.MeshLambertMaterial({color:0x2a2a2e}));arm.position.z=-.1;B.add(arm);
+ var scr=new T.Mesh(new T.PlaneGeometry(.82,.48),new T.MeshBasicMaterial({map:t,fog:false}));scr.position.z=.001;B.add(scr);
+ var glow=new T.PointLight(0x7fd8ff,.35,2.2);glow.position.set(0,0,.3);B.add(glow);
+ return {c:c,x:x,t:t,last:'',ph:0,glow:glow}}
+function tvTick(dt){var V=CAR&&CAR.tv;if(!V)return;V.ph+=dt;var x=V.x,W2=512,H2=300;
+ var me=myName(),host=NET.isHost()?me:((NET.players.host&&NET.players.host.name)||'the host'),n=inCar(),wait=waiting(),touch=document.body.classList.contains('touch');
+ var key=[host,n,wait,Math.floor(V.ph*2)%2,touch].join('|');if(key===V.last)return;V.last=key;var blink=Math.floor(V.ph*2)%2;
+ x.fillStyle='#04121a';x.fillRect(0,0,W2,H2);
+ x.fillStyle='#0d3346';x.fillRect(0,0,W2,52);x.fillStyle='#7fe6ff';x.font='bold 30px monospace';x.textAlign='center';x.fillText('CO-OP ELEVATOR',W2/2,37);
+ x.textAlign='left';x.font='bold 26px monospace';x.fillStyle='#9fb8c4';x.fillText('HOST',28,100);x.fillStyle='#ffe07a';x.fillText(String(host).slice(0,18).toUpperCase(),150,100);
+ x.fillStyle='#9fb8c4';x.fillText('PLAYERS',28,145);x.fillStyle='#ffffff';x.fillText(n+' / '+MAXP+' IN',190,145);
+ for(var i=0;i<MAXP;i++){x.fillStyle=i<n?'#5fe08a':'#22323a';x.beginPath();x.arc(370+i*34,136,11,0,7);x.fill()}
+ x.textAlign='center';
+ if(wait){if(NET.isHost()){x.fillStyle=blink?'#ffe07a':'#ffffff';x.font='bold 27px monospace';x.fillText(touch?'TAP  ACT  TO OPEN':'PRESS  ENTER  TO OPEN',W2/2,212);x.font='bold 24px monospace';x.fillText('THE DOORS',W2/2,246);x.font='17px monospace';x.fillStyle='#8fb0bd';x.fillText('wait for your friends first',W2/2,280)}
+  else{x.fillStyle='#ffffff';x.font='bold 24px monospace';x.fillText('WAITING FOR THE HOST',W2/2,212);x.fillText('TO OPEN THE DOORS'+(blink?' ...':'    '),W2/2,246)}}
+ else{x.fillStyle='#5fe08a';x.font='bold 30px monospace';x.fillText('DOORS OPEN',W2/2,220);x.font='bold 22px monospace';x.fillStyle='#ffffff';x.fillText("STAY TOGETHER. DON'T LOOK BACK.",W2/2,258)}
+ // scanlines
+ x.fillStyle='rgba(0,0,0,.18)';for(var y=0;y<H2;y+=4)x.fillRect(0,y,W2,2);
+ V.t.needsUpdate=true;V.glow.intensity=wait?.35:.2}
 function openDoors(remote){if(!waiting())return;ST.open=curSeed();saveST();if(NET.isHost())bcast({t:'open',seed:curSeed()});if(CAR&&CAR.flWas!=null){P.fl=CAR.flWas;CAR.flWas=null}
  try{if(typeof AC!='undefined'&&AC&&!muted){tone({f:880,d:1.2,v:.12});tone({f:1320,d:1.2,v:.08,at:.25})}}catch(e){}if(inLevel())say(remote?'The doors open. Stay together.':'You opened the doors. Stay together.',4)}
 NET.openDoors=function(){if(NET.isHost())openDoors(false)};
-function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var E=CAR.E;
+function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var E=CAR.E;try{tvTick(dt)}catch(e){}
  var tgt=waiting()?0:1;if(CAR.k!==tgt){CAR.k+=(tgt-CAR.k)*Math.min(1,dt*1.6);if(Math.abs(CAR.k-tgt)<.01)CAR.k=tgt;E.doors(CAR.k)}
  var L=toLocal(P.x,P.z),inBox=L.x>-1.1&&L.x<1.1&&L.z>-.05&&L.z<2.55;
  if(waiting()){var nx=Math.max(-.75,Math.min(.75,L.x)),nz=Math.max(.45,Math.min(2.2,L.z));if(nx!==L.x||nz!==L.z){var w=toWorld(nx,nz);P.x=w.x;P.z=w.z}
@@ -7068,11 +7091,11 @@ function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var
  var L2=toLocal(P.x,P.z);CAR.inside=L2.x>-1.1&&L2.x<1.1&&L2.z>-.05&&L2.z<2.55;CAR.px=P.x;CAR.pz=P.z;
  // nothing else happens while you wait: no blackouts, and 14 - 1 - 20 - 8 - 1 - 14 stays away
  if(waiting()){try{if(HU.LO&&HU.LO.ph==0)HU.LO.cd=Math.max(HU.LO.cd,30)}catch(e){}try{if(HU.kid&&HU.kid.E&&!HU.kid.E.on)HU.kid.E.next=Math.max(HU.kid.E.next||0,40)}catch(e){}}}
-var PROMPT=document.createElement('div');PROMPT.style.cssText='position:fixed;left:50%;top:36%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;font:bold 17px monospace;color:#e8f8ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.6';document.body.appendChild(PROMPT);
+var PROMPT=document.createElement('div');PROMPT.style.cssText='position:fixed;left:50%;top:74%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;font:bold 17px monospace;color:#e8f8ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.6';document.body.appendChild(PROMPT);
 function inCar(){var n=1;Object.keys(NET.players).forEach(function(k){var b=NET.players[k].b;if(b&&b.lv===curLv()&&b.seed===curSeed()&&performance.now()-NET.players[k].last<4000)n++});return n}
 function prompt2(){if(!NET.on||!inLevel()||!waiting()){PROMPT.style.display='none';return}PROMPT.style.display='block';var n=inCar(),hostName=(NET.players.host&&NET.players.host.name)||'the host';
- PROMPT.innerHTML='<span style="color:#7fe6ff">'+n+(n==1?' player':' players')+' in the elevator</span><br>'+(NET.isHost()?'Wait for your friends, then press <span style="color:#ffe07a">ENTER</span> to open the doors':'Waiting for '+e2(hostName)+' to open the doors...')}
-addEventListener('keydown',function(e){if((e.code!='Enter'&&e.code!='NumpadEnter')||!NET.isHost()||!waiting()||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;e.preventDefault();openDoors(false)},true);
+ PROMPT.innerHTML='<span style="color:#7fe6ff">'+n+(n==1?' player':' players')+' in the elevator</span><br>'+(NET.isHost()?'Wait for your friends, then '+(document.body.classList.contains('touch')?'tap <span style="color:#ffe07a">ACT</span>':'press <span style="color:#ffe07a">ENTER</span>')+' to open the doors':'Waiting for '+e2(hostName)+' to open the doors...')}
+addEventListener('keydown',function(e){if((e.code!='Enter'&&e.code!='NumpadEnter'&&!(e.code=='KeyF'&&document.body.classList.contains('touch')))||!NET.isHost()||!waiting()||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;e.preventDefault();openDoors(false)},true);
 
 
 // ---------------------------------------------------------------- no PLAY button needed: hosting, joining, the group elevator and retries put you straight into the elevator
