@@ -1,5 +1,15 @@
 # Changelog
 
+## The Backrooms Song now has sung words
+- **Vocals:** "DON'T LOOK BACK" now has a singing voice on every lyric line, sung on the song's melody, an octave low for a ghostly sound.
+  - In the bridge, each number (fourteen… one… twenty… eight… one… fourteen) is sung on its music-box note, one per beat.
+  - The title, the "HELP" letter lines and the outro are whispered.
+- **How it was made:** the voice is a computer voice made with the eSpeak NG speech synthesizer, not a real person or anyone's imitation. A vocoder puts the spoken words onto the melody notes.
+  - Only the song has a voice. The rest of the game still uses captions only, as you asked.
+  - The vocal track is embedded in the game as a small MP3, so it adds about 1 MB.
+- **Vocals switch:** **🎤 VOCALS: ON/OFF** on the song screen turns them off or back on, even mid-song, and your choice is remembered. The lyrics still show on screen.
+- **Checked:** the vocals play in sync for the whole song. A speech recognizer picks out the sung lines about as well as the plain spoken ones, for example "I slipped through", "something is" and "the threshold".
+
 ## The Backrooms Song: "DON'T LOOK BACK" (2:00)
 - **Where:** 🎵 SOUND (main menu or pause menu) → **🎤 THE BACKROOMS SONG**.
 - **What it is:** an original 2-minute song about the game and its lore, in A minor at 106 BPM.
