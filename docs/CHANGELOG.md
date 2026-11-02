@@ -1,5 +1,19 @@
 # Changelog
 
+## The Backrooms Song: "DON'T LOOK BACK" (2:00)
+- **Where:** 🎵 SOUND (main menu or pause menu) → **🎤 THE BACKROOMS SONG**.
+- **What it is:** an original 2-minute song about the game and its lore, in A minor at 106 BPM.
+  - Intro: fluorescent hum and static.
+  - Verse 1: falling into the Lobby.
+  - Chorus: "Don't look back".
+  - Verse 2: the Threshold Project, October '87, the five First Wanderers and their tapes.
+  - Chorus 2: the Boiled One.
+  - Bridge: a music box plays 14 - 1 - 20 - 8 - 1 - 14 as notes over a ticking clock, then Nathan's letter: "HELP. But who held the pen?"
+  - Final chorus: an octave higher.
+  - Outro: the elevator doors open with a ding.
+- **Lyrics on screen:** they appear karaoke style, with the section name, the next line, a progress bar and STOP and CLOSE buttons. There is no singing voice, because the game uses captions only. A synth lead plays the melody line.
+- **Made in code:** all of it is generated with Web Audio, with no audio files. It uses the Music volume, and the background music pauses while it plays.
+
 ## Co-op voice chat
 - **Talk to your friends:** in a co-op game press **Y**, or use **🎤 TURN ON YOUR MIC** in the multiplayer menu. The browser asks for permission the first time. Press Y again to turn it off.
 - **Proximity voice:** friends next to you sound at full volume and get quieter the farther away they are. Friends on another level sound at 60%. You can switch this off in the multiplayer menu to hear everyone at full volume.

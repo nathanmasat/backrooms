@@ -7090,6 +7090,120 @@ hookBtn();addEventListener('load',function(){hookBtn();setTimeout(hookBtn,500)})
 NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;
 })();
 </script>
+<!-- ===== THE BACKROOMS SONG: "DON'T LOOK BACK" (2:00), an original song about the game and its lore, generated live, lyrics on screen ===== -->
+<script>
+// ===================================================================================
+// THE BACKROOMS SONG — "DON'T LOOK BACK" (2:00). An original song about the game and its lore,
+// generated live with the Web Audio API (no audio files). The lyrics show on screen, karaoke style
+// (no sung or spoken voice: the game uses captions only).
+// ===================================================================================
+(function(){
+var BPM=106,BEAT=60/BPM,BAR=BEAT*4,E8=BEAT/2,BARS=53,LEN=BARS*BAR;
+function N(m){return 440*Math.pow(2,(m-69)/12)}
+// ---- the chords, bar by bar ----
+var C={Am:[57,60,64,45],F:[57,60,65,41],Dm:[57,62,65,38],E:[56,59,64,40],G:[55,59,62,43],Em:[55,59,64,40],Bb:[58,62,65,46]};
+var PROG=[].concat(['Am','F','Dm','E'],['Am','F','Dm','E','Am','F','Dm','E'],['F','G','Em','Am','F','G','Em','Am'],['Am','F','Dm','E','Am','F','Dm','E'],['F','G','Em','Am','F','G','Em','Am'],['Am','Am','Bb','Bb','E','E'],['F','G','Em','Am','F','G','Em','Am'],['Am','F','Am']);
+var SEC=[[0,'INTRO'],[4,'VERSE 1'],[12,'CHORUS'],[20,'VERSE 2'],[28,'CHORUS'],[36,'BRIDGE'],[42,'FINAL CHORUS'],[50,'OUTRO']];
+function secAt(b){var s='INTRO';SEC.forEach(function(q){if(b>=q[0])s=q[1]});return s}
+// ---- the melody (eighth notes, 0 = rest), one 2-bar phrase per lyric line ----
+var _=0;
+var VA=[69,_,69,67,69,72,_,69, 65,_,64,65,67,_,_,_],VB=[65,_,65,64,62,64,_,65, 64,_,62,_,59,_,_,_],VA2=[69,_,72,71,69,67,_,69, 65,_,67,69,67,_,65,64],VB2=[65,_,64,62,64,_,65,64, 62,_,59,_,64,_,_,_];
+var CA=[72,_,72,_,71,_,_,_, 74,_,74,_,72,_,_,_],CB=[71,72,71,69,67,_,69,71, 72,_,71,_,69,_,_,_],CC=[69,72,74,72,74,76,_,74, 74,72,71,72,74,_,_,_],CD=[76,_,74,_,72,71,_,_, 69,_,_,_,_,_,_,_];
+var MEL={4:VA,6:VB,8:VA2,10:VB2,12:CA,14:CB,16:CC,18:CD,20:VA,22:VB,24:VA2,26:VB2,28:CA,30:CB,32:CC,34:CD,42:CA,44:CB,46:CC,48:CD};
+// ---- the lyrics (original), by bar ----
+var LY=[[0,"DON'T LOOK BACK","The Backrooms Song"],
+ [4,"I slipped through the floor where the world wears thin"],[6,"Yellow walls humming, they're calling me in"],[8,"Damp carpet, dead lights, a door that's not there"],[10,"Endless and empty, but something's aware"],
+ [12,"Don't look back, don't look back"],[14,"Something is breathing just behind the black"],[16,"Find the keycards, find the light, find the elevator door"],[18,"Don't look back... not anymore"],
+ [20,"October '87, they opened a door"],[22,"The Threshold Project wanted to see more"],[24,"Five went in with a camera and a name"],[26,"Now the voices on the tapes don't sound the same"],
+ [28,"Don't look back, don't look back"],[30,"The Boiled One is smiling where the hallways crack"],[32,"Find the keycards, find the light, find the elevator door"],[34,"Don't look back... not anymore"],
+ [36,"Fourteen... one... twenty... eight... one... fourteen..."],[38,"Count every letter, read the name in between"],[40,"A letter on a desk says HELP. But who held the pen?"],
+ [42,"Don't look back, don't look back"],[44,"The cameras keep watching every step of your track"],[46,"Hold your friends, hold the light, find the elevator door"],[48,"Don't look back... not anymore"],
+ [50,"...the doors are opening.","Don't look back."]];
+// the bridge riff: 14 - 1 - 20 - 8 - 1 - 14 as notes of the A minor scale (number mod 7)
+var SCALE=[69,71,72,74,76,77,79],NUMS=[14,1,20,8,1,14],RIFF=NUMS.map(function(n){return SCALE[n%7]+12});
+
+// ---------------------------------------------------------------- instruments (work on any AudioContext, live or offline)
+function rig(ctx,dest){var R={ctx:ctx};var comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=3.5;comp.attack.value=.01;comp.release.value=.25;var out=ctx.createGain();out.gain.value=.9;comp.connect(out);out.connect(dest);R.out=out;R.dry=ctx.createGain();R.dry.connect(comp);
+ // a small room reverb made from decaying noise
+ var len=ctx.sampleRate*2.4|0,ir=ctx.createBuffer(2,len,ctx.sampleRate);for(var c=0;c<2;c++){var d=ir.getChannelData(c);for(var i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}var cv=ctx.createConvolver();cv.buffer=ir;var wg=ctx.createGain();wg.gain.value=.32;cv.connect(wg);wg.connect(comp);R.wet=cv;
+ var nb=ctx.createBuffer(1,ctx.sampleRate*2,ctx.sampleRate),nd=nb.getChannelData(0);for(var j=0;j<nd.length;j++)nd[j]=Math.random()*2-1;R.nb=nb;R.nodes=[];return R}
+function send(R,node,rev){node.connect(R.dry);if(rev)node.connect(R.wet)}
+function track(R,n){R.nodes.push(n);if(R.nodes.length>400)R.nodes.splice(0,R.nodes.length-400)}
+function env(g,t,a,h,r,v){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+a);g.gain.setValueAtTime(v,t+a+h);g.gain.exponentialRampToValueAtTime(.0001,t+a+h+r)}
+function osc(R,t,f,o){var x=R.ctx,os=x.createOscillator(),g=x.createGain(),last=os;os.type=o.w||'sine';os.frequency.setValueAtTime(f,t);if(o.f2)os.frequency.exponentialRampToValueAtTime(o.f2,t+(o.gl||.1));if(o.det)os.detune.value=o.det;
+ if(o.vib){var l=x.createOscillator(),lg=x.createGain();l.frequency.value=o.vib;lg.gain.value=o.vd||10;l.connect(lg);lg.connect(os.detune);l.start(t);l.stop(t+(o.a||.01)+(o.h||0)+(o.r||.3)+.1)}
+ if(o.lp){var f2=x.createBiquadFilter();f2.type='lowpass';f2.frequency.value=o.lp;f2.Q.value=o.q||.7;os.connect(f2);last=f2}last.connect(g);env(g,t,o.a||.01,o.h||0,o.r||.3,o.v||.1);send(R,g,o.rev);os.start(t);os.stop(t+(o.a||.01)+(o.h||0)+(o.r||.3)+.05);track(R,os)}
+function noise(R,t,o){var x=R.ctx,s=x.createBufferSource(),f=x.createBiquadFilter(),g=x.createGain();s.buffer=R.nb;f.type=o.ft||'bandpass';f.frequency.value=o.f||2000;f.Q.value=o.q||1;s.connect(f);f.connect(g);env(g,t,o.a||.002,o.h||0,o.r||.1,o.v||.1);send(R,g,o.rev);s.start(t,Math.random()*1.5);s.stop(t+(o.a||.002)+(o.h||0)+(o.r||.1)+.05);track(R,s)}
+function kick(R,t,v){osc(R,t,130,{f2:42,gl:.13,a:.003,r:.32,v:v||.55})}
+function snare(R,t,v){noise(R,t,{f:1900,q:.8,r:.16,v:(v||.22)});osc(R,t,200,{f2:150,gl:.06,a:.002,r:.1,v:(v||.22)*.6,w:'triangle'})}
+function hat(R,t,v){noise(R,t,{ft:'highpass',f:7500,q:.5,r:.035,v:v||.05})}
+function crash(R,t){noise(R,t,{ft:'highpass',f:4200,q:.4,r:1.6,v:.07,rev:1})}
+function pad(R,t,ch,dur,v){ch.slice(0,3).forEach(function(m){[-9,9].forEach(function(d){osc(R,t,N(m),{w:'sawtooth',det:d,lp:900,a:.7,h:Math.max(.1,dur-1.2),r:1.1,v:v||.022,rev:1})})})}
+function bass(R,t,m,d,v){osc(R,t,N(m),{w:'triangle',a:.01,h:d*.6,r:.12,v:v||.16,lp:520});osc(R,t,N(m-12),{w:'sine',a:.01,h:d*.6,r:.12,v:(v||.16)*.8})}
+function lead(R,t,m,d,v){osc(R,t,N(m),{w:'square',lp:1900,a:.025,h:Math.max(.02,d-.12),r:.18,v:v||.045,vib:5.5,vd:12,rev:1});osc(R,t,N(m-12),{w:'triangle',a:.025,h:Math.max(.02,d-.12),r:.18,v:(v||.045)*.7,rev:1})}
+function pluck(R,t,m,v){osc(R,t,N(m),{w:'sine',a:.003,r:.35,v:v||.05,rev:1});osc(R,t,N(m+12),{w:'triangle',a:.003,r:.15,v:(v||.05)*.4})}
+function box(R,t,m,v){osc(R,t,N(m),{w:'sine',a:.002,r:1.1,v:v||.07,rev:1});osc(R,t,N(m)*2.01,{w:'sine',a:.002,r:.5,v:(v||.07)*.35,rev:1})}
+function hum(R,t,d,v){osc(R,t,60,{w:'sawtooth',lp:260,a:.6,h:Math.max(.1,d-1.2),r:.6,v:v||.012});osc(R,t,120,{w:'sine',a:.6,h:Math.max(.1,d-1.2),r:.6,v:(v||.012)*.8})}
+function stat(R,t,d){noise(R,t,{f:3000,q:.3,a:.01,r:d||.5,v:.05})}
+function tick(R,t){noise(R,t,{ft:'highpass',f:3500,q:2,r:.02,v:.07})}
+function ding(R,t){[[880,0],[1320,.3]].forEach(function(p){osc(R,t+p[1],p[0],{w:'sine',a:.005,r:2.2,v:.08,rev:1})})}
+
+// ---------------------------------------------------------------- the arrangement: every event in the song, in time order
+function events(){var ev=[];function at(t,fn){ev.push({t:t,fn:fn})}
+ for(var b=0;b<BARS;b++){(function(b){var t0=b*BAR,ch=C[PROG[b]],s=secAt(b),full=/CHORUS/.test(s),fin=s=='FINAL CHORUS',v2=s=='VERSE 2',br=s=='BRIDGE',intro=s=='INTRO',out=s=='OUTRO';
+  // pad + fluorescent hum
+  at(t0,function(R,t){pad(R,t,ch,BAR,intro||out?.018:full?.026:.022)});
+  if(intro||br||out)at(t0,function(R,t){hum(R,t,BAR,.014)});
+  if(b%4==0&&(intro||b==36||b==50))at(t0,function(R,t){stat(R,t,.6)});
+  // bass
+  if(!intro){for(var i=0;i<8;i++){(function(i){var m=ch[3];if(br&&i%2)return;if(out&&i>0)return;at(t0+i*E8,function(R,t){bass(R,t,i==6&&full?m+7:m,out?BAR:E8,full?.17:.13)})})(i)}}
+  // drums
+  if(s=='VERSE 1'||v2){for(var k=0;k<4;k++){(function(k){if(k%2==0)at(t0+k*BEAT,function(R,t){kick(R,t,.45)});if(k==3)at(t0+k*BEAT,function(R,t){snare(R,t,.12)})})(k)}for(var h=0;h<8;h++)(function(h){at(t0+h*E8,function(R,t){hat(R,t,h%2?.025:.04)})})(h)}
+  if(full){[0,1.5,2].forEach(function(q){at(t0+q*BEAT,function(R,t){kick(R,t,.55)})});[1,3].forEach(function(q){at(t0+q*BEAT,function(R,t){snare(R,t,.22)})});for(var h2=0;h2<8;h2++)(function(h2){at(t0+h2*E8,function(R,t){hat(R,t,h2%2?.03:.05)})})(h2);if(b==12||b==28||b==42)at(t0,function(R,t){crash(R,t)})}
+  if(br){[0,.35].forEach(function(q){at(t0+q,function(R,t){kick(R,t,.3)})});[0,2].forEach(function(q){at(t0+q*BEAT,function(R,t){kick(R,t,.3)})});for(var c=0;c<4;c++)(function(c){at(t0+c*BEAT,function(R,t){tick(R,t)})})(c)}
+  // verse 2 arpeggio
+  if(v2)for(var a=0;a<8;a++)(function(a){var m=[ch[0],ch[1],ch[2],ch[1]][a%4]+12;at(t0+a*E8,function(R,t){pluck(R,t,m,.035)})})(a);
+  // bridge: the 14-1-20-8-1-14 riff on a music box, one number per beat
+  if(br)for(var q=0;q<4;q++)(function(q){var idx=((b-36)*4+q)%6;at(t0+q*BEAT,function(R,t){box(R,t,RIFF[idx],.075)})})(q);
+  // the melody (the line the lyrics follow)
+  var ph=MEL[b-(b%2)];if(ph){var off=(b%2)*8;for(var e=0;e<8;e++){(function(e){var m=ph[off+e];if(!m)return;var d=E8,j=e+1;while(j<8&&!ph[off+j]&&!(off+j>=16)){d+=E8;j++}at(t0+e*E8,function(R,t){lead(R,t,fin?m+12:m,Math.min(d,BEAT*1.5),fin?.038:.045);if(fin)lead(R,t,m,Math.min(d,BEAT*1.5),.03)})})(e)}}
+  if(out&&b==52)at(t0+BEAT,function(R,t){ding(R,t)});
+ })(b)}
+ ev.sort(function(a,b){return a.t-b.t});return ev}
+
+// ---------------------------------------------------------------- live player + offline render
+var SONG={len:LEN,bpm:BPM,lyrics:LY,title:"DON'T LOOK BACK"},LIVE=null;
+SONG.render=function(ctx){var R=rig(ctx,ctx.destination);events().forEach(function(e){e.fn(R,e.t+.05)});return ctx.startRendering()};
+SONG.play=function(){SONG.stop();var ctx=(typeof AC!='undefined'&&AC)?AC:null;if(!ctx){try{initAudio();ctx=AC}catch(e){}}if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}}try{ctx.resume()}catch(e){}
+ var dest=(typeof MUSB!='undefined'&&MUSB)?MUSB:ctx.destination,g=ctx.createGain();g.gain.value=1;g.connect(dest);var R=rig(ctx,g),EV=events(),i=0,t0=ctx.currentTime+.25;
+ LIVE={ctx:ctx,R:R,g:g,t0:t0,iv:setInterval(function(){var now=ctx.currentTime-t0;while(i<EV.length&&EV[i].t<now+1.2){try{EV[i].fn(R,t0+EV[i].t)}catch(e){}i++}if(now>LEN+3)SONG.stop()},100)};window.SONGON=1};
+SONG.stop=function(){if(!LIVE)return;var L=LIVE;LIVE=null;clearInterval(L.iv);try{L.g.gain.setTargetAtTime(0,L.ctx.currentTime,.15)}catch(e){}setTimeout(function(){L.R.nodes.forEach(function(n){try{n.stop()}catch(e){}});try{L.g.disconnect()}catch(e){}},700);window.SONGON=0;if(UIx)paint(-1)};
+SONG.time=function(){return LIVE?LIVE.ctx.currentTime-LIVE.t0:-1};
+window.SONG=SONG;
+
+// ---------------------------------------------------------------- the lyrics screen
+var UIx=null;
+function fmt(s){s=Math.max(0,s|0);return (s/60|0)+':'+('0'+s%60).slice(-2)}
+function lineAt(t){var b=t/BAR,cur=-1;LY.forEach(function(l,i){if(b>=l[0])cur=i});return cur}
+function paint(t){if(!UIx)return;var playing=t>=0,ci=playing?lineAt(t):-1,b=playing?t/BAR:0;
+ UIx.sec.textContent=playing?secAt(Math.floor(b)):'';var L=ci>=0?LY[ci]:null,nx=LY[ci+1];
+ UIx.cur.innerHTML=L?(L[2]?'<div style="font-size:1.6em;letter-spacing:.12em">'+L[1]+'</div><div style="opacity:.75;font-size:.6em;margin-top:.4em">'+L[2]+'</div>':L[1]):(playing?'':'Press PLAY');
+ UIx.nxt.textContent=nx&&playing?nx[1]:'';UIx.bar.style.width=(playing?Math.min(100,t/LEN*100):0)+'%';UIx.tm.textContent=(playing?fmt(t):'0:00')+' / '+fmt(LEN);UIx.pp.textContent=playing?'■ STOP':'▶ PLAY';
+ var beat=playing?(t/BEAT)%1:1;UIx.glow.style.opacity=playing?(.25+.35*Math.max(0,1-beat*3)):.15}
+function openUI(){if(UIx)return;var d=document.createElement('div');d.id='songui';d.style.cssText='position:fixed;inset:0;z-index:97;background:radial-gradient(ellipse at 50% 40%,#2a2408 0%,#0b0a04 55%,#000 100%);color:#f3e7a0;font-family:Georgia,serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box';
+ d.innerHTML='<div data-s=glow style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 30%,rgba(255,230,120,.35),transparent 60%);opacity:.15"></div>'+
+  '<div style="font:bold 12px monospace;letter-spacing:.35em;opacity:.7">🎵 THE BACKROOMS SONG</div><div style="font:bold clamp(26px,5vw,44px) Georgia,serif;letter-spacing:.12em;margin:6px 0 2px;text-shadow:0 0 18px #a80">DON\'T LOOK BACK</div><div style="font:12px monospace;opacity:.6">an original song for THE BACKROOMS: DON\'T LOOK BACK, a game by Nathan</div>'+
+  '<div data-s=sec style="font:bold 12px monospace;letter-spacing:.3em;color:#e4d56a;margin-top:6vh;min-height:16px"></div><div data-s=cur style="font-size:clamp(20px,3.6vw,34px);max-width:900px;min-height:3.2em;margin-top:12px;line-height:1.3;text-shadow:0 0 12px #000"></div><div data-s=nxt style="font-size:clamp(13px,1.8vw,17px);opacity:.45;min-height:1.6em;margin-top:6px"></div>'+
+  '<div style="width:min(560px,86vw);height:4px;background:#3a3410;margin-top:6vh;border-radius:2px;overflow:hidden"><div data-s=bar style="height:100%;width:0;background:#e4d56a"></div></div><div data-s=tm style="font:12px monospace;opacity:.7;margin-top:6px"></div>'+
+  '<div style="display:flex;gap:10px;margin-top:16px"><div data-s=pp class="bt" style="min-width:120px">▶ PLAY</div><div data-s=close class="bt" style="min-width:120px">✕ CLOSE</div></div><div style="font:11px monospace;opacity:.5;margin-top:10px">No singing voice: the lyrics are on screen. The music uses your Music volume.</div>';
+ document.body.appendChild(d);UIx={d:d};['glow','sec','cur','nxt','bar','tm','pp','close'].forEach(function(k){UIx[k]=d.querySelector('[data-s='+k+']')});
+ UIx.pp.onclick=function(){if(SONG.time()>=0)SONG.stop();else SONG.play()};UIx.close.onclick=function(){SONG.stop();d.remove();UIx=null};
+ d.addEventListener('keydown',function(e){e.stopPropagation()},true);
+ (function loop(){if(!UIx)return;requestAnimationFrame(loop);paint(SONG.time())})()}
+SONG.open=function(autoplay){try{var m=document.getElementById('mp');if(m)m.style.display='none'}catch(e){}openUI();if(autoplay!==false)SONG.play()};
+addEventListener('keydown',function(e){if(e.code=='Escape'&&UIx){SONG.stop();UIx.d.remove();UIx=null;e.stopImmediatePropagation()}},true);
+})();
+</script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
@@ -7544,7 +7658,7 @@ var TR={
 function stopMusic(){if(!MZ.bus)return;var b=MZ.bus,ns=MZ.nodes;try{b.gain.setTargetAtTime(0,AC.currentTime,.4)}catch(e){}setTimeout(function(){ns.forEach(function(n){try{n.stop()}catch(e){}});try{b.disconnect()}catch(e){}},2500);MZ.bus=null;MZ.nodes=[];MZ.lfo=null;MZ.trk=null}
 function startMusic(k){stopMusic();if(!TR[k]||!AC||!MUSB)return;MZ.trk=k;MZ.bus=AC.createGain();MZ.bus.gain.value=0;MZ.bus.connect(MUSB);MZ.bus.gain.setTargetAtTime(1,AC.currentTime,.8);MZ.t=AC.currentTime+.1;MZ.step=0;if(TR[k].start)TR[k].start()}
 setInterval(function(){if(!AC||!MUSB||AC.state!='running')return;
- var want=(typeof CUT!='undefined'&&CUT)?null:(SET.trk=='off'?null:SET.trk);
+ var want=((typeof CUT!='undefined'&&CUT)||window.SONGON)?null:(SET.trk=='off'?null:SET.trk);
  if(want!=MZ.trk){if(want)startMusic(want);else stopMusic()}
  if(!MZ.trk)return;var T=TR[MZ.trk];while(MZ.t<AC.currentTime+.6){try{T.ev(MZ.t,MZ.step)}catch(e){}MZ.t+=T.len;MZ.step++}},120);
 
@@ -7559,7 +7673,7 @@ function pct(v){return Math.round(v*100)+'%'}
 function sl(k,l){return '<div class="sl"><span>'+l+'</span><input type="range" data-k="'+k+'" min="0" max="100" value="'+Math.round(SET[k]*100)+'"><span id="pv-'+k+'">'+pct(SET[k])+'</span></div>'}
 function panel(){var h='<div class="snd"><h3>&#127925; MUSIC &amp; SOUND</h3>'+sl('vol','Master volume')+sl('mus','Music')+sl('sfx','Sound effects')+sl('amb','Light hum')+
  '<div style="margin-top:10px">Music track:</div><div class="trk">'+Object.keys(TR).map(function(k){return '<div class="tb2'+(SET.trk==k?' on':'')+'" data-snd="trk:'+k+'">'+TR[k].n+'<small>'+TR[k].d+'</small></div>'}).join('')+'<div class="tb2'+(SET.trk=='off'?' on':'')+'" data-snd="trk:off">Off<small>no music</small></div></div>'+
- '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div></div>';
+ '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div><div class="row2"><div class="tb2" data-snd="song" style="border-color:#e4d56a">&#127908; THE BACKROOMS SONG: &quot;DON&#39;T LOOK BACK&quot; (2:00)<small>an original song about the game and its lore, with on-screen lyrics</small></div></div></div>';
  pnl(h)}
 window.openSound=function(){if(!AC){try{initAudio();applyS()}catch(e){}}try{AC&&AC.resume()}catch(e){}panel()};
 if(btn){btn.onclick=function(e){e.stopPropagation();openSound()};paintBtn()}
@@ -7567,6 +7681,7 @@ mp.addEventListener('input',function(e){var k=e.target.dataset&&e.target.dataset
 mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('[data-snd]');if(!a)return;var v=a.dataset.snd;
  if(v.indexOf('trk:')==0){sv('trk',v.slice(4))}
  else if(v=='mute'){muted=!muted;SET.muted=muted?1:0;sv('muted',SET.muted);paintBtn()}
+ else if(v=='song'){if(window.SONG)SONG.open();return}
  else if(v=='test'){if(AC){try{AC.resume();tone({f:520,f2:780,d:.25,v:.35});burst({f:1800,q:3,d:.12,v:.4})}catch(x){}}}
  panel()});
 // pause menu gets a SOUND button too (works on phones from the pause button)

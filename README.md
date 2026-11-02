@@ -52,6 +52,9 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 - **Style & money:** Shop, Wallet, Suits, Rare Suits.
 - **Photos & fun:** Camera, My Files, Images, Minigames.
 
+## Music
+- **The Backrooms Song:** 🎵 SOUND → THE BACKROOMS SONG plays "DON'T LOOK BACK", an original 2-minute song about the game's lore, with lyrics on screen.
+
 ## New players
 - Your first Level 0 is easier: a guide arrow to the keycards and the elevator, glowing beams over keycards, a sleeping Boiled One for 45 seconds, then a slower one, and half-speed sanity and battery drain. Press H to turn it off. It ends after your first escape.
 
