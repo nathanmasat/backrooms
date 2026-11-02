@@ -1,5 +1,14 @@
 # Changelog
 
+## Co-op: OPEN GAMES list
+- The co-op menu now shows **🌐 OPEN GAMES**: every public game being hosted right now, with the host's name, the level, and how many players are in (for example 2/4). Tap **JOIN** to hop in; full games say FULL.
+- Hosting now has two choices:
+  - **HOST A PUBLIC GAME**: listed in OPEN GAMES, anyone can join.
+  - **HOST A PRIVATE GAME**: not listed; only friends with your room code can join (same as before).
+- While hosting, the host can switch between public and private any time from the co-op menu.
+- How it works: there's no game server, so a public host posts a small listing (room code, in-game name, level, player count) on the same free relay servers co-op already uses, refreshed every 10 seconds. Listings disappear right away when the host leaves or goes private, and within about a minute if the host's game closes suddenly.
+- Privacy: only in-game info is listed, never anything personal. Private games are never listed. Anyone playing the game can see and join a public game, so the menu reminds players to only play with people they trust. Voice chat stays off until each player turns on their own mic.
+
 ## Co-op starts where you left off
 - Hosting a co-op game now starts on the level the host was last playing (solo or co-op) instead of a random level. Friends who join go to that same level.
 - The game remembers your last level for each save slot. It updates every couple of seconds while you play, so if you leave a co-op game on Level 14, your next co-op game starts on Level 14.
