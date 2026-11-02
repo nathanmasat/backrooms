@@ -1,5 +1,14 @@
 # Changelog
 
+## The Backrooms Song: clearer vocals
+- **A clearer voice:** the vocoded robot voice is replaced by a more natural synthetic voice (MBROLA "us2" through eSpeak NG; still a computer voice, not a real person). Each syllable is lined up with its melody note and pitch-corrected onto it with Praat's PSOLA, so consonants and vowels stay sharp instead of smeared.
+- **Mixing:**
+  - When the vocals are on, the lead synth that doubled the melody drops to 30%, so it no longer covers the words.
+  - The voice is 4 dB louder than before, with a presence lift around 3 kHz and gentle compression.
+  - A limiter on the song's output stops it clipping.
+- **Measured:** the same speech recognizer now picks out 38% of the lyric words in the full mix, up from 8% before. Lines like "Something is breathing just behind the black" come through almost word for word.
+- **The MP3 and the game** both use the new vocals. The 🎤 VOCALS ON/OFF switch still works.
+
 ## The Backrooms Song now has sung words
 - **Vocals:** "DON'T LOOK BACK" now has a singing voice on every lyric line, sung on the song's melody, an octave low for a ghostly sound.
   - In the bridge, each number (fourteen… one… twenty… eight… one… fourteen) is sung on its music-box note, one per beat.
