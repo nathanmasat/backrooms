@@ -2757,7 +2757,7 @@ today();
 #rec-ind i{width:10px;height:10px;border-radius:50%;background:#ff2a1a;box-shadow:0 0 8px #f00;animation:recb 1s infinite}
 #rec-ind.pz{color:#ffcc55}#rec-ind.pz i{background:#ffaa00;animation:none}
 @keyframes recb{50%{opacity:.2}}
-body.touch.tplay #rec-ind{right:auto;left:calc(env(safe-area-inset-left) + 8px);top:calc(env(safe-area-inset-top) + 128px)}
+body.touch.tplay #rec-ind{right:auto;left:calc(env(safe-area-inset-left) + 214px);top:calc(env(safe-area-inset-top) + 10px)}
 .gw{position:relative;margin:-6px -12px;padding:8px 10px 10px;min-height:470px;background:#020a04;color:#7dff8a;font:12px/1.45 monospace;overflow:hidden;animation:mgfl 7s infinite}
 .gw:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
 .gw h3{margin:2px 0 6px;font:bold 15px monospace;letter-spacing:.2em;color:#b8ffbf;text-shadow:0 0 8px #2f8}
@@ -7091,7 +7091,7 @@ function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var
  var L2=toLocal(P.x,P.z);CAR.inside=L2.x>-1.1&&L2.x<1.1&&L2.z>-.05&&L2.z<2.55;CAR.px=P.x;CAR.pz=P.z;
  // nothing else happens while you wait: no blackouts, and 14 - 1 - 20 - 8 - 1 - 14 stays away
  if(waiting()){try{if(HU.LO&&HU.LO.ph==0)HU.LO.cd=Math.max(HU.LO.cd,30)}catch(e){}try{if(HU.kid&&HU.kid.E&&!HU.kid.E.on)HU.kid.E.next=Math.max(HU.kid.E.next||0,40)}catch(e){}}}
-var PROMPT=document.createElement('div');PROMPT.style.cssText='position:fixed;left:50%;top:74%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;font:bold 17px monospace;color:#e8f8ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.6';document.body.appendChild(PROMPT);
+var PROMPT=document.createElement('div');PROMPT.id='mpprompt';PROMPT.style.cssText='position:fixed;left:50%;top:74%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;font:bold 17px monospace;color:#e8f8ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.6';document.body.appendChild(PROMPT);
 function inCar(){var n=1;Object.keys(NET.players).forEach(function(k){var b=NET.players[k].b;if(b&&b.lv===curLv()&&b.seed===curSeed()&&performance.now()-NET.players[k].last<4000)n++});return n}
 function prompt2(){if(!NET.on||!inLevel()||!waiting()){PROMPT.style.display='none';return}PROMPT.style.display='block';var n=inCar(),hostName=(NET.players.host&&NET.players.host.name)||'the host';
  PROMPT.innerHTML='<span style="color:#7fe6ff">'+n+(n==1?' player':' players')+' in the elevator</span><br>'+(NET.isHost()?'Wait for your friends, then '+(document.body.classList.contains('touch')?'tap <span style="color:#ffe07a">ACT</span>':'press <span style="color:#ffe07a">ENTER</span>')+' to open the doors':'Waiting for '+e2(hostName)+' to open the doors...')}
@@ -7115,7 +7115,7 @@ try{var vs=JSON.parse(localStorage.getItem('brvc')||'{}');VC.prox=vs.prox!==fals
 function vcSave(){try{localStorage.setItem('brvc',JSON.stringify({prox:VC.prox,muted:VC.muted}))}catch(e){}}
 function realId(id){return id==='host'?PFX+NET.code:id}
 function vcStart(){if(VC.on||!NET.on)return;if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('This browser cannot use a microphone here.');return}
- navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false}).then(function(st){if(!NET.on){st.getTracks().forEach(function(t){t.stop()});return}VC.stream=st;VC.on=true;if(ST){ST.mic=1;saveST()}toast('🎤 Mic on: your friends can hear you. Press Y to turn it off.');callAll();render()})
+ navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false}).then(function(st){if(!NET.on){st.getTracks().forEach(function(t){t.stop()});return}VC.stream=st;VC.on=true;if(ST){ST.mic=1;saveST()}toast('🎤 Mic on: your friends can hear you. '+(document.body.classList.contains('touch')?'Tap MIC to turn it off.':'Press Y to turn it off.'));callAll();render()})
  .catch(function(err){toast(err&&err.name=='NotAllowedError'?'The microphone is blocked. Allow it in the address bar to talk.':'Could not start the microphone.');if(ST){ST.mic=0;saveST()}})}
 function vcStop(silent){VC.on=false;if(ST){ST.mic=0;saveST()}Object.keys(VC.out).forEach(function(k){try{VC.out[k].close()}catch(e){}});VC.out={};if(VC.stream){VC.stream.getTracks().forEach(function(t){t.stop()});VC.stream=null}if(!silent)toast('🎤 Mic off.');render()}
 function vcDropAll(){Object.keys(VC.inc).forEach(function(k){try{VC.inc[k].call.close()}catch(e){}try{VC.inc[k].el.remove()}catch(e){}});VC.inc={};Object.keys(VC.out).forEach(function(k){try{VC.out[k].close()}catch(e){}});VC.out={};if(VC.stream){VC.stream.getTracks().forEach(function(t){t.stop()});VC.stream=null}VC.on=false}
@@ -7156,7 +7156,7 @@ addEventListener('pagehide',function(){try{if(NET.peer)NET.peer.destroy()}catch(
 var HUD2=document.createElement('div');HUD2.id='mphud';HUD2.style.cssText='position:fixed;right:12px;top:150px;z-index:6;pointer-events:none;font:12px monospace;color:#dff;text-shadow:0 0 4px #000;text-align:right;line-height:1.6;display:none';document.body.appendChild(HUD2);
 var TOAST=document.createElement('div');TOAST.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;pointer-events:none;font:13px monospace;color:#e8f8ff;background:rgba(0,10,20,.8);border:1px solid #3a6a7a;padding:6px 12px;border-radius:6px;display:none;max-width:90vw;text-align:center';document.body.appendChild(TOAST);var toastT=0;
 function toast(t){TOAST.textContent=t;TOAST.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){TOAST.style.display='none'},4200)}
-function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+(VC.on?'<span style="color:#7f7">🎤 LIVE</span> ':'')+e2(myName())+(NET.isHost()?' (host)':'')+' · you'+(VC.on?'':' <span style="opacity:.6">(Y = mic)</span>')+'<br>';
+function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+(VC.on?'<span style="color:#7f7">🎤 LIVE</span> ':'')+e2(myName())+(NET.isHost()?' (host)':'')+' · you'+(VC.on?'':' <span style="opacity:.6">('+(document.body.classList.contains('touch')?'tap MIC':'Y = mic')+')</span>')+'<br>';
  Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#f77">caught</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
  if(NET.role=='client'&&!(NET.host&&NET.host.open))h+='<span style="color:#fc6">reconnecting to host…</span>';HUD2.innerHTML=h}
 
@@ -7905,6 +7905,7 @@ body.touch.tplay #tc{display:block}
 #b-fire{right:84px;bottom:76px;border-color:#ff6a5a;color:#ff8a7a}
 #b-R{right:144px;bottom:58px;width:50px!important;height:50px!important}
 /* lean pair */
+#b-mic{display:none;right:calc(env(safe-area-inset-right) + 76px);top:calc(env(safe-area-inset-top) + 30px);width:50px!important;height:50px!important}body.tcoop #b-mic{display:flex}#b-mic.act{background:#0b2a14cc}
 #tc-lean{position:absolute;right:calc(env(safe-area-inset-right) + 84px);bottom:calc(env(safe-area-inset-bottom) + 206px);display:flex;gap:6px;pointer-events:none}
 #tc-lean .tb{position:static;width:46px;height:34px;border-radius:17px}
 #tc-lean .tb i{font-size:14px}
@@ -7932,6 +7933,8 @@ body.touch.tplay #nbguide .nbsub{display:none}
 body.touch.tplay #msg{bottom:auto;top:auto;bottom:calc(env(safe-area-inset-bottom) + 14px);font-size:11px;max-width:40vw}
 body.touch.tplay #gun{bottom:calc(env(safe-area-inset-bottom) + 70px)!important;left:50%!important;transform:translateX(-50%);font-size:11px;white-space:nowrap}
 body.touch.tplay #tc-lean{opacity:.75}
+body.touch.tplay #mphud{left:calc(env(safe-area-inset-left) + 8px)!important;right:auto!important;top:calc(env(safe-area-inset-top) + 112px)!important;text-align:left!important;font-size:9px!important;line-height:1.45!important;max-width:200px;background:#0006;border-radius:6px;padding:3px 6px}
+body.touch.tplay #mpprompt{top:64%!important;font-size:12px!important;line-height:1.45!important;max-width:44vw}
 body.touch.tplay #mic{right:80px!important}
 body.touch canvas{touch-action:none}
 @media (max-height:500px){body.touch .pn{font-size:11px;line-height:1.55;padding:12px 16px;max-height:92vh;-webkit-overflow-scrolling:touch}body.touch .pn .bt{padding:6px 10px;margin:6px auto;font-size:12px}}
@@ -7939,7 +7942,8 @@ body.touch canvas{touch-action:none}
 <div id="tc">
  <div id="tc-joy"><div id="tc-base"><div id="tc-runlbl">SPRINT</div><div id="tc-knob"></div></div></div>
  <div id="tc-look"></div>
- <div id="tc-lean"><div class="tb" data-hold="KeyZ"><i>&#8630;</i></div><div class="tb" data-hold="KeyX"><i>&#8631;</i></div></div>
+ <div class="tb" id="b-mic" data-key="KeyY"><i>&#127908;</i><b>MIC</b></div>
+<div id="tc-lean"><div class="tb" data-hold="KeyZ"><i>&#8630;</i></div><div class="tb" data-hold="KeyX"><i>&#8631;</i></div></div>
  <div id="tc-acts">
   <div class="tb" id="b-F" data-key="KeyF"><i>&#9995;</i><b>ACT</b></div>
   <div class="tb" id="b-E" data-key="KeyE"><i>&#128230;</i><b>GRAB</b></div>
@@ -8014,7 +8018,7 @@ var $b=function(i){return document.getElementById(i)},body=document.body,wasPlay
  var play=!!started&&!(typeof CUT!='undefined'&&CUT)&&!P.dead&&!P.won;
  if(play!=wasPlay){body.classList.toggle('tplay',play);wasPlay=play;if(!play){home();lid=null;K.KeyC=0;['KeyZ','KeyX','Tab'].forEach(function(k){if(K[k])key(k,0)})}}
  if(play){
-  $b('b-Q').classList.toggle('act',!!P.scan);body.classList.toggle('tscan',!!P.scan);
+  $b('b-Q').classList.toggle('act',!!P.scan);var co=!!(window.NET&&NET.on);body.classList.toggle('tcoop',co);if(co)$b('b-mic').classList.toggle('act',!!(NET.vc&&NET.vc.on));body.classList.toggle('tscan',!!P.scan);
   $b('b-T').classList.toggle('act',!!P.fl);
   $b('b-M').classList.toggle('act',!!MAPON);
   $b('b-C').classList.toggle('act',!!K.KeyC);

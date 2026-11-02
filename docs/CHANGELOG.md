@@ -1,5 +1,12 @@
 # Changelog
 
+## Phone mic button
+- **🎤 MIC button on phones:** in a co-op game, phones show a MIC button at the top right (next to the button column). Tap it to turn your mic on (it lights up green), and tap again to turn it off. It does the same as the Y key on a computer.
+- The button only appears on phones and tablets, and only during co-op. Computers keep using Y.
+- The mic still only turns on when you tap it, and the browser asks for permission the first time.
+- Phone text now says "tap MIC" instead of "Y".
+- The co-op player list moved under the mini-map on phones so it doesn't run into the buttons, and the elevator message is smaller.
+
 ## Co-op elevator TV
 - A TV on the left wall of the co-op starting elevator (co-op only) shows:
   - **HOST:** the host's name
