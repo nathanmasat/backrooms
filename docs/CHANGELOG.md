@@ -1,5 +1,12 @@
 # Changelog
 
+## Pick any name
+- Names can now be almost anything: 1 to 20 characters, any language, emoji, accents and symbols (for example "Ünal 🐸 the GOAT!!" or "李小龙"). Before, names had to be 3-16 plain letters, numbers, spaces or _.
+- Co-op shows your real name to your friends; it used to strip everything except plain letters.
+- Fixed false blocks: names like "Hostile" or "grapes" were rejected because they started with or contained a blocked word.
+- Still blocked: hateful slurs, and the exact names admin / administrator / moderator / mod / staff (so nobody can pretend to be game staff). Characters that could break the page (< > & " ' ` \) are quietly removed.
+- A name never gives admin powers; admin still needs the admin key.
+
 ## Phone mic button
 - **🎤 MIC button on phones:** in a co-op game, phones show a MIC button at the top right (next to the button column). Tap it to turn your mic on (it lights up green), and tap again to turn it off. It does the same as the Y key on a computer.
 - The button only appears on phones and tablets, and only during co-op. Computers keep using Y.
