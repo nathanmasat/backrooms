@@ -1,5 +1,15 @@
 # Changelog
 
+## The Backrooms Song: no stutter, no echo
+- **No stutter:** each line is now sung at an even, natural pace. Before, every syllable was stretched or squashed to hit its note, which made the stutter.
+- **On pitch:** the voice is still pitch-corrected onto the melody notes, with short smooth glides between them.
+- **No echo or "playback":**
+  - The delay echo on the voice is gone.
+  - Each line now stops before the next one starts, so lines never overlap.
+  - The song's room reverb is much shorter and quieter (1.2 s at 13%, down from 2.4 s at 32%).
+- **A cleaner voice:** the vocals now use the MBROLA "us1" voice, a computer voice and not a real person. It speaks around 190 Hz, right in the middle of the melody, so the pitch is moved less and sounds cleaner.
+- **Measured:** the speech recognizer picks out 45% of the lyric words on the voice alone (30% before) and 34% in the full song. "The Threshold Project wanted to see more" and "The Boiled One is smiling where the hallway…" come through clearly.
+
 ## The Backrooms Song: clearer vocals
 - **A clearer voice:** the vocoded robot voice is replaced by a more natural synthetic voice (MBROLA "us2" through eSpeak NG; still a computer voice, not a real person). Each syllable is lined up with its melody note and pitch-corrected onto it with Praat's PSOLA, so consonants and vowels stay sharp instead of smeared.
 - **Mixing:**
