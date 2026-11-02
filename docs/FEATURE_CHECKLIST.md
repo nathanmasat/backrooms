@@ -153,7 +153,8 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [x] Same level and seed for everyone; joins mid-level; reconnects after every reload
 - [x] Other players drawn with their suit, name tag, flashlight and walk / run / crouch animation
 - [x] Host-run monster (Levels 0 and 3–19) that hunts the nearest player; clients see the host's monster
-- [x] Shared keycards / objective items; group elevator to the next level with a new shared seed
+- [x] Shared keycards / objective items; group elevator to a random next level with a new shared seed
+- [x] Co-op starts on a random level (0–19); co-op never changes the solo save (level, unlocks, save spot)
 - [x] Co-op HUD list; join, leave and caught notices
 - [x] Co-op start in a closed elevator: own spot per player, monster frozen, host presses ENTER to open the doors for everyone; open state kept for retries and late joiners; auto-open if the host goes silent for 20 s
 - [x] Message checks, rate limit, escaped names, IP-address privacy note

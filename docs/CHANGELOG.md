@@ -1,5 +1,10 @@
 # Changelog
 
+## Co-op: random levels
+- **A random start:** every new co-op game starts on a random level from 0 to 19, with everyone in the elevator showing that floor number.
+- **Random next levels:** each time the group takes the elevator, it goes to another random level, never the same one twice in a row. On Level 19 the game doesn't end in co-op: the elevator just takes the group somewhere new.
+- **Your solo save is safe:** co-op never changes your solo level, unlocked levels or save spot. Leaving multiplayer takes you back to where your solo game was. Cash, trophies and stats you earn in co-op still count.
+
 ## Co-op: no PLAY button needed
 - **Straight into the elevator:**
   - Pressing **HOST A GAME** puts the host in the closed elevator right away.

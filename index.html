@@ -593,7 +593,9 @@ const LV=[
 {n:'LEVEL 19 — THE FORGOTTEN CITY',w:'#3a3c42',s:'#141518',c:'#2a2624',f:0x05070c,fd:.03,am:.3,k:0,kn:'transmitters',d:13,open:1}];
 let SV={lv:0,max:0,score:0};try{SV=JSON.parse(localStorage.getItem('br'))||SV}catch(e){}
 // MULTIPLAYER: in a co-op session every player loads the host's level from the host's seed (see the MULTIPLAYER block)
-window.MPS=null;try{var _m=JSON.parse(sessionStorage.getItem('brmp')||'null');if(_m&&_m.on){if(_m.role=='host'){if(_m.lv!==SV.lv||!_m.seed){_m.lv=SV.lv;_m.seed=((Date.now()%1e9)|0)||1;_m.picks=[]}}else if(_m.lv!=null&&_m.lv>=0&&_m.lv<=20){SV.lv=_m.lv}sessionStorage.setItem('brmp',JSON.stringify(_m));window.MPS=_m}}catch(e){}
+window.MPS=null;try{var _m=JSON.parse(sessionStorage.getItem('brmp')||'null');if(_m&&_m.on){if(_m.role=='host'&&(_m.lv==null||!_m.seed)){_m.lv=SV.lv;_m.seed=((Date.now()%1e9)|0)||1;_m.picks=[]}if(_m.lv!=null&&_m.lv>=0&&_m.lv<=20){SV.lv=_m.lv}sessionStorage.setItem('brmp',JSON.stringify(_m));window.MPS=_m}}catch(e){}
+// co-op never changes your solo save: the level, unlocked levels and save spot are kept as they were
+try{(function(){var SP=Storage.prototype,o=SP.setItem;SP.setItem=function(k,v){if(this===window.localStorage&&k==='br'){try{var m=JSON.parse(sessionStorage.getItem('brmp')||'null');if(m&&m.on){var nv=JSON.parse(v),old=JSON.parse(this.getItem('br')||'{}');nv.lv=old.lv!=null?old.lv:0;nv.max=old.max!=null?old.max:0;nv.sp=old.sp;nv.cont=old.cont;v=JSON.stringify(nv)}}catch(e){}}return o.call(this,k,v)}})()}catch(e){}
 const CF=LV[SV.lv]||LV[0],save=()=>{try{localStorage.setItem('br',JSON.stringify(SV))}catch(e){}};
 let SET={vol:.9,sens:1,inv:0,br:1,q:'High',fc:'#fffbe0'};try{Object.assign(SET,JSON.parse(localStorage.getItem('brs')))}catch(e){}
 let UN='';try{UN=localStorage.getItem('bru')||''}catch(e){}
@@ -6852,7 +6854,7 @@ function joinGame(code){leaveNet();code=String(code||'').toUpperCase().replace(/
  p.on('error',function(err){var t=err&&err.type;if(t=='peer-unavailable'){NET.status='No room '+code+' yet (or the host is loading). Retrying...';render();retry()}else if(t=='network'||t=='server-error'||t=='socket-error'){NET.status='Lost the matchmaking server. Retrying...';render();setTimeout(function(){if(NET.on&&NET.role=='client')joinGame(code)},5000)}else{NET.status='Network problem: '+(t||'unknown');render()}});
  p.on('disconnected',function(){try{p.reconnect()}catch(e){}});render()}
 function leaveNet(){try{Object.keys(NET.conns).forEach(function(k){try{NET.conns[k].close()}catch(e){}})}catch(e){}try{if(NET.host)NET.host.close()}catch(e){}try{if(NET.peer)NET.peer.destroy()}catch(e){}NET.conns={};NET.host=null;NET.peer=null;Object.keys(NET.players).forEach(dropPlayer)}
-function leave(){if(NET.isHost())bcast({t:'bye',why:'The host closed the room.'});else send({t:'bye'});setTimeout(function(){leaveNet();NET.on=false;NET.role=null;NET.status='';ST=null;saveST();render();toast('You left the multiplayer game.')},150)}
+function leave(){if(NET.isHost())bcast({t:'bye',why:'The host closed the room.'});else send({t:'bye'});setTimeout(function(){leaveNet();NET.on=false;NET.role=null;NET.status='';ST=null;saveST();render();toast('You left the multiplayer game.');NET.reloading=true;setTimeout(function(){location.reload()},700)},150)}
 NET.leave=leave;
 
 // ---------------------------------------------------------------- host side
@@ -6910,12 +6912,20 @@ function watchPicks(){try{items.forEach(function(it){if(it.type!='card'||!it.got
 
 // ---------------------------------------------------------------- the elevator takes everyone
 var oNext=typeof nextLv=='function'?nextLv:null;
-function goNext(n,remoteAsked){var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=n;ST.seed=seed;ST.picks=[];ST.auto=1;saveST();bcast({t:'go',n:n,seed:seed});NET.reloading=true;
+function goNext(n,remoteAsked){n=randLv(curLv());var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=n;ST.seed=seed;ST.picks=[];ST.auto=1;saveST();bcast({t:'go',n:n,seed:seed});NET.reloading=true;
  if(inLevel()&&!P.dead){if(remoteAsked)say('The group is taking the elevator...',3);oNext(n)}else{SV.lv=n;SV.max=Math.max(SV.max|0,n);try{save()}catch(e){}setTimeout(function(){location.reload()},600)}}
-if(oNext){nextLv=function(n){if(!NET.on||!Object.keys(NET.players).length&&NET.role!='client')return oNext.apply(this,arguments);
+if(oNext){nextLv=function(n){if(!NET.on)return oNext.apply(this,arguments);
  if(NET.isHost())return goNext(n,false);
  // a client asks the host; if the host does not answer, carry on alone
- send({t:'next',n:n});say('Calling the group to the elevator...',3);var lv0=curLv();setTimeout(function(){if(!NET.reloading&&curLv()===lv0){say('The host did not answer. Going up alone.',3);oNext(n)}},6000)}}
+ send({t:'next',n:n});say('Calling the group to the elevator...',3);var lv0=curLv();setTimeout(function(){if(!NET.reloading&&curLv()===lv0)say('The host did not answer. Try the elevator again in a moment.',4)},6000)}}
+// in co-op the last level does not end the game: the elevator takes the group to another random level
+if(typeof winGame=='function'){var oWinG=winGame;winGame=function(){if(NET.on&&!P.won){return nextLv(curLv()+1)}return oWinG.apply(this,arguments)}}
+
+
+// ---------------------------------------------------------------- RANDOM LEVELS (co-op only)
+function randLv(not){var n;do{n=Math.random()*20|0}while(n===not);return n}
+function hostNew(){var code=newCode(),lv=randLv(-1);ST={on:true,role:'host',room:code,lv:lv,seed:((Date.now()*13+Math.random()*1e6)%1e9|0)||1,picks:[],open:0,auto:1};saveST();
+ NET.status='Opening room '+code+' on '+((LV[lv]||{}).n||('Level '+lv))+'...';render();toast('Co-op on a random level: '+((LV[lv]||{}).n||('Level '+lv)));NET.reloading=true;setTimeout(function(){location.reload()},900)}
 
 // ---------------------------------------------------------------- remote players (models, names, flashlights)
 var LIGHTS=0;
@@ -7031,7 +7041,7 @@ var BOX=null;
 function menu(){if(BOX){BOX.remove();BOX=null}BOX=document.createElement('div');BOX.id='mpbox';BOX.style.cssText='position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;font-family:monospace';
  BOX.innerHTML='<div style="background:#0d0c08;border:1px solid #6a5f2a;border-radius:10px;padding:18px 20px;width:min(560px,92vw);max-height:88vh;overflow:auto;color:#e8e0b8;font-size:13px;line-height:1.55" data-in=1></div>';document.body.appendChild(BOX);
  BOX.addEventListener('click',function(e){if(e.target===BOX){BOX.remove();BOX=null;return}var a=e.target.closest('[data-mp]');if(!a)return;var k=a.dataset.mp;
-  if(k=='host')startHost(newCode(),true);if(k=='join'){var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
+  if(k=='host')hostNew();if(k=='join'){var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
   if(k=='srv'){var cur=localStorage.getItem('brmpsrv')||'';var v2=prompt('Custom PeerJS server as JSON, e.g. {"host":"my.server.com","port":443,"path":"/","secure":true}\nLeave empty to use the free public server.',cur);if(v2!==null){try{if(v2.trim()){var o=JSON.parse(v2);if(!o.host)throw 0;localStorage.setItem('brmpsrv',JSON.stringify({host:String(o.host),port:+o.port||443,path:String(o.path||'/'),secure:o.secure!==false}))}else localStorage.removeItem('brmpsrv');toast('Server setting saved.')}catch(x){toast('That was not valid JSON.')}}}
   render()});
  BOX.addEventListener('keydown',function(e){e.stopPropagation();if(e.key=='Enter'&&e.target.id=='mpcode')joinGame(e.target.value)},true);render()}
@@ -7039,7 +7049,7 @@ function render(){if(!BOX)return;var IN=BOX.querySelector('[data-in]');if(!IN)re
  var h='<div style="font:bold 17px monospace;color:#e4d56a;letter-spacing:.1em">👥 MULTIPLAYER · CO-OP <span style="font-size:11px;color:#9f9">BETA</span></div><div style="opacity:.75;margin-bottom:10px">2–4 players in the same level. Keycards are shared, everyone sees the same monster, and the elevator takes the whole group.</div>';
  if(!NET.on){h+='<div>Your name: <b>'+e2(myName())+'</b></div><div data-mp="host" style="'+bt+'">HOST A GAME</div><div style="margin-top:12px">Join a friend: type their 6-letter room code</div><input id="mpcode" maxlength="6" autocomplete="off" style="width:100%;box-sizing:border-box;padding:10px;font:bold 20px monospace;letter-spacing:.3em;text-transform:uppercase;background:#000;color:#bff3ff;border:1px solid #3a6a7a;border-radius:6px;margin-top:6px" placeholder="ABC123"><div data-mp="join" style="'+bt+'">JOIN GAME</div>'}
  else{h+='<div style="margin:6px 0">Status: <b style="color:#bff3ff">'+e2(NET.status)+'</b></div>';
-  if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. You choose the level and difficulty; your friends follow you.</div>';
+  if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. Every co-op game starts on a random level, and each elevator takes the group to another random level. Your solo save is not changed.</div>';
   h+='<div style="margin-top:10px"><b>Players ('+NET.count()+'/4)</b><br>• '+e2(myName())+(NET.isHost()?' (host)':'')+' — you';Object.keys(NET.players).forEach(function(k){h+='<br>• '+e2(NET.players[k].name)+(k==='host'?' (host)':'')});h+='</div>';
   h+='<div style="opacity:.75;margin-top:8px">Press PLAY to enter the level. '+(NET.isHost()?'':'You will play on the host\'s level and seed. ')+'Each of you keeps your own save, cash and suits.</div><div data-mp="close" style="'+bt+'">CLOSE (stay connected)</div><div data-mp="leave" style="'+bt+';color:#f88;border-color:#733">LEAVE MULTIPLAYER</div>'}
  h+='<details style="margin-top:10px;opacity:.8;font-size:11.5px"><summary style="cursor:pointer">How it works · privacy · limits</summary>'+
