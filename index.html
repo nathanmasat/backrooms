@@ -6833,7 +6833,7 @@ NET.count=function(){return 1+Object.keys(NET.players).length};
 function newCode(){var c='';for(var i=0;i<6;i++)c+=CODECH[Math.random()*CODECH.length|0];return c}
 function startHost(code,fresh){leaveNet();NET.on=true;NET.role='host';NET.code=code;NET.status='Opening the room...';
  if(fresh||!ST||ST.room!==code){ST={on:true,role:'host',room:code,lv:curLv(),seed:curSeed(),picks:[],open:inLevel()?curSeed():0}}else{ST.on=true;ST.role='host'}saveST();
- var tries=0;(function open(){var p=new Peer(PFX+code,srvOpts());NET.peer=p;
+ var tries=0;(function open(){var p=new Peer(PFX+code,srvOpts());NET.peer=p;p.on('call',onCall);
   p.on('open',function(){NET.status='Hosting';NET.myId='host';render();if(fresh)autoEnter()});
   p.on('connection',function(c){onClientConn(c)});
   p.on('error',function(err){var t=err&&err.type;if(t=='unavailable-id'&&tries++<15){NET.status='Re-opening the room...';try{p.destroy()}catch(e){}setTimeout(open,2000)}else if(t=='network'||t=='server-error'||t=='socket-error'||t=='socket-closed'){NET.status='Lost the matchmaking server. Retrying...';try{p.destroy()}catch(e){}setTimeout(open,4000)}else if(t!='peer-unavailable'){NET.status='Network problem: '+(t||'unknown');}render()});
@@ -6841,7 +6841,7 @@ function startHost(code,fresh){leaveNet();NET.on=true;NET.role='host';NET.code=c
 function joinGame(code){leaveNet();code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);if(code.length!=6){NET.status='Room codes have 6 letters.';render();return}
  NET.on=true;NET.role='client';NET.code=code;NET.status='Connecting to room '+code+'...';
  if(!ST||ST.room!==code||ST.role!=='client')ST={on:true,role:'client',room:code,lv:null,seed:null,picks:[]};ST.on=true;saveST();
- var p=new Peer(srvOpts());NET.peer=p;var fails=0;
+ var p=new Peer(srvOpts());NET.peer=p;p.on('call',onCall);var fails=0;
  function dial(){if(!NET.on||NET.role!='client')return;var c=p.connect(PFX+code,{reliable:true,serialization:'json'});NET.host=c;var opened=false;
   var to=setTimeout(function(){if(!opened){try{c.close()}catch(e){}retry()}},9000);
   c.on('open',function(){opened=true;clearTimeout(to);fails=0;NET.status='Connected. Waiting for the host...';c.send({t:'hi',ver:VER,name:myName(),si:mySuit(),eq:myEq()});render()});
@@ -6853,7 +6853,7 @@ function joinGame(code){leaveNet();code=String(code||'').toUpperCase().replace(/
  p.on('open',function(id){NET.myId=id;dial()});
  p.on('error',function(err){var t=err&&err.type;if(t=='peer-unavailable'){NET.status='No room '+code+' yet (or the host is loading). Retrying...';render();retry()}else if(t=='network'||t=='server-error'||t=='socket-error'){NET.status='Lost the matchmaking server. Retrying...';render();setTimeout(function(){if(NET.on&&NET.role=='client')joinGame(code)},5000)}else{NET.status='Network problem: '+(t||'unknown');render()}});
  p.on('disconnected',function(){try{p.reconnect()}catch(e){}});render()}
-function leaveNet(){try{Object.keys(NET.conns).forEach(function(k){try{NET.conns[k].close()}catch(e){}})}catch(e){}try{if(NET.host)NET.host.close()}catch(e){}try{if(NET.peer)NET.peer.destroy()}catch(e){}NET.conns={};NET.host=null;NET.peer=null;Object.keys(NET.players).forEach(dropPlayer)}
+function leaveNet(){vcDropAll();try{Object.keys(NET.conns).forEach(function(k){try{NET.conns[k].close()}catch(e){}})}catch(e){}try{if(NET.host)NET.host.close()}catch(e){}try{if(NET.peer)NET.peer.destroy()}catch(e){}NET.conns={};NET.host=null;NET.peer=null;Object.keys(NET.players).forEach(dropPlayer)}
 function leave(){if(NET.isHost())bcast({t:'bye',why:'The host closed the room.'});else send({t:'bye'});setTimeout(function(){leaveNet();NET.on=false;NET.role=null;NET.status='';ST=null;saveST();render();toast('You left the multiplayer game.');NET.reloading=true;setTimeout(function(){location.reload()},700)},150)}
 NET.leave=leave;
 
@@ -6936,10 +6936,10 @@ function buildModel(p){if(p.model||typeof scene=='undefined'||!HU.buildPlayer)re
  var sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),depthTest:false,transparent:true,opacity:.85}));sp.scale.set(1.2,.3,1);sp.position.y=2.15;sp.renderOrder=999;g.add(sp);p.tag=sp;
  if(LIGHTS<3){LIGHTS++;var sl=new T.SpotLight(0xfff4d8,1.4,22,.48,.6,1.3);var tg=new T.Object3D();scene.add(tg);sl.target=tg;scene.add(sl);p.light=sl;p.lt=tg}}catch(e){console.warn('mp model',e)}}
 function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light){scene.remove(p.light);scene.remove(p.lt);LIGHTS--}}catch(e){}delete NET.players[id]}
-function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,t:performance.now()};
+function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,t:performance.now()};
  if(s.dead&&!p.dead&&s.lv===curLv())note(p.name+' was caught!',4);p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
-function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,name:d.name,si:d.si,eq:d.eq}}
-function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed()}}
+function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,name:d.name,si:d.si,eq:d.eq}}
+function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0}}
 function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!p.b)return;buildModel(p);var g=p.model;if(!g)return;
  var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd&&!p.b.dead;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl?1.4:0;if(!show)return;
  var a=p.a||p.b,b=p.b,span=Math.max(30,b.t-a.t),k=Math.min(1.2,(now-100-a.t)/span);if(k<0)k=0;var x=a.x+(b.x-a.x)*k,z=a.z+(b.z-a.z)*k,dy=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw)),yaw=a.yaw+dy*Math.min(1,k);
@@ -7017,10 +7017,35 @@ NET.autoEnter=autoEnter;
 // going back to the main menu on purpose keeps you there
 document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('#p-menu');if(t&&ST){ST.auto=0;saveST()}},true);
 
+
+// ---------------------------------------------------------------- VOICE CHAT: talk to your friends with your real microphone (only after you turn it on)
+var VC={on:false,stream:null,out:{},inc:{},muted:{},prox:true,want:false};
+try{var vs=JSON.parse(localStorage.getItem('brvc')||'{}');VC.prox=vs.prox!==false;VC.muted=vs.muted&&typeof vs.muted=='object'?vs.muted:{}}catch(e){}
+function vcSave(){try{localStorage.setItem('brvc',JSON.stringify({prox:VC.prox,muted:VC.muted}))}catch(e){}}
+function realId(id){return id==='host'?PFX+NET.code:id}
+function vcStart(){if(VC.on||!NET.on)return;if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast('This browser cannot use a microphone here.');return}
+ navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false}).then(function(st){if(!NET.on){st.getTracks().forEach(function(t){t.stop()});return}VC.stream=st;VC.on=true;if(ST){ST.mic=1;saveST()}toast('🎤 Mic on: your friends can hear you. Press Y to turn it off.');callAll();render()})
+ .catch(function(err){toast(err&&err.name=='NotAllowedError'?'The microphone is blocked. Allow it in the address bar to talk.':'Could not start the microphone.');if(ST){ST.mic=0;saveST()}})}
+function vcStop(silent){VC.on=false;if(ST){ST.mic=0;saveST()}Object.keys(VC.out).forEach(function(k){try{VC.out[k].close()}catch(e){}});VC.out={};if(VC.stream){VC.stream.getTracks().forEach(function(t){t.stop()});VC.stream=null}if(!silent)toast('🎤 Mic off.');render()}
+function vcDropAll(){Object.keys(VC.inc).forEach(function(k){try{VC.inc[k].call.close()}catch(e){}try{VC.inc[k].el.remove()}catch(e){}});VC.inc={};Object.keys(VC.out).forEach(function(k){try{VC.out[k].close()}catch(e){}});VC.out={};if(VC.stream){VC.stream.getTracks().forEach(function(t){t.stop()});VC.stream=null}VC.on=false}
+// send my voice to everyone in the room (one call per player)
+function callAll(){if(!VC.on||!NET.peer||!VC.stream)return;Object.keys(NET.players).forEach(function(id){if(VC.out[id]&&VC.out[id].open!==false)return;try{var c=NET.peer.call(realId(id),VC.stream,{metadata:{bv:1}});if(!c)return;VC.out[id]=c;var drop=function(){if(VC.out[id]===c)delete VC.out[id]};c.on('close',drop);c.on('error',drop)}catch(e){}});
+ Object.keys(VC.out).forEach(function(id){if(!NET.players[id]){try{VC.out[id].close()}catch(e){}delete VC.out[id]}})}
+// a friend's voice arrives: only from players in this room
+function onCall(call){var from=call.peer,key=from===PFX+NET.code?'host':from;if(!NET.players[key]||!(call.metadata&&call.metadata.bv===1)){try{call.close()}catch(e){}return}
+ try{call.answer()}catch(e){return}call.on('stream',function(st){var old=VC.inc[key];if(old){try{old.el.remove()}catch(e){}}var el=document.createElement('audio');el.autoplay=true;el.srcObject=st;el.style.display='none';document.body.appendChild(el);try{var pr=el.play();if(pr&&pr.catch)pr.catch(function(){})}catch(e){}VC.inc[key]={call:call,el:el}});
+ var bye=function(){var v=VC.inc[key];if(v&&v.call===call){try{v.el.remove()}catch(e){}delete VC.inc[key]}};call.on('close',bye);call.on('error',bye)}
+// how loud each friend is: muted, near or far, same level or not
+function vcTick(){Object.keys(VC.inc).forEach(function(k){var v=VC.inc[k],p=NET.players[k];if(!p){try{v.el.remove()}catch(e){}delete VC.inc[k];return}var vol=1;
+ if(VC.muted[p.name])vol=0;else if(VC.prox&&p.b&&inLevel()&&p.b.lv===curLv()&&p.b.seed===curSeed()){var d=Math.hypot(p.b.x-P.x,p.b.z-P.z);vol=d<5?1:Math.max(.12,1-(d-5)/35)}else if(VC.prox&&p.b&&inLevel())vol=.6;
+ if(Math.abs(v.el.volume-vol)>.02)v.el.volume=vol;if(v.el.paused)try{v.el.play().catch(function(){})}catch(e){}})}
+var vcT=0;NET.vc=VC;
+addEventListener('keydown',function(e){if(e.code!='KeyY'||e.repeat||!NET.on)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;VC.on?vcStop():vcStart()},true);
+
 // ---------------------------------------------------------------- the network tick
 var sendT=0,monSendT=0,lastF=performance.now();
 (function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-lastF)/1000);lastF=now;if(!NET.on)return;
- if(inLevel())watchPicks();animPlayers(dt);carTick(dt);prompt2();if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
+ if(inLevel())watchPicks();animPlayers(dt);carTick(dt);prompt2();vcTick();vcT-=dt;if(vcT<=0){vcT=2;if(VC.on)callAll();else if(ST&&ST.mic&&!VC.want&&NET.peer&&NET.peer.open){VC.want=true;vcStart()}}if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
  sendT-=dt;if(sendT<=0&&typeof P!='undefined'){sendT=1/12;var s=myState();if(NET.isHost()){s.id='host';s.name=myName();s.si=mySuit();s.eq=myEq();bcast(s)}else send(s)}
  if(NET.isHost()&&monSynced()){monSendT-=dt;if(monSendT<=0&&now-NET.aiT<400){monSendT=1/15;var m=monMesh();bcast({t:'mon',x:+M.x.toFixed(2),z:+M.z.toFixed(2),ry:m?+m.rotation.y.toFixed(3):0,lv:curLv(),seed:curSeed()})}}
  hud()})();
@@ -7032,8 +7057,8 @@ addEventListener('pagehide',function(){try{if(NET.peer)NET.peer.destroy()}catch(
 var HUD2=document.createElement('div');HUD2.id='mphud';HUD2.style.cssText='position:fixed;right:12px;top:150px;z-index:6;pointer-events:none;font:12px monospace;color:#dff;text-shadow:0 0 4px #000;text-align:right;line-height:1.6;display:none';document.body.appendChild(HUD2);
 var TOAST=document.createElement('div');TOAST.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;pointer-events:none;font:13px monospace;color:#e8f8ff;background:rgba(0,10,20,.8);border:1px solid #3a6a7a;padding:6px 12px;border-radius:6px;display:none;max-width:90vw;text-align:center';document.body.appendChild(TOAST);var toastT=0;
 function toast(t){TOAST.textContent=t;TOAST.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){TOAST.style.display='none'},4200)}
-function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+e2(myName())+(NET.isHost()?' (host)':'')+' · you<br>';
- Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#f77">caught</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
+function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+(VC.on?'<span style="color:#7f7">🎤 LIVE</span> ':'')+e2(myName())+(NET.isHost()?' (host)':'')+' · you'+(VC.on?'':' <span style="opacity:.6">(Y = mic)</span>')+'<br>';
+ Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#f77">caught</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
  if(NET.role=='client'&&!(NET.host&&NET.host.open))h+='<span style="color:#fc6">reconnecting to host…</span>';HUD2.innerHTML=h}
 
 // ---------------------------------------------------------------- the MULTIPLAYER menu
@@ -7041,7 +7066,7 @@ var BOX=null;
 function menu(){if(BOX){BOX.remove();BOX=null}BOX=document.createElement('div');BOX.id='mpbox';BOX.style.cssText='position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;font-family:monospace';
  BOX.innerHTML='<div style="background:#0d0c08;border:1px solid #6a5f2a;border-radius:10px;padding:18px 20px;width:min(560px,92vw);max-height:88vh;overflow:auto;color:#e8e0b8;font-size:13px;line-height:1.55" data-in=1></div>';document.body.appendChild(BOX);
  BOX.addEventListener('click',function(e){if(e.target===BOX){BOX.remove();BOX=null;return}var a=e.target.closest('[data-mp]');if(!a)return;var k=a.dataset.mp;
-  if(k=='host')hostNew();if(k=='join'){var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
+  if(k=='host')hostNew();if(k=='join'){var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='mic'){VC.on?vcStop():vcStart()}if(k=='prox'){VC.prox=!VC.prox;vcSave()}if(k.indexOf('mute:')===0){var pl=NET.players[k.slice(5)];if(pl){VC.muted[pl.name]=!VC.muted[pl.name];vcSave()}}if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
   if(k=='srv'){var cur=localStorage.getItem('brmpsrv')||'';var v2=prompt('Custom PeerJS server as JSON, e.g. {"host":"my.server.com","port":443,"path":"/","secure":true}\nLeave empty to use the free public server.',cur);if(v2!==null){try{if(v2.trim()){var o=JSON.parse(v2);if(!o.host)throw 0;localStorage.setItem('brmpsrv',JSON.stringify({host:String(o.host),port:+o.port||443,path:String(o.path||'/'),secure:o.secure!==false}))}else localStorage.removeItem('brmpsrv');toast('Server setting saved.')}catch(x){toast('That was not valid JSON.')}}}
   render()});
  BOX.addEventListener('keydown',function(e){e.stopPropagation();if(e.key=='Enter'&&e.target.id=='mpcode')joinGame(e.target.value)},true);render()}
@@ -7050,12 +7075,14 @@ function render(){if(!BOX)return;var IN=BOX.querySelector('[data-in]');if(!IN)re
  if(!NET.on){h+='<div>Your name: <b>'+e2(myName())+'</b></div><div data-mp="host" style="'+bt+'">HOST A GAME</div><div style="margin-top:12px">Join a friend: type their 6-letter room code</div><input id="mpcode" maxlength="6" autocomplete="off" style="width:100%;box-sizing:border-box;padding:10px;font:bold 20px monospace;letter-spacing:.3em;text-transform:uppercase;background:#000;color:#bff3ff;border:1px solid #3a6a7a;border-radius:6px;margin-top:6px" placeholder="ABC123"><div data-mp="join" style="'+bt+'">JOIN GAME</div>'}
  else{h+='<div style="margin:6px 0">Status: <b style="color:#bff3ff">'+e2(NET.status)+'</b></div>';
   if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. Every co-op game starts on a random level, and each elevator takes the group to another random level. Your solo save is not changed.</div>';
-  h+='<div style="margin-top:10px"><b>Players ('+NET.count()+'/4)</b><br>• '+e2(myName())+(NET.isHost()?' (host)':'')+' — you';Object.keys(NET.players).forEach(function(k){h+='<br>• '+e2(NET.players[k].name)+(k==='host'?' (host)':'')});h+='</div>';
+  h+='<div style="margin-top:10px"><b>Players ('+NET.count()+'/4)</b><br>• '+e2(myName())+(NET.isHost()?' (host)':'')+' — you';Object.keys(NET.players).forEach(function(k){var nm=NET.players[k].name;h+='<br>• '+e2(nm)+(k==='host'?' (host)':'')+(NET.players[k].b&&NET.players[k].b.mic?' 🎤':'')+' <span data-mp="mute:'+e2(k)+'" style="cursor:pointer;text-decoration:underline;font-size:11px;opacity:.85">'+(VC.muted[nm]?'unmute':'mute')+'</span>'});h+='</div>';
+  h+='<div style="margin-top:10px;border-top:1px solid #3a3420;padding-top:8px"><b>🎤 Voice chat</b><div data-mp="mic" style="'+bt+';'+(VC.on?'color:#7f7;border-color:#3a7a3a':'')+'">'+(VC.on?'🎤 MIC ON — press to turn it off':'🎤 TURN ON YOUR MIC')+'</div><div style="opacity:.8;font-size:12px">In the game press <b>Y</b> to turn your mic on or off. <span data-mp="prox" style="cursor:pointer;text-decoration:underline">'+(VC.prox?'Proximity voice: ON (friends far away sound quieter)':'Proximity voice: OFF (everyone at full volume)')+'</span></div></div>';
   h+='<div style="opacity:.75;margin-top:8px">Press PLAY to enter the level. '+(NET.isHost()?'':'You will play on the host\'s level and seed. ')+'Each of you keeps your own save, cash and suits.</div><div data-mp="close" style="'+bt+'">CLOSE (stay connected)</div><div data-mp="leave" style="'+bt+';color:#f88;border-color:#733">LEAVE MULTIPLAYER</div>'}
  h+='<details style="margin-top:10px;opacity:.8;font-size:11.5px"><summary style="cursor:pointer">How it works · privacy · limits</summary>'+
   '<p><b>Peer-to-peer:</b> the browsers connect straight to each other. A free public matchmaking server (PeerJS) only introduces them; game data does not go through it. Like every peer-to-peer game, the other players can see your internet (IP) address, so <b>only play with people you know</b>.</p>'+
+  '<p><b>Voice chat:</b> only your real microphone, and only after you turn it on (the browser asks you first). Your voice goes straight to the other players\' browsers; the game never records or stores it, and never changes or imitates anyone\'s voice. Turn it off any time with Y, and mute anyone in the player list.</p>'+
   '<p><b>The host is in charge:</b> the host\'s game decides the level, runs the monster and moves everyone to the next level. If the host leaves, the room closes.</p>'+
-  '<p><b>Not shared yet:</b> the Level 1 and Level 2 monsters and the special objectives on Levels 10–19 (each player does their own), random events and hallucinations (everyone gets their own scares), admin tools (they only affect your own game), Hide and Seek and Stalker (still AI players). There is no voice or text chat.</p>'+
+  '<p><b>Not shared yet:</b> the Level 1 and Level 2 monsters and the special objectives on Levels 10–19 (each player does their own), random events and hallucinations (everyone gets their own scares), admin tools (they only affect your own game), Hide and Seek and Stalker (still AI players). There is no text chat.</p>'+
   '<p>Some strict networks (school or office Wi-Fi) block direct connections. If joining never works, try another network. <span data-mp="srv" style="cursor:pointer;text-decoration:underline">Advanced: use your own PeerJS server</span></p></details>';
  if(!NET.on)h+='<div data-mp="close" style="'+bt+'">BACK</div>';IN.innerHTML=h;if(!NET.on){var i=IN.querySelector('#mpcode');if(i&&ST&&ST.room)i.value=ST.room}}
 function hookBtn(){var b=document.getElementById('b-mp');if(!b)return;b.textContent='👥 MULTIPLAYER (CO-OP)';b.onclick=function(e){if(e)e.stopPropagation();menu()}}

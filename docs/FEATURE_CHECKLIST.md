@@ -159,5 +159,6 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [x] Co-op start in a closed elevator: own spot per player, monster frozen, host presses ENTER to open the doors for everyone; open state kept for retries and late joiners; auto-open if the host goes silent for 20 s
 - [x] Message checks, rate limit, escaped names, IP-address privacy note
 - [ ] Level 1 and Level 2 monsters, and the Level 10–19 special objectives, are not shared yet
-- [ ] Hide and Seek / Stalker with real players, chat, host migration
+- [x] Voice chat (Y): real microphone only, opt-in, proximity volume, per-player mute, mic indicators, never recorded
+- [ ] Hide and Seek / Stalker with real players, text chat, host migration
 - [ ] Tested between two real homes over the internet (only tested locally so far)

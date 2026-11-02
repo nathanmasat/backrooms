@@ -30,6 +30,7 @@ A first-person survival horror game that runs in the browser: 20 levels, plus a 
 | B | Big map / drone map | O | Compass |
 | L / N / G | Lighter / night vision / glow stick | 1–5 | Gadgets |
 | Esc | Pause | Tab | Scoreboard |
+| Y | Co-op voice chat: mic on/off | ENTER | Co-op host: open the elevator doors |
 
 You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 

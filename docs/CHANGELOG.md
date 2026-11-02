@@ -1,5 +1,21 @@
 # Changelog
 
+## Co-op voice chat
+- **Talk to your friends:** in a co-op game press **Y**, or use **🎤 TURN ON YOUR MIC** in the multiplayer menu. The browser asks for permission the first time. Press Y again to turn it off.
+- **Proximity voice:** friends next to you sound at full volume and get quieter the farther away they are. Friends on another level sound at 60%. You can switch this off in the multiplayer menu to hear everyone at full volume.
+- **Mute anyone:** each player in the multiplayer menu's list has a mute link, and it is remembered by name.
+- **Who is talking:** the co-op list shows 🎤 LIVE next to your name while your mic is on, and 🎤 next to friends with their mic on (🔇 if you muted them).
+- **Your mic stays on between levels:** after the group elevator, a retry or a reload, the mic switches back on by itself if it was on. Leaving multiplayer turns it off.
+- **Privacy:**
+  - Only your real microphone is used, and only after you turn it on.
+  - Your voice goes straight to the other players' browsers. It never goes through a server.
+  - Nothing is recorded or stored, and voices are never changed or imitated.
+  - Echo cancellation and noise reduction are on.
+- **Tested:** with two browsers and a fake test microphone.
+  - Both directions work, and the volume drops from 100% to 12% when far away.
+  - Muting sets a friend to 0%.
+  - Turning the mic off stops the other player hearing it.
+
 ## Co-op: random levels
 - **A random start:** every new co-op game starts on a random level from 0 to 19, with everyone in the elevator showing that floor number.
 - **Random next levels:** each time the group takes the elevator, it goes to another random level, never the same one twice in a row. On Level 19 the game doesn't end in co-op: the elevator just takes the group somewhere new.
