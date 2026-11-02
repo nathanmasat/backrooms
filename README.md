@@ -42,7 +42,7 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 ## Hide and Seek keys
 - **Hider:** E transform (or H) · J prop wheel · [ ] switch prop · Z / X rotate · 1–4 abilities.
 - **Seeker:** F or click to tag · Q Detection Pulse.
-- Other players are AI, because there is no online server yet.
+- Other players are AI. Online co-op exists for the main game (MULTIPLAYER), but not for Hide and Seek yet.
 
 ## Phone apps
 - **Essentials:** Map, Scanner, Light, Gadgets, Drone, Emergency.
@@ -59,4 +59,4 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 
 ## Notes
 - **Saves:** progress is saved in your browser, with separate save slots.
-- **Multiplayer:** the game has no online server, so multiplayer features are not available. Stalker mode uses AI teammates instead.
+- **Multiplayer (beta):** ▶ MODES → 👥 MULTIPLAYER (CO-OP). Host a game to get a 6-letter room code, and friends join with it (2–4 players, peer-to-peer). Shared: the level, keycards, the monster and the elevator. Only play with people you know, because peer-to-peer shows your IP address to the other players. Hide and Seek and Stalker still use AI players.

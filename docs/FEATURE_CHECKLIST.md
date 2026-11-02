@@ -147,3 +147,15 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [x] Guide with keycard count, arrow and distance; then elevator (or fuse)
 - [x] Light beams over keycards / fuse
 - [x] Half sanity and battery drain; no blackouts; 14-1-20-8-1-14 kept away; 2 starter Almond Waters; step-by-step tips
+
+## Multiplayer (peer-to-peer co-op, beta)
+- [x] Host / join with a 6-letter room code (PeerJS + WebRTC, bundled), 2–4 players, version check, room-full check
+- [x] Same level and seed for everyone; joins mid-level; reconnects after every reload
+- [x] Other players drawn with their suit, name tag, flashlight and walk / run / crouch animation
+- [x] Host-run monster (Levels 0 and 3–19) that hunts the nearest player; clients see the host's monster
+- [x] Shared keycards / objective items; group elevator to the next level with a new shared seed
+- [x] Co-op HUD list; join, leave and caught notices
+- [x] Message checks, rate limit, escaped names, IP-address privacy note
+- [ ] Level 1 and Level 2 monsters, and the Level 10–19 special objectives, are not shared yet
+- [ ] Hide and Seek / Stalker with real players, chat, host migration
+- [ ] Tested between two real homes over the internet (only tested locally so far)

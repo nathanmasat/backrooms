@@ -1,5 +1,35 @@
 # Changelog
 
+## Multiplayer: peer-to-peer co-op (beta)
+- **How to play together:** ▶ MODES → 👥 MULTIPLAYER (CO-OP). One player presses **HOST A GAME** and gets a 6-letter room code. Friends type the code and press **JOIN GAME**. Then everyone presses PLAY. 2–4 players.
+- **What is shared:**
+  - **The level:** the host sends the level and its seed, so every player gets the exact same maze, items and exit.
+  - **Other players:** they show up with their own suit colour, name tag, flashlight beam and walking, running and crouching animations. Hidden or caught players disappear from view.
+  - **The monster:** the host's game runs it and it hunts whoever is closest. Everyone sees it in the same place. Being caught is still personal: you die, retry, and rejoin the same level.
+  - **Keycards and objective items:** they are shared. When anyone picks one up, it is gone for everyone and counts for the whole team.
+  - **The elevator:** it takes the whole group. When anyone leaves with the keycards, every player moves to the next level together, on a new shared seed.
+  - **The co-op list** on the right of the screen shows each player's distance, and whether they are hiding, caught or on another level.
+- **Reconnecting:** every page reload (a new level, a retry, the main menu) reconnects to the same room by itself. Players can join mid-level.
+- **How it connects:** browsers connect directly with WebRTC through PeerJS, which is bundled into the game (MIT licence). The free public PeerJS server only introduces the browsers to each other; game data never goes through it. You can set your own PeerJS server in the menu's advanced options.
+- **Safety:**
+  - Every incoming message is checked: allowed message types only, number and text limits, and a rate limit.
+  - Names are escaped before they appear on screen.
+  - Rooms take 4 players at most, and players on a different game version are turned away.
+  - The menu explains that peer-to-peer means other players can see your IP address, so only play with people you know.
+- **Saves:** each player keeps their own save, cash and suits. Nobody can change anyone else's save.
+- **Not shared yet:**
+  - The Level 1 and Level 2 monsters, and the special objectives on Levels 10–19.
+  - Random events and hallucinations, which stay personal scares.
+  - Admin tools, which only affect your own game.
+  - Hide and Seek and Stalker, which still use AI players.
+  - There is no voice or text chat. If the host leaves, the room closes.
+- **Tested:** with two browsers on a local PeerJS server.
+  - Joining, the identical maze and keycards, seeing each other, and the monster in the same place on both screens.
+  - The host's monster chasing the friend.
+  - A shared keycard pickup.
+  - The group elevator from Level 1 to Level 2 with a new shared seed, automatic reconnecting, and leaving.
+  - Not yet tested between two real homes over the internet.
+
 ## Easier first Level 0 for new players
 - **Who gets it:** anyone on Level 0 who has never escaped it. It switches off by itself after your first escape. Press **H** to turn it off sooner. It does not apply to Nightmare or Don't Look Back runs.
 - **New-run screen:** brand-new players start with **CASUAL** selected (marked "★ recommended for your first time") and mutations **OFF**. You can still pick anything.
