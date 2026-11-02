@@ -1,5 +1,25 @@
 # Changelog
 
+## Co-op connection fix: automatic encrypted relay
+- **The problem:** joining only worked when the two browsers could connect directly. Many home routers, phone hotspots and school networks block that, and PeerJS has no relay of its own. The free public PeerJS matchmaking server also sometimes goes down.
+- **The fix: two ways to connect at once.**
+  - **Direct (peer-to-peer):** this is tried first, and voice chat uses it.
+  - **Relay:** if the direct connection hasn't answered within 7 seconds, the game also tries free public MQTT message servers (EMQX, HiveMQ, Mosquitto) over a normal secure web connection. Whichever reaches the host first is used.
+  - The host listens on every relay server at once, so a friend whose network blocks one of them still gets in.
+  - The game never stops on a missing matchmaking server: if it is down, everyone simply uses the relay.
+- **Encrypted:** everything sent through the relay is encrypted (AES-GCM) with a key made from the room code. The topic name is a hash of the code too, so the relay servers can't read your game or find your room.
+- **Upgrades by itself:** if you started on the relay and a direct connection comes through later, the game switches over seamlessly so voice chat starts working. If a direct connection drops mid-game, it falls back to the relay.
+- **No duplicate players:** each game has a session ID, so the host never shows the same friend twice while a connection is being swapped.
+- **Clear status:**
+  - The host's multiplayer menu shows "Ways in: direct ✓/✗ · relay ✓ (n servers)", with advice when both are blocked.
+  - Friends see whether they are connected directly or through the relay.
+- **Advanced:** you can add your own TURN server, for example from a free TURN account, to help direct connections and voice on very strict networks.
+- **Version check:** multiplayer is now version 2. Everyone needs the latest index.html, and an older copy gets a clear "different version" message.
+- **Tested:**
+  - Matchmaking server switched off: joining, the elevator start, the same monster, the group elevator and reconnecting all work through the relay.
+  - Both available: the game starts on the relay, upgrades to direct, and voice works with exactly one copy of each player.
+  - All 20 levels still work in solo.
+
 ## The Backrooms Song: no stutter, no echo
 - **No stutter:** each line is now sung at an even, natural pace. Before, every syllable was stretched or squashed to hit its note, which made the stutter.
 - **On pitch:** the voice is still pitch-corrected onto the melody notes, with short smooth glides between them.

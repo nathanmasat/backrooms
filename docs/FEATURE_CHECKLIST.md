@@ -161,4 +161,5 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [ ] Level 1 and Level 2 monsters, and the Level 10–19 special objectives, are not shared yet
 - [x] Voice chat (Y): real microphone only, opt-in, proximity volume, per-player mute, mic indicators, never recorded
 - [ ] Hide and Seek / Stalker with real players, text chat, host migration
+- [x] Automatic encrypted relay (public MQTT servers, AES-GCM with the room code) when direct connections are blocked or the matchmaking server is down; upgrade to direct later; no duplicate players
 - [ ] Tested between two real homes over the internet (only tested locally so far)
