@@ -1,5 +1,13 @@
 # Changelog
 
+## Fix: "Cannot create so many PeerConnections" crash
+- **The problem:** with the mic on, voice chat re-called each friend every 2 seconds. A call that was still connecting (or that a friend's network never answered) counted as "not connected", so every 2 seconds the game opened another browser connection without closing the old one. After a few minutes Chrome hit its limit and threw "Failed to construct 'RTCPeerConnection': Cannot create so many PeerConnections".
+- **The fix:**
+  - A voice call that is still connecting is left alone. A call stuck for 15 seconds is closed before a new one is tried, and there are at most 3 tries per friend per minute.
+  - A repeated call from the same friend closes the older one.
+  - Joining a room never has more than one connection attempt waiting at a time; a stuck attempt is closed first, and reconnecting no longer stacks extra attempts.
+  - A safety cap: the game counts its open connections and won't open new ones once 60 are open (far below the browser's limit).
+
 ## Co-op connection fix: automatic encrypted relay
 - **The problem:** joining only worked when the two browsers could connect directly. Many home routers, phone hotspots and school networks block that, and PeerJS has no relay of its own. The free public PeerJS matchmaking server also sometimes goes down.
 - **The fix: two ways to connect at once.**
