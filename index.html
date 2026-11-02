@@ -6832,7 +6832,7 @@ function newCode(){var c='';for(var i=0;i<6;i++)c+=CODECH[Math.random()*CODECH.l
 function startHost(code,fresh){leaveNet();NET.on=true;NET.role='host';NET.code=code;NET.status='Opening the room...';
  if(fresh||!ST||ST.room!==code){ST={on:true,role:'host',room:code,lv:curLv(),seed:curSeed(),picks:[],open:inLevel()?curSeed():0}}else{ST.on=true;ST.role='host'}saveST();
  var tries=0;(function open(){var p=new Peer(PFX+code,srvOpts());NET.peer=p;
-  p.on('open',function(){NET.status='Hosting';NET.myId='host';render()});
+  p.on('open',function(){NET.status='Hosting';NET.myId='host';render();if(fresh)autoEnter()});
   p.on('connection',function(c){onClientConn(c)});
   p.on('error',function(err){var t=err&&err.type;if(t=='unavailable-id'&&tries++<15){NET.status='Re-opening the room...';try{p.destroy()}catch(e){}setTimeout(open,2000)}else if(t=='network'||t=='server-error'||t=='socket-error'||t=='socket-closed'){NET.status='Lost the matchmaking server. Retrying...';try{p.destroy()}catch(e){}setTimeout(open,4000)}else if(t!='peer-unavailable'){NET.status='Network problem: '+(t||'unknown');}render()});
   p.on('disconnected',function(){try{p.reconnect()}catch(e){}})})();render()}
@@ -6880,13 +6880,13 @@ function onHostMsg(d){if(!d||typeof d!='object')return;HOSTT=performance.now();
  if(d.t=='welcome'){var lv=d.lv|0,seed=d.seed|0;if(lv<0||lv>20)return;NET.status='Playing in '+cleanName(d.host)+"'s game";
   (d.roster||[]).slice(0,MAXP).forEach(function(r){if(r&&r.id&&r.id!==NET.myId&&!NET.players[r.id])NET.players[r.id]=mkPlayer(r.id,r)});
   ST.lv=lv;ST.seed=seed;ST.open=d.open|0;ST.slot=Math.max(1,Math.min(3,d.slot|0));ST.picks=sanePicks(d.picks);saveST();HOSTT=performance.now();
-  if(curLv()!==lv||curSeed()!==seed){moveTo('Joining the host on '+((LV[lv]||{}).n||('Level '+lv))+'...')}else{applyAllPicks();toast('Connected to '+cleanName(d.host)+"'s game ("+NET.count()+' players).')}render();return}
+  if(curLv()!==lv||curSeed()!==seed){ST.auto=1;saveST();moveTo('Joining the host on '+((LV[lv]||{}).n||('Level '+lv))+'...')}else{applyAllPicks();toast('Connected to '+cleanName(d.host)+"'s game ("+NET.count()+' players).');autoEnter()}render();return}
  if(d.t=='join'&&d.p&&d.p.id&&d.p.id!==NET.myId){if(Object.keys(NET.players).length<MAXP-1){NET.players[d.p.id]=mkPlayer(d.p.id,d.p);note(NET.players[d.p.id].name+' joined the game.')}render();return}
  if(d.t=='left'){var p=NET.players[d.id];if(p){note(p.name+' left the game.');dropPlayer(d.id)}render();return}
  if(d.t=='st'){var q=NET.players[d.id];if(!q&&d.id==='host')q=NET.players.host=mkPlayer('host',{name:d.name||'Host',si:d.si,eq:d.eq});if(q)applySt(q,d);return}
  if(d.t=='mon'){if((d.lv|0)===curLv()&&(d.seed|0)===curSeed()){NET.mon={x:num(d.x),z:num(d.z),ry:num(d.ry,10)};NET.monT=performance.now()}return}
  if(d.t=='pick'){addPick(d.k,d.x,d.z,false,d.by);return}
- if(d.t=='go'){var n=d.n|0,s2=d.seed|0;if(n<0||n>20)return;ST.lv=n;ST.seed=s2;ST.picks=[];saveST();NET.reloading=true;
+ if(d.t=='go'){var n=d.n|0,s2=d.seed|0;if(n<0||n>20)return;ST.lv=n;ST.seed=s2;ST.picks=[];ST.auto=1;saveST();NET.reloading=true;
   if(inLevel()&&!P.dead&&typeof oNext=='function'){say('The group is taking the elevator...',3);oNext(n)}else moveTo('The group moved to '+((LV[n]||{}).n||('Level '+n))+'...');return}
  if(d.t=='open'){if((d.seed|0)===curSeed())openDoors(true);return}
  if(d.t=='bye'){NET.status=d.why?String(d.why).slice(0,120):'The host closed the room.';toast(NET.status);leaveNet();NET.on=false;ST=null;saveST();render()}}
@@ -6910,7 +6910,7 @@ function watchPicks(){try{items.forEach(function(it){if(it.type!='card'||!it.got
 
 // ---------------------------------------------------------------- the elevator takes everyone
 var oNext=typeof nextLv=='function'?nextLv:null;
-function goNext(n,remoteAsked){var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=n;ST.seed=seed;ST.picks=[];saveST();bcast({t:'go',n:n,seed:seed});NET.reloading=true;
+function goNext(n,remoteAsked){var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=n;ST.seed=seed;ST.picks=[];ST.auto=1;saveST();bcast({t:'go',n:n,seed:seed});NET.reloading=true;
  if(inLevel()&&!P.dead){if(remoteAsked)say('The group is taking the elevator...',3);oNext(n)}else{SV.lv=n;SV.max=Math.max(SV.max|0,n);try{save()}catch(e){}setTimeout(function(){location.reload()},600)}}
 if(oNext){nextLv=function(n){if(!NET.on||!Object.keys(NET.players).length&&NET.role!='client')return oNext.apply(this,arguments);
  if(NET.isHost())return goNext(n,false);
@@ -6996,15 +6996,26 @@ function prompt2(){if(!NET.on||!inLevel()||!waiting()){PROMPT.style.display='non
  PROMPT.innerHTML='<span style="color:#7fe6ff">'+n+(n==1?' player':' players')+' in the elevator</span><br>'+(NET.isHost()?'Wait for your friends, then press <span style="color:#ffe07a">ENTER</span> to open the doors':'Waiting for '+e2(hostName)+' to open the doors...')}
 addEventListener('keydown',function(e){if((e.code!='Enter'&&e.code!='NumpadEnter')||!NET.isHost()||!waiting()||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;e.preventDefault();openDoors(false)},true);
 
+
+// ---------------------------------------------------------------- no PLAY button needed: hosting, joining, the group elevator and retries put you straight into the elevator
+function autoEnter(){if(!NET.on||inLevel()||NET.reloading)return;if(typeof MENU!='undefined'&&!MENU)return;if(typeof UN!='undefined'&&!UN){toast('Pick a username first, then press PLAY.');return}
+ var bx=document.getElementById('mpbox');if(bx)bx.remove();BOX=null;var bp=document.getElementById('b-play');if(!bp)return;bp.click();
+ var n=0,iv=setInterval(function(){n++;var st=document.querySelector('[data-hu="start"]');if(st&&st.offsetParent){st.click()}if(inLevel()||n>20){clearInterval(iv);if(ST&&ST.auto){ST.auto=0;saveST()}if(inLevel())toast('Click the game to look around.')}},250)}
+NET.autoEnter=autoEnter;
+// a game started without a click has its sound paused by the browser: wake it on the first click or key
+['pointerdown','keydown'].forEach(function(ev){addEventListener(ev,function(){try{if(typeof AC!='undefined'&&AC&&AC.state=='suspended')AC.resume()}catch(e){}},true)});
+// going back to the main menu on purpose keeps you there
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('#p-menu');if(t&&ST){ST.auto=0;saveST()}},true);
+
 // ---------------------------------------------------------------- the network tick
 var sendT=0,monSendT=0,lastF=performance.now();
 (function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-lastF)/1000);lastF=now;if(!NET.on)return;
- if(inLevel())watchPicks();animPlayers(dt);carTick(dt);prompt2();
+ if(inLevel())watchPicks();animPlayers(dt);carTick(dt);prompt2();if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
  sendT-=dt;if(sendT<=0&&typeof P!='undefined'){sendT=1/12;var s=myState();if(NET.isHost()){s.id='host';s.name=myName();s.si=mySuit();s.eq=myEq();bcast(s)}else send(s)}
  if(NET.isHost()&&monSynced()){monSendT-=dt;if(monSendT<=0&&now-NET.aiT<400){monSendT=1/15;var m=monMesh();bcast({t:'mon',x:+M.x.toFixed(2),z:+M.z.toFixed(2),ry:m?+m.rotation.y.toFixed(3):0,lv:curLv(),seed:curSeed()})}}
  hud()})();
 // when a game reloads (a new level, a retry, the menu), it reconnects to the same room by itself
-addEventListener('load',function(){setTimeout(function(){if(ST&&ST.on&&ST.room){if(ST.role=='host')startHost(ST.room,false);else joinGame(ST.room)}if(ST&&ST.on)applyAllPicks()},300)});
+addEventListener('load',function(){setTimeout(function(){if(ST&&ST.on&&ST.auto)setTimeout(autoEnter,700);if(ST&&ST.on&&ST.room){if(ST.role=='host')startHost(ST.room,false);else joinGame(ST.room)}if(ST&&ST.on)applyAllPicks()},300)});
 addEventListener('pagehide',function(){try{if(NET.peer)NET.peer.destroy()}catch(e){}});
 
 // ---------------------------------------------------------------- HUD: who is in the game

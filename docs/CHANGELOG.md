@@ -1,5 +1,14 @@
 # Changelog
 
+## Co-op: no PLAY button needed
+- **Straight into the elevator:**
+  - Pressing **HOST A GAME** puts the host in the closed elevator right away.
+  - Pressing **JOIN GAME** loads the host's level and puts the friend in the elevator too.
+  - The same happens after the group elevator takes everyone to a new level, and after a retry when you get caught.
+- **Your first run:** if you don't have a run yet, it starts with the difficulty already selected on the run screen (Casual for brand-new players).
+- **Main menu:** choosing MAIN MENU from the pause menu still leaves you in the menu.
+- **Sound:** a game started without a click wakes its sound on your first click or key press. Click the game once to look around.
+
 ## Co-op start: everyone begins in the elevator
 - **The start:** in a co-op game, every level begins with all players inside a closed elevator, with the floor number lit above the doors. Each player stands in their own spot, facing the doors.
 - **While you wait:**

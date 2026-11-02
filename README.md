@@ -59,4 +59,4 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 
 ## Notes
 - **Saves:** progress is saved in your browser, with separate save slots.
-- **Multiplayer (beta):** ▶ MODES → 👥 MULTIPLAYER (CO-OP). Host a game to get a 6-letter room code, and friends join with it (2–4 players, peer-to-peer). Shared: the level, keycards, the monster and the elevator. Every co-op level starts with everyone in a closed elevator, and the host presses ENTER to open the doors. Only play with people you know, because peer-to-peer shows your IP address to the other players. Hide and Seek and Stalker still use AI players.
+- **Multiplayer (beta):** ▶ MODES → 👥 MULTIPLAYER (CO-OP). Host a game to get a 6-letter room code, and friends join with it (2–4 players, peer-to-peer). Shared: the level, keycards, the monster and the elevator. Hosting or joining puts you straight into a closed elevator (no PLAY needed), and the host presses ENTER to open the doors. Only play with people you know, because peer-to-peer shows your IP address to the other players. Hide and Seek and Stalker still use AI players.
