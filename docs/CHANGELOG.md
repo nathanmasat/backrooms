@@ -1,5 +1,11 @@
 # Changelog
 
+## Co-op starts where you left off
+- Hosting a co-op game now starts on the level the host was last playing (solo or co-op) instead of a random level. Friends who join go to that same level.
+- The game remembers your last level for each save slot. It updates every couple of seconds while you play, so if you leave a co-op game on Level 14, your next co-op game starts on Level 14.
+- Riding the elevator together still takes the group to a random level.
+- Your solo save is still protected: co-op never changes it.
+
 ## Pick any name
 - Names can now be almost anything: 1 to 20 characters, any language, emoji, accents and symbols (for example "Ünal 🐸 the GOAT!!" or "李小龙"). Before, names had to be 3-16 plain letters, numbers, spaces or _.
 - Co-op shows your real name to your friends; it used to strip everything except plain letters.

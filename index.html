@@ -32,7 +32,7 @@
 <script>
 /* ===== 3 SAVE FILES: every progress key is stored per file (key@1, key@2, key@3) ===== */
 (function(){
-var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc','brrp'];
+var SLOT_KEYS=['br','brm','brmo','brn','brp','brph','brse','brsh','brso','brsw','bru','brdr','brmg','brrec','brarc','brach','brgx','brhu','brdc','brrp','brlast'];
 var SP=Storage.prototype,oGet=SP.getItem,oSet=SP.setItem,oRem=SP.removeItem,LS;
 try{LS=window.localStorage}catch(e){return}
 function raw(k){try{return oGet.call(LS,k)}catch(e){return null}}
@@ -6992,9 +6992,12 @@ if(typeof winGame=='function'){var oWinG=winGame;winGame=function(){if(NET.on&&!
 
 
 // ---------------------------------------------------------------- RANDOM LEVELS (co-op only)
+// the level this player was last on (solo or co-op), saved per save slot
+function lastLv(){var n=NaN;try{n=parseInt(localStorage.getItem('brlast'),10)}catch(e){}if(!(n>=0)){try{n=SV.lv|0}catch(e){n=0}}var mx=(typeof LV!='undefined'&&LV.length)?LV.length-1:19;return Math.max(0,Math.min(mx,n|0))}
+setInterval(function(){try{if(inLevel()&&!(typeof CUT!='undefined'&&CUT)&&!(typeof P!='undefined'&&P.dead))localStorage.setItem('brlast',String(curLv()))}catch(e){}},2000);
 function randLv(not){var n;do{n=Math.random()*20|0}while(n===not);return n}
-function hostNew(){var code=newCode(),lv=randLv(-1);ST={on:true,role:'host',room:code,lv:lv,seed:((Date.now()*13+Math.random()*1e6)%1e9|0)||1,picks:[],open:0,auto:1};saveST();
- NET.status='Opening room '+code+' on '+((LV[lv]||{}).n||('Level '+lv))+'...';render();toast('Co-op on a random level: '+((LV[lv]||{}).n||('Level '+lv)));NET.reloading=true;setTimeout(function(){location.reload()},900)}
+function hostNew(){var code=newCode(),lv=lastLv();ST={on:true,role:'host',room:code,lv:lv,seed:((Date.now()*13+Math.random()*1e6)%1e9|0)||1,picks:[],open:0,auto:1};saveST();
+ NET.status='Opening room '+code+' on '+((LV[lv]||{}).n||('Level '+lv))+'...';render();toast('Co-op starts on your last level: '+((LV[lv]||{}).n||('Level '+lv)));NET.reloading=true;setTimeout(function(){location.reload()},900)}
 
 // ---------------------------------------------------------------- remote players (models, names, flashlights)
 var LIGHTS=0;
@@ -7177,7 +7180,7 @@ function render(){if(!BOX)return;var IN=BOX.querySelector('[data-in]');if(!IN)re
  else{var stShow=NET.status;if(NET.isHost()&&NET.relay&&Object.keys(NET.relay.up).length&&/matchmaking|Network problem|Opening|Re-opening/.test(stShow))stShow='Hosting (friends can join through the relay)';h+='<div style="margin:6px 0">Status: <b style="color:#bff3ff">'+e2(stShow)+'</b></div>';
   if(NET.isHost()){var ru=NET.relay?Object.keys(NET.relay.up).length:0,dok=!!(NET.peer&&NET.peer.open);h+='<div style="font-size:12px;opacity:.85">Ways in: '+(dok?'<span style="color:#7f7">direct ✓</span>':'<span style="color:#fc6">direct ✗ (matchmaking server not reachable)</span>')+' · '+(ru?'<span style="color:#7f7">relay ✓ ('+ru+'/'+BROKERS.length+' servers)</span>':'<span style="color:#f88">relay connecting…</span>')+'</div>'+(!dok&&!ru?'<div style="font-size:12px;color:#f88">Your network is blocking both ways in. Try another network (for example a phone hotspot), or check that the game is not blocked by a firewall.</div>':'')}
   else h+='<div style="font-size:12px;opacity:.85">Connection: '+(NET.via==='relay'?'relay through '+e2(brokerName(NET.relayUrl||''))+' (encrypted; voice chat needs a direct connection)':NET.via==='direct'?'direct (peer-to-peer)':'trying direct first, then the relay…')+'</div>';
-  if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. Every co-op game starts on a random level, and each elevator takes the group to another random level. Your solo save is not changed.</div>';
+  if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. Every co-op game starts on the host\'s last level (where they left off), and each elevator takes the group to a random level. Your solo save is not changed.</div>';
   h+='<div style="margin-top:10px"><b>Players ('+NET.count()+'/4)</b><br>• '+e2(myName())+(NET.isHost()?' (host)':'')+' — you';Object.keys(NET.players).forEach(function(k){var nm=NET.players[k].name;h+='<br>• '+e2(nm)+(k==='host'?' (host)':'')+(NET.players[k].b&&NET.players[k].b.mic?' 🎤':'')+' <span data-mp="mute:'+e2(k)+'" style="cursor:pointer;text-decoration:underline;font-size:11px;opacity:.85">'+(VC.muted[nm]?'unmute':'mute')+'</span>'});h+='</div>';
   h+='<div style="margin-top:10px;border-top:1px solid #3a3420;padding-top:8px"><b>🎤 Voice chat</b><div data-mp="mic" style="'+bt+';'+(VC.on?'color:#7f7;border-color:#3a7a3a':'')+'">'+(VC.on?'🎤 MIC ON — press to turn it off':'🎤 TURN ON YOUR MIC')+'</div><div style="opacity:.8;font-size:12px">In the game press <b>Y</b> to turn your mic on or off. <span data-mp="prox" style="cursor:pointer;text-decoration:underline">'+(VC.prox?'Proximity voice: ON (friends far away sound quieter)':'Proximity voice: OFF (everyone at full volume)')+'</span></div></div>';
   h+='<div style="opacity:.75;margin-top:8px">Press PLAY to enter the level. '+(NET.isHost()?'':'You will play on the host\'s level and seed. ')+'Each of you keeps your own save, cash and suits.</div><div data-mp="close" style="'+bt+'">CLOSE (stay connected)</div><div data-mp="leave" style="'+bt+';color:#f88;border-color:#733">LEAVE MULTIPLAYER</div>'}
