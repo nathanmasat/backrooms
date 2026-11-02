@@ -155,6 +155,7 @@ The organization is now **the Threshold Project** everywhere; the old "Aster Ins
 - [x] Host-run monster (Levels 0 and 3–19) that hunts the nearest player; clients see the host's monster
 - [x] Shared keycards / objective items; group elevator to the next level with a new shared seed
 - [x] Co-op HUD list; join, leave and caught notices
+- [x] Co-op start in a closed elevator: own spot per player, monster frozen, host presses ENTER to open the doors for everyone; open state kept for retries and late joiners; auto-open if the host goes silent for 20 s
 - [x] Message checks, rate limit, escaped names, IP-address privacy note
 - [ ] Level 1 and Level 2 monsters, and the Level 10–19 special objectives, are not shared yet
 - [ ] Hide and Seek / Stalker with real players, chat, host migration

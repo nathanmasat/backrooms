@@ -1,5 +1,20 @@
 # Changelog
 
+## Co-op start: everyone begins in the elevator
+- **The start:** in a co-op game, every level begins with all players inside a closed elevator, with the floor number lit above the doors. Each player stands in their own spot, facing the doors.
+- **While you wait:**
+  - A message shows how many players are in the elevator.
+  - The host sees "press ENTER to open the doors"; everyone else sees "Waiting for (host) to open the doors...".
+  - Nobody can leave the elevator, and the monster stays frozen.
+  - No blackouts happen, and 14 - 1 - 20 - 8 - 1 - 14 stays away.
+- **When the host presses ENTER:** the doors slide open for everyone at the same moment with a chime, and the level begins. Your flashlight switches back on if it was on before.
+- **Every co-op level works this way:** that includes arriving on a new level with the group elevator.
+- **After the doors open:**
+  - If you get caught and retry, or reload, you come back in the elevator with the doors already open.
+  - Friends who join late also find them open.
+  - The elevator stays in the level as a landmark, and you can only go in or out through its doorway.
+- **Safety net:** if the host stops answering for 20 seconds, the doors open by themselves so nobody is stuck.
+
 ## Multiplayer: peer-to-peer co-op (beta)
 - **How to play together:** ▶ MODES → 👥 MULTIPLAYER (CO-OP). One player presses **HOST A GAME** and gets a 6-letter room code. Friends type the code and press **JOIN GAME**. Then everyone presses PLAY. 2–4 players.
 - **What is shared:**
