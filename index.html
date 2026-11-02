@@ -2757,7 +2757,7 @@ today();
 #rec-ind i{width:10px;height:10px;border-radius:50%;background:#ff2a1a;box-shadow:0 0 8px #f00;animation:recb 1s infinite}
 #rec-ind.pz{color:#ffcc55}#rec-ind.pz i{background:#ffaa00;animation:none}
 @keyframes recb{50%{opacity:.2}}
-body.touch.tplay #rec-ind{right:auto;left:calc(env(safe-area-inset-left) + 132px);top:calc(env(safe-area-inset-top) + 12px)}
+body.touch.tplay #rec-ind{right:auto;left:calc(env(safe-area-inset-left) + 8px);top:calc(env(safe-area-inset-top) + 128px)}
 .gw{position:relative;margin:-6px -12px;padding:8px 10px 10px;min-height:470px;background:#020a04;color:#7dff8a;font:12px/1.45 monospace;overflow:hidden;animation:mgfl 7s infinite}
 .gw:after{content:'';position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px)}
 .gw h3{margin:2px 0 6px;font:bold 15px monospace;letter-spacing:.2em;color:#b8ffbf;text-shadow:0 0 8px #2f8}
@@ -4845,7 +4845,7 @@ var oEv=HU.ev;HU.ev=function(id){if(id=='black'||id=='gen'||id=='tape'||id=='res
 // 1. COMPASS & OBJECTIVE MARKERS (O to toggle)
 // =====================================================================
 if(SET.cmp==null)SET.cmp=1;
-var CV=document.createElement('canvas');CV.width=420;CV.height=40;CV.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:6;pointer-events:none;width:min(420px,80vw);height:auto;display:none';document.body.appendChild(CV);var CX=CV.getContext('2d');
+var CV=document.createElement('canvas');CV.id='cmp';CV.width=420;CV.height=40;CV.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:6;pointer-events:none;width:min(420px,80vw);height:auto;display:none';document.body.appendChild(CV);var CX=CV.getContext('2d');
 addEventListener('keydown',function(e){if(e.code!='KeyO'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(typeof started=='undefined'||!started)return;SET.cmp=SET.cmp?0:1;try{localStorage.setItem('brs',JSON.stringify(SET))}catch(x){}say('Compass '+(SET.cmp?'on':'off')+' (O)',1.5)});
 function markers(){var m=[];try{var ok=P.cards>=CF.k&&(!HU.fuse||HU.fuse());m.push({x:EL.x||cc(EL.i),z:EL.z||cc(EL.j),c:ok?'#3f8':'#f55',s:'▣',l:ok?'EXIT':'EXIT 🔒'});
  var best=null,bd=1e9;items.forEach(function(it){if(it.got||it.type!='card')return;var d=Math.hypot(it.x-P.x,it.z-P.z);if(d<bd){bd=d;best=it}});if(best&&bd<45)m.push({x:best.x,z:best.z,c:'#ffe033',s:'◆',l:(CF.kn||'item').split(' ').pop()});
@@ -6765,6 +6765,7 @@ var beams=[];items.forEach(function(it){if(it.type!='card')return;var b=new T.Me
 var box=document.createElement('div');box.id='nbguide';box.style.cssText='position:fixed;left:50%;top:96px;transform:translateX(-50%);z-index:6;pointer-events:none;font:bold 15px monospace;color:#bff3ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.5';document.body.appendChild(box);
 function arrow(x,z){var dx=x-P.x,dz=z-P.z,a=Math.atan2(Math.sin(Math.atan2(-dx,-dz)-P.yaw),Math.cos(Math.atan2(-dx,-dz)-P.yaw));return Math.abs(a)<.4?'▲':Math.abs(a)>2.7?'▼':a>0?'◀':'▶'}
 var TIPS=[[2,'WELCOME! Find '+CF.k+' KEYCARDS, then take the ELEVATOR out. Follow the arrow at the top and the blue light beams.'],[13,'W A S D to walk · hold SHIFT to sprint · T turns your flashlight on and off.'],[26,'The Boiled One is asleep for now. If you hear giggling or it chases you: sprint, turn corners, and break its line of sight.'],[40,'Lockers save lives: stand next to one and press F to hide. Press F again to come out.'],[54,'Low sanity or battery? Press I to drink Almond Water or swap batteries.']];
+if(document.body.classList.contains('touch')){TIPS[1][1]='Push the LEFT STICK to walk (push it to the edge to sprint) · drag the right side to look · LIGHT turns your flashlight on and off.';TIPS[3][1]='Lockers save lives: stand next to one and tap ACT to hide. Tap ACT again to come out.';TIPS[4][1]='Low sanity or battery? Tap BAG to drink Almond Water or swap batteries.'}
 var lastSay=0;
 (function tick(){requestAnimationFrame(tick);if(!NB.on)return;var play=typeof started!='undefined'&&started&&!P.dead&&!(typeof MENU!='undefined'&&MENU)&&!(HU.PK&&HU.PK.cur);box.style.display=play?'block':'none';if(!play){NB.lastS=null;NB.lastB=null;return}
  var now=performance.now(),dt=Math.min(.1,(now-(NB.lt||now))/1000);NB.lt=now;NB.t+=dt;
@@ -6776,7 +6777,7 @@ var lastSay=0;
  if(NB.tip<TIPS.length&&NB.t>=TIPS[NB.tip][0]&&msgT<=0){say(TIPS[NB.tip][1],7);NB.tip++}
  if(NB.t>=NB.grace&&!NB.woke){NB.woke=1;say('Somewhere far away, the Boiled One wakes up. Keep moving.',5)}
  beams.forEach(function(b){var it=b.userData.it;b.visible=!it.got;b.material.opacity=.2+.1*Math.sin(NB.t*3)});
- var html='<span style="color:#ffe07a">NEWCOMER HELP</span> <span style="opacity:.6;font-size:11px">(first Level 0 only · H to turn off)</span><br>';
+ var html='<span style="color:#ffe07a">NEWCOMER HELP</span> <span class="nbsub" style="opacity:.6;font-size:11px">(first Level 0 only · H to turn off)</span><br>';
  if(P.cards<CF.k){var best=null,bd=1e9;items.forEach(function(it){if(it.type!='card'||it.got)return;var d=Math.hypot(it.x-P.x,it.z-P.z);if(d<bd){bd=d;best=it}});
   html+='KEYCARDS '+P.cards+'/'+CF.k+(best?'  ·  nearest '+arrow(best.x,best.z)+' '+Math.round(bd)+'m':'')}
  else if(HU.fuse&&!HU.fuse()&&HU.XI){var fu=HU.XI.find(function(q){return q.k=='fuse'});if(!NB.fb&&fu){NB.fb=new T.Mesh(new T.CylinderGeometry(.18,.18,14,10,1,true),new T.MeshBasicMaterial({color:0xffcc33,transparent:true,opacity:.3,fog:false,depthWrite:false,blending:T.AdditiveBlending}));NB.fb.position.set(fu.x,7,fu.z);scene.add(NB.fb)}var d3=Math.hypot(fu.x-P.x,fu.z-P.z);html+='KEYCARDS DONE!  ·  this elevator is broken: find the ELEVATOR FUSE '+arrow(fu.x,fu.z)+' '+Math.round(d3)+'m (yellow beam)';if(!NB.fuMsg){NB.fuMsg=1;say('This run has BROKEN ELEVATORS: grab the ELEVATOR FUSE first. Follow the arrow and the yellow beam.',7)}}
@@ -7894,12 +7895,20 @@ body.touch.tplay #tc{display:block}
  #tc-acts{transform:scale(.85);transform-origin:100% 100%}#tc-base{transform:scale(.9)}}
 @media (max-height:420px){#tc-col .tb{min-height:30px}#tc-col .tb i{font-size:14px}#tc-col .tb b{display:none}}
 /* keep the game HUD clear of the thumbs */
-body.touch.tplay #hud{bottom:auto;top:calc(env(safe-area-inset-top) + 12px);left:50%;transform:translateX(-50%);width:200px;text-align:center}
-body.touch.tplay #gun{bottom:calc(env(safe-area-inset-bottom) + 12px)!important;left:50%!important;transform:translateX(-50%);font-size:11px;white-space:nowrap}
-body.touch.tplay #msg{bottom:auto;top:40%}
-body.touch.tplay #obj{right:calc(env(safe-area-inset-right) + 78px)!important;max-width:34vw;font-size:11px}
-body.touch.tplay #hud{transform:translateX(-50%) scale(.78);transform-origin:50% 0}
-@media (max-height:420px){body.touch.tplay #map{width:110px!important;height:110px!important;left:10px!important;top:10px!important}}
+/* phone HUD: tidy corners, nothing in the middle of the screen */
+body.touch.tplay #map{width:96px!important;height:96px!important;left:calc(env(safe-area-inset-left) + 8px)!important;top:calc(env(safe-area-inset-top) + 8px)!important}
+body.touch.tplay #rad{left:calc(env(safe-area-inset-left) + 8px)!important;top:calc(env(safe-area-inset-top) + 8px)!important;right:auto!important;bottom:auto!important;width:100px!important;height:115px!important;z-index:7}
+body.touch.tplay.tscan #map{visibility:hidden}
+body.touch.tplay #hud{left:calc(env(safe-area-inset-left) + 112px);top:calc(env(safe-area-inset-top) + 8px);bottom:auto;width:96px;font:bold 8px/1 monospace;letter-spacing:.06em;color:#e4d56acc;text-shadow:0 0 3px #000;background:#0007;border:1px solid #6a5c2055;border-radius:6px;padding:5px 6px 4px;transform:none}
+body.touch.tplay #hud .b{height:3px;margin:2px 0 5px;border-radius:2px;overflow:hidden}
+body.touch.tplay #hud #inv{display:block;font-size:8px;line-height:1.3;color:#cfe;white-space:normal}
+body.touch.tplay #cmp{width:min(300px,40vw)!important;top:calc(env(safe-area-inset-top) + 4px)!important}
+body.touch.tplay #obj{top:calc(env(safe-area-inset-top) + 8px)!important;right:calc(env(safe-area-inset-right) + 72px)!important;max-width:20vw;font-size:9px;opacity:.65}
+body.touch.tplay #nbguide{top:calc(env(safe-area-inset-top) + 44px)!important;font-size:11px!important;max-width:44vw;line-height:1.35!important}
+body.touch.tplay #nbguide .nbsub{display:none}
+body.touch.tplay #msg{bottom:auto;top:auto;bottom:calc(env(safe-area-inset-bottom) + 14px);font-size:11px;max-width:40vw}
+body.touch.tplay #gun{bottom:calc(env(safe-area-inset-bottom) + 70px)!important;left:50%!important;transform:translateX(-50%);font-size:11px;white-space:nowrap}
+body.touch.tplay #tc-lean{opacity:.75}
 body.touch.tplay #mic{right:80px!important}
 body.touch canvas{touch-action:none}
 @media (max-height:500px){body.touch .pn{font-size:11px;line-height:1.55;padding:12px 16px;max-height:92vh;-webkit-overflow-scrolling:touch}body.touch .pn .bt{padding:6px 10px;margin:6px auto;font-size:12px}}
@@ -7982,7 +7991,7 @@ var $b=function(i){return document.getElementById(i)},body=document.body,wasPlay
  var play=!!started&&!(typeof CUT!='undefined'&&CUT)&&!P.dead&&!P.won;
  if(play!=wasPlay){body.classList.toggle('tplay',play);wasPlay=play;if(!play){home();lid=null;K.KeyC=0;['KeyZ','KeyX','Tab'].forEach(function(k){if(K[k])key(k,0)})}}
  if(play){
-  $b('b-Q').classList.toggle('act',!!P.scan);
+  $b('b-Q').classList.toggle('act',!!P.scan);body.classList.toggle('tscan',!!P.scan);
   $b('b-T').classList.toggle('act',!!P.fl);
   $b('b-M').classList.toggle('act',!!MAPON);
   $b('b-C').classList.toggle('act',!!K.KeyC);

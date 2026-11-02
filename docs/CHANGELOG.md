@@ -1,5 +1,13 @@
 # Changelog
 
+## Cleaner phone screen
+- **Scanner moved:** on phones, the scanner now opens in the top-left corner (in place of the mini-map while it's on) instead of sitting under the ACT / CROUCH buttons.
+- **Stats tidied:** stamina, battery, sanity, imprint and keycards are a small panel next to the mini-map instead of big bars across the middle of the top of the screen.
+- **Compass** is narrower so it no longer runs into the other text. The level name is smaller and tucked by the right-hand buttons.
+- **Messages** appear at the bottom centre between the joystick and the buttons, so the middle of the screen stays clear for watching the hallway.
+- **Newcomer help** is smaller and sits under the compass. On phones its tips describe touch controls (LEFT STICK, ACT, BAG, LIGHT) instead of keyboard keys.
+- Computers are unchanged.
+
 ## Fix: "Cannot create so many PeerConnections" crash
 - **The problem:** with the mic on, voice chat re-called each friend every 2 seconds. A call that was still connecting (or that a friend's network never answered) counted as "not connected", so every 2 seconds the game opened another browser connection without closing the old one. After a few minutes Chrome hit its limit and threw "Failed to construct 'RTCPeerConnection': Cannot create so many PeerConnections".
 - **The fix:**
