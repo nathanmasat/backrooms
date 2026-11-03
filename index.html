@@ -7035,15 +7035,15 @@ function buildModel(p){if(p.model||typeof scene=='undefined'||!HU.buildPlayer)re
  var sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),depthTest:false,transparent:true,opacity:.85}));sp.scale.set(1.2,.3,1);sp.position.y=2.15;sp.renderOrder=999;g.add(sp);p.tag=sp;
  if(LIGHTS<3){LIGHTS++;var sl=new T.SpotLight(0xfff4d8,1.4,22,.48,.6,1.3);var tg=new T.Object3D();scene.add(tg);sl.target=tg;scene.add(sl);p.light=sl;p.lt=tg}}catch(e){console.warn('mp model',e)}}
 function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light){scene.remove(p.light);scene.remove(p.lt);LIGHTS--}}catch(e){}delete NET.players[id]}
-function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,t:performance.now()};
+function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),t:performance.now()};
  p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
-function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,name:d.name,si:d.si,eq:d.eq}}
-function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0}}
+function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,name:d.name,si:d.si,eq:d.eq}}
+function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0,y:+(P.y||0).toFixed(2)}}
 function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!p.b)return;buildModel(p);var g=p.model;if(!g)return;
  var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl&&!p.b.dead?1.4:0;if(!show)return;if(p.b.dead){ragPose(p,g,dt);return}unRag(p,g);
  var a=p.a||p.b,b=p.b,span=Math.max(30,b.t-a.t),k=Math.min(1.2,(now-100-a.t)/span);if(k<0)k=0;var x=a.x+(b.x-a.x)*k,z=a.z+(b.z-a.z)*k,dy=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw)),yaw=a.yaw+dy*Math.min(1,k);
  var sp=p.px!=null?Math.hypot(x-p.px,z-p.pz)/Math.max(dt,.001):0;p.px=x;p.pz=z;p.sp=(p.sp||0)+(Math.min(7,sp)-(p.sp||0))*Math.min(1,dt*8);
- g.position.set(x,0,z);g.rotation.y=yaw+PI;var U=g.userData,mv=Math.min(1,p.sp/3),run=p.sp>4;p.ph+=dt*p.sp*2.4;var sw=Math.sin(p.ph)*(run?.8:.5)*mv;
+ g.position.set(x,b.y||0,z);g.rotation.y=yaw+PI;var U=g.userData,mv=Math.min(1,p.sp/3),run=p.sp>4;p.ph+=dt*p.sp*2.4;var sw=Math.sin(p.ph)*(run?.8:.5)*mv;
  if(U.legs)U.legs.forEach(function(l,i){l.rotation.x=(i?-sw:sw)+(b.cr?-1.1:0);if(l.userData.kn)l.userData.kn.rotation.x=(b.cr?1.9:0)+Math.max(0,Math.sin(p.ph+(i?PI:0)))*.6*mv});
  if(U.hips)U.hips.position.y=b.cr?.62:.95+Math.abs(Math.sin(p.ph))*.03*mv;
  if(U.arms)U.arms.forEach(function(ar,i){ar.rotation.x=i&&b.fl?-1.2:(i?sw:-sw)*.8;if(ar.userData.el)ar.userData.el.rotation.x=i&&b.fl?-.2:-.25*mv});
@@ -7449,6 +7449,227 @@ function openUI(){if(UIx)return;var d=document.createElement('div');d.id='songui
  (function loop(){if(!UIx)return;requestAnimationFrame(loop);paint(SONG.time())})()}
 SONG.open=function(autoplay){try{var m=document.getElementById('mp');if(m)m.style.display='none'}catch(e){}openUI();if(autoplay!==false)SONG.play()};
 addEventListener('keydown',function(e){if(e.code=='Escape'&&UIx){SONG.stop();UIx.d.remove();UIx=null;e.stopImmediatePropagation()}},true);
+})();
+</script>
+<!-- ===== TAPE CHALLENGES: jumping (SPACE / JUMP), and the VHS tape on Levels 0-9 is only reachable by parkour to a second floor, a mini-maze, or a lamp puzzle ===== -->
+<script>
+(function(){
+// ===================================================================================
+// JUMPING + TAPE CHALLENGES
+// - SPACE (phone: JUMP) jumps, on every level.
+// - On Levels 0-9 the VHS tape sits in a special 12 x 12 m challenge room, and the challenge is the ONLY way to get it:
+//     PARKOUR: the tape is on a second floor high above, reached by jumping across crates and pillars;
+//     MAZE:    the tape is in the middle of a walled mini-maze;
+//     PUZZLE:  the tape is locked in a glass case that opens when all five lamps are lit
+//              (each button flips its own lamp and the lamps next to it).
+// The room and its challenge come from the level seed, so co-op players get the same room.
+// ===================================================================================
+if(typeof THREE=='undefined'||typeof scene=='undefined'||typeof g=='undefined'||typeof SV=='undefined')return;
+var T=THREE,PI=Math.PI,LV0=SV.lv|0,HU=window.HU||{};
+function rng(a){return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function lam(c,em){return new T.MeshLambertMaterial({color:c,emissive:em||0})}
+function box(w,h,d,mat,x,y,z,par){var m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);(par||scene).add(m);return m}
+function touch(){return document.body.classList.contains('touch')}
+function tnS(f,f2,d,v){try{if(typeof AC!='undefined'&&AC&&!(typeof muted!='undefined'&&muted))tone({f:f,f2:f2,d:d,v:v})}catch(e){}}
+function playing(){return typeof started!='undefined'&&started&&!P.dead&&!(typeof MENU!='undefined'&&MENU)}
+
+// ---------------------------------------------------------------- platforms you can stand on (and bump into)
+var PLAT=[];   // {x,z,hw,hd,top,bot,circ:[furn entries],on}
+function addPlat(x,z,hw,hd,top,bot){var p={x:x,z:z,hw:hw,hd:hd,top:top,bot:bot||0,circ:[],on:false};
+ // a ring of small circles that the game's normal collision (FURN) uses to stop you walking into the side
+ var r=Math.min(hw,hd),nx=Math.max(1,Math.round(hw/r)),nz=Math.max(1,Math.round(hd/r));
+ for(var a=0;a<nx;a++)for(var b=0;b<nz;b++)p.circ.push({x:x-hw+r+(nx>1?a*(2*hw-2*r)/(nx-1):hw-r),z:z-hd+r+(nz>1?b*(2*hd-2*r)/(nz-1):hd-r),r:Math.max(.05,r-.2),plat:1});
+ PLAT.push(p);return p}
+function blockSet(p,want){if(p.on===want)return;p.on=want;p.circ.forEach(function(c){var i=FURN.indexOf(c);if(want&&i<0)FURN.push(c);else if(!want&&i>=0)FURN.splice(i,1)})}
+function groundAt(x,z,y){var gr=0;for(var i=0;i<PLAT.length;i++){var p=PLAT[i];if(Math.abs(x-p.x)<p.hw+.18&&Math.abs(z-p.z)<p.hd+.18&&p.top<=y+.36&&p.top>gr)gr=p.top}return gr}
+
+// ---------------------------------------------------------------- jumping
+P.y=P.y||0;P.vy=P.vy||0;var onGround=true,jumpQ=0,lastGround=0;
+addEventListener('keydown',function(e){if(e.code!='Space'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(!playing()||P.hide||P.sit||(P.para>0))return;jumpQ=.25},false);
+var lastT=performance.now();
+(function phys(){requestAnimationFrame(phys);var now=performance.now(),dt=Math.min(.1,(now-lastT)/1000);lastT=now;
+ if(!playing()){return}
+ // side collision only for platforms you are below
+ PLAT.forEach(function(p){var under=P.y+1.75<p.bot;blockSet(p,!under&&P.y<p.top-.36)});
+ var gr=groundAt(P.x,P.z,P.y);
+ if(onGround)lastGround=now;
+ // a short grace window: you can still jump just after stepping off an edge, and a jump pressed just before landing still counts
+ if(jumpQ>0){jumpQ-=dt;if((onGround||now-lastGround<160)&&P.vy<=0){P.vy=6.7;onGround=false;lastGround=0;jumpQ=0;tnS(180,260,.08,.05)}}
+ if(!onGround||P.y>gr+.001||P.vy>0){var sub=Math.max(1,Math.ceil(dt/.02)),h=dt/sub;for(var q=0;q<sub;q++){P.vy-=20*h;P.y+=P.vy*h;if(P.y<=gr)break}
+  if(P.y<=gr){var hard=P.vy<-7;P.y=gr;P.vy=0;if(!onGround){onGround=true;if(typeof step=='function')try{step(null,hard?.5:.3,false)}catch(e){}}}else onGround=false}
+ else{P.y=gr;onGround=true}
+ if(P.y<0){P.y=0;P.vy=0;onGround=true}
+ CH&&CH.tick&&CH.tick(dt)})();
+// the camera rides along with your height
+var oPFX=window.PFX;window.PFX=function(s,c){try{if(P.y&&!P.dead)c.position.y+=P.y}catch(e){}
+ // the compass and map draw during the frame: show them the real tape spot, then hide it from the pickup check again
+ var tp=CH&&CH.locked&&CH.tape;if(tp){tp.x=CH.home.x;tp.z=CH.home.z}
+ try{if(oPFX)oPFX(s,c);else ren.render(s,c)}finally{if(tp&&CH.locked){tp.x=CH.home.x+1e4;tp.z=CH.home.z+1e4}}};
+HU.jumpY=function(){return P.y};
+
+// ---------------------------------------------------------------- the tape challenge room
+var CH=null;
+var OPENLV=!!(typeof CF!='undefined'&&CF.open);
+if(LV0<=9&&typeof wm!='undefined'){try{CH=build()}catch(e){console.error('tape challenge',e);CH=null}}
+HU.tapeChallenge=function(){return CH};
+
+function build(){
+ var r=rng(((SEED|0)*7919+LV0*104729)|0),start={x:cc(1),z:cc(1)},cands=[];
+ for(var i0=2;i0<=W-5;i0++)for(var j0=2;j0<=W-5;j0++)cands.push([i0,j0]);
+ for(var k=cands.length-1;k>0;k--){var q=Math.floor(r()*(k+1)),t=cands[k];cands[k]=cands[q];cands[q]=t}
+ var pick=null,ent=null;
+ for(var c=0;c<cands.length&&!pick;c++){var i0=cands[c][0],j0=cands[c][1],ok=true,walls=0;
+  var cx=cc(i0+1),cz=cc(j0+1);if(Math.hypot(cx-start.x,cz-start.z)<22)continue;
+  if(Math.abs(EL.i-(i0+1))<=3&&Math.abs(EL.j-(j0+1))<=3)continue;
+  for(var i=i0;i<i0+3&&ok;i++)for(var j=j0;j<j0+3;j++){var v=g[i][j];if(v!==0&&v!==1){ok=false;break}if(v)walls++;if(CL[i*W+j]){ok=false;break}}
+  if(!ok||(OPENLV?walls>0:walls<4))continue;   // the forest has no walls to knock down: use an open clearing there
+  var x0=i0*S,z0=j0*S,x1=x0+3*S,z1=z0+3*S,inR=function(x,z,m){return x>x0-m&&x<x1+m&&z>z0-m&&z<z1+m};
+  if(FURN.some(function(f){return inR(f.x,f.z,1)}))continue;
+  if(items.some(function(it){return inR(it.x,it.z,.5)}))continue;
+  if(typeof DOORS!='undefined'&&DOORS.some(function(d){return inR(d.x,d.z,2)}))continue;
+  if(typeof lockers!='undefined'&&lockers.some(function(l){return inR(l.position.x,l.position.z,1)}))continue;
+  // an open corridor must touch the room from outside
+  var es=[];for(var a=0;a<3;a++){[[i0+a,j0-1,0,-1],[i0+a,j0+3,0,1],[i0-1,j0+a,-1,0],[i0+3,j0+a,1,0]].forEach(function(o){if(o[0]>0&&o[1]>0&&o[0]<W-1&&o[1]<W-1&&g[o[0]][o[1]]===0)es.push(o)})}
+  if(!es.length)continue;pick=[i0,j0];ent=es[Math.floor(r()*es.length)]}
+ if(!pick)return null;
+ var i0=pick[0],j0=pick[1],x0=i0*S,z0=j0*S,X0=x0+1.5*S,Z0=z0+1.5*S,SZ=3*S;
+ // 1) knock out the walls inside the room (hide their wall blocks, open the grid cells)
+ var n=0,m4=new T.Matrix4(),hid=new T.Matrix4().makeScale(0,0,0);
+ for(var i=0;i<W;i++)for(var j=0;j<W;j++)if(g[i][j]){if(i>=i0&&i<i0+3&&j>=j0&&j<j0+3){wm.setMatrixAt(n,hid)}n++}
+ for(var i=i0;i<i0+3;i++)for(var j=j0;j<j0+3;j++){if(g[i][j]){g[i][j]=0;open.push([i,j])}}
+ wm.instanceMatrix.needsUpdate=true;
+ try{pan.forEach(function(p,k){if(p[0]>=i0&&p[0]<i0+3&&p[1]>=j0&&p[1]<j0+3){pim.setMatrixAt(k,hid)}});pim.instanceMatrix.needsUpdate=true}catch(e){}
+ var types=['parkour','maze','puzzle'],type=types[Math.floor(r()*3)];
+ try{var force=sessionStorage.getItem('brchal');if(types.indexOf(force)>=0)type=force}catch(e){}
+ var C={type:type,i0:i0,j0:j0,x0:x0,z0:z0,X0:X0,Z0:Z0,SZ:SZ,ent:ent,spot:null,solved:false,seen:false,r:r};
+ // which way the entrance faces (so the challenge is built facing you)
+ C.edir=ent[2]?[ent[2],0]:[0,ent[3]];
+ // a sign over the room
+ var lamp=new T.PointLight(type=='parkour'?0xbfd8ff:type=='maze'?0xb8ffc8:0xffe0a8,type=='parkour'?1.3:1.0,type=='parkour'?20:14,1.6);lamp.position.set(X0,type=='parkour'?7.6:2.9,Z0);scene.add(lamp);C.lamp=lamp;
+ if(type=='parkour')buildParkour(C);else if(type=='maze')buildMaze(C);else buildPuzzle(C);
+ C.tick=function(dt){tickChallenge(C,dt)};C.plat=PLAT;
+ return C}
+
+// world position from room coordinates (u along x, v along z, 0..12), rotated so the hard part is away from the entrance
+function W2(C,u,v){var d=C.edir,uu=u-C.SZ/2,vv=v-C.SZ/2,x,z;
+ // "forward" (away from the entrance) is +v
+ if(d[1]==-1){x=uu;z=vv}else if(d[1]==1){x=-uu;z=-vv}else if(d[0]==-1){x=vv;z=-uu}else{x=-vv;z=uu}
+ return {x:C.X0+x,z:C.Z0+z}}
+function rotY(C){var d=C.edir;return d[1]==-1?0:d[1]==1?PI:d[0]==-1?-PI/2:PI/2}
+
+// ---------------------------------------------------------------- PARKOUR: climb to the second floor
+function buildParkour(C){var H2=7.4,FL=3.9,SZ=C.SZ,x0=C.x0,z0=C.z0;
+ // cut a hole in the ceiling over the room and build a tall shaft
+ if(!OPENLV&&typeof ce2!='undefined'&&ce2&&ce2.visible){var G=new T.PlaneGeometry(W*S,W*S,W,W),idx=G.index.array,keep=[];
+  for(var iy=0;iy<W;iy++)for(var ix=0;ix<W;ix++){var jj=W-1-iy,cut=ix>=C.i0&&ix<C.i0+3&&jj>=C.j0&&jj<C.j0+3,b=(iy*W+ix)*6;if(!cut)for(var q=0;q<6;q++)keep.push(idx[b+q])}
+  G.setIndex(keep);G.setAttribute('uv2',G.attributes.uv);ce2.geometry.dispose();ce2.geometry=G}
+ var wt=(typeof wallT!='undefined')?wallT.clone():null;if(wt){wt.needsUpdate=true;wt.repeat.set(3,1.4)}
+ if(!OPENLV){var wmat=new T.MeshLambertMaterial(wt?{map:wt}:{color:0x8a8060}),hh=H2-H;
+ box(SZ+.3,hh,.3,wmat,C.X0,H+hh/2,z0-.15);box(SZ+.3,hh,.3,wmat,C.X0,H+hh/2,z0+SZ+.15);box(.3,hh,SZ+.3,wmat,x0-.15,H+hh/2,C.Z0);box(.3,hh,SZ+.3,wmat,x0+SZ+.15,H+hh/2,C.Z0);
+ var ct=(typeof ceilT!='undefined')?ceilT.clone():null;if(ct){ct.needsUpdate=true;ct.repeat.set(1.5,1.5)}
+ var top=new T.Mesh(new T.PlaneGeometry(SZ+.3,SZ+.3),new T.MeshLambertMaterial(ct?{map:ct}:{color:0x777060}));top.rotation.x=PI/2;top.position.set(C.X0,H2,C.Z0);scene.add(top);
+ [[-3,-3],[3,3],[-3,3],[3,-3]].forEach(function(o){var pn=new T.Mesh(new T.PlaneGeometry(1.8,.6),new T.MeshBasicMaterial({color:0xfff6c0}));pn.rotation.x=PI/2;pn.position.set(C.X0+o[0],H2-.02,C.Z0+o[1]);scene.add(pn)})}
+ var crateM=lam(0x7a5a34,0x140c04),pilM=lam(0x8c8c88,0x101010),stripe=lam(0xe0b030,0x2a1c00);
+ // the route: crates, then pillars, then a high ledge, then the second floor (heights in metres, jump height ~1.1 m)
+ var steps=[[2,2,1.25,.8,'c'],[4.1,1.6,1.05,1.6,'c'],[6.3,2.2,1.05,2.35,'c'],[8.5,3.1,.95,2.95,'p'],[9.8,5.3,1.0,3.4,'p'],[7.7,6.85,1.2,3.6,'p']];
+ var ry=rotY(C);
+ C.steps=[];steps.forEach(function(s){var w=W2(C,s[0],s[1]),hw=s[2]/2,m=box(s[2],s[3],s[2],s[4]=='c'?crateM:pilM,w.x,s[3]/2,w.z);m.rotation.y=ry;
+  if(s[4]=='c'){box(s[2]+.02,.08,s[2]+.02,stripe,w.x,s[3]-.04,w.z).rotation.y=ry}else{box(s[2]+.02,.06,s[2]+.02,stripe,w.x,s[3]-.03,w.z).rotation.y=ry}
+  addPlat(w.x,w.z,hw,hw,s[3],0);C.steps.push({x:w.x,z:w.z,top:s[3]})});
+ // second floor: a balcony across the far side of the room
+ var bA=W2(C,0,8.5),bB=W2(C,SZ,SZ),bx=(bA.x+bB.x)/2,bz=(bA.z+bB.z)/2,bw=Math.abs(bA.x-bB.x),bd=Math.abs(bA.z-bB.z);
+ box(bw,.3,bd,lam(0x6a6458,0x0c0b08),bx,FL-.15,bz);
+ // railing on the open edge
+  [[0,6.4],[9.2,SZ]].forEach(function(sg){var a1=W2(C,sg[0],8.5),a2=W2(C,sg[1],8.5);box(Math.abs(a1.x-a2.x)||.06,.06,Math.abs(a1.z-a2.z)||.06,lam(0x2a2a2a),(a1.x+a2.x)/2,FL+1.0,(a1.z+a2.z)/2)});for(var k=0;k<=8;k++){var uu=k*SZ/8;if(uu>6.4&&uu<9.2)continue;var pp=W2(C,uu,8.5);box(.05,1,.05,lam(0x2a2a2a),pp.x,FL+.5,pp.z)}
+ C.balc=addPlat(bx,bz,bw/2,bd/2,FL,FL-.3);
+ var sp=W2(C,6,10.6);C.spot={x:sp.x,y:FL+.08,z:sp.z};C.FL=FL;
+ sign(C,'TAPE CHALLENGE · PARKOUR','The tape is on the second floor. Jump across the crates and pillars to reach it ('+(touch()?'JUMP button':'SPACE to jump')+').')}
+
+// ---------------------------------------------------------------- MAZE: the tape is in the middle of a walled mini-maze
+function buildMaze(C){var N=4,cs=2.3,off=(C.SZ-N*cs)/2,r=C.r,wallH=2.5,th=.24;
+ var wt=(typeof wallT!='undefined')?wallT.clone():null;if(wt){wt.needsUpdate=true;wt.repeat.set(1,1)}
+ var wmat=new T.MeshLambertMaterial(wt?{map:wt,color:0xb8c8b0}:{color:0x6a7a5a});
+ // walls between cells: H[a][b] = wall on the +v side of cell (a,b); V[a][b] = wall on the +u side
+ var Hh=[],Vv=[],seen=[];for(var a=0;a<N;a++){Hh.push([]);Vv.push([]);seen.push([]);for(var b=0;b<N;b++){Hh[a].push(1);Vv[a].push(1);seen[a].push(0)}}
+ var st=[[0,0]];seen[0][0]=1;while(st.length){var cur=st[st.length-1],nb=[];[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var u=cur[0]+d[0],v=cur[1]+d[1];if(u>=0&&v>=0&&u<N&&v<N&&!seen[u][v])nb.push([u,v,d])});
+  if(!nb.length){st.pop();continue}var n=nb[Math.floor(r()*nb.length)],d=n[2];
+  if(d[0]==1)Vv[cur[0]][cur[1]]=0;if(d[0]==-1)Vv[n[0]][n[1]]=0;if(d[1]==1)Hh[cur[0]][cur[1]]=0;if(d[1]==-1)Hh[n[0]][n[1]]=0;seen[n[0]][n[1]]=1;st.push([n[0],n[1]])}
+ // entrance: the middle of the near side (v = 0 side faces the room entrance); the tape goes in the cell farthest away
+ var eu=Math.floor(r()*N),dist=[],q=[[eu,0]];for(var a=0;a<N;a++){dist.push([]);for(var b=0;b<N;b++)dist[a].push(-1)}dist[eu][0]=0;
+ while(q.length){var c=q.shift(),u=c[0],v=c[1];[[1,0],[-1,0],[0,1],[0,-1]].forEach(function(d){var nu=u+d[0],nv=v+d[1];if(nu<0||nv<0||nu>=N||nv>=N||dist[nu][nv]>=0)return;
+  var open2=d[0]==1?!Vv[u][v]:d[0]==-1?!Vv[nu][nv]:d[1]==1?!Hh[u][v]:!Hh[nu][nv];if(open2){dist[nu][nv]=dist[u][v]+1;q.push([nu,nv])}})}
+ var far=[0,0],fd=-1;for(var a=0;a<N;a++)for(var b=0;b<N;b++)if(dist[a][b]>fd){fd=dist[a][b];far=[a,b]}
+ var ry=rotY(C);
+ function seg(u1,v1,u2,v2){var A=W2(C,off+u1*cs,off+v1*cs),B=W2(C,off+u2*cs,off+v2*cs),len=Math.hypot(B.x-A.x,B.z-A.z)+th,mx=(A.x+B.x)/2,mz=(A.z+B.z)/2,horiz=Math.abs(B.x-A.x)>Math.abs(B.z-A.z);
+  box(horiz?len:th,wallH,horiz?th:len,wmat,mx,wallH/2,mz);
+  var steps=Math.max(1,Math.round(len/.32));for(var k=0;k<=steps;k++){var t=k/steps;FURN.push({x:A.x+(B.x-A.x)*t,z:A.z+(B.z-A.z)*t,r:.12,plat:1})}}
+ // outer walls (with the entrance gap)
+ for(var a=0;a<N;a++){if(a!==eu)seg(a,0,a+1,0);seg(a,N,a+1,N);seg(0,a,0,a+1);seg(N,a,N,a+1)}
+ for(var a=0;a<N;a++)for(var b=0;b<N;b++){if(Hh[a][b]&&b<N-1)seg(a,b+1,a+1,b+1);if(Vv[a][b]&&a<N-1)seg(a+1,b,a+1,b+1)}
+ // little lamps on top of the walls so it is not pitch black
+ var sp=W2(C,off+(far[0]+.5)*cs,off+(far[1]+.5)*cs);C.spot={x:sp.x,y:.08,z:sp.z};
+ var gl=new T.PointLight(0x66ccff,.8,5,2);gl.position.set(sp.x,1.6,sp.z);scene.add(gl);
+ C.solved=true;   // reaching the tape is the puzzle
+ sign(C,'TAPE CHALLENGE · MAZE','The tape is hidden in the middle of the maze. Find the way in.')}
+
+// ---------------------------------------------------------------- PUZZLE: light all five lamps to open the glass case
+function buildPuzzle(C){var r=C.r,N=5,ry=rotY(C);
+ var ped=W2(C,6,8.2);box(.9,.9,.9,lam(0x3a3632,0x080706),ped.x,.45,ped.z).rotation.y=ry;FURN.push({x:ped.x,z:ped.z,r:.55,plat:1});
+ var glass=new T.Mesh(new T.BoxGeometry(.7,.6,.7),new T.MeshLambertMaterial({color:0xa8e4ff,transparent:true,opacity:.28,emissive:0x0a2030}));glass.position.set(ped.x,1.2,ped.z);scene.add(glass);C.glass=glass;
+ var frame=box(.74,.04,.74,lam(0xc9a040,0x2a1c04),ped.x,1.52,ped.z);C.gframe=frame;
+ C.spot={x:ped.x,y:.98,z:ped.z};
+ // lamps on a beam above, buttons on posts in front
+ C.lit=[];C.lampM=[];C.btn=[];for(var i=0;i<N;i++)C.lit.push(1);
+ // scramble from solved with random presses (always solvable), never already solved
+ do{for(var k=0;k<5+Math.floor(r()*4);k++)flip(C,Math.floor(r()*N),true)}while(C.lit.every(function(v){return v}));
+ var bA=W2(C,2.6,6.6),bB=W2(C,9.4,6.6);box(Math.abs(bA.x-bB.x)+.2||.2,.15,Math.abs(bA.z-bB.z)+.2||.2,lam(0x2a2826),(bA.x+bB.x)/2,2.55,(bA.z+bB.z)/2);
+ for(var i=0;i<N;i++){var lp=W2(C,3+i*1.5,6.6),m=new T.Mesh(new T.SphereGeometry(.16,12,8),new T.MeshBasicMaterial({color:0x222222}));m.position.set(lp.x,2.3,lp.z);scene.add(m);C.lampM.push(m);
+  var bp=W2(C,3+i*1.5,5.4),post=box(.22,1.0,.22,lam(0x4a4640,0x0a0908),bp.x,.5,bp.z);var cap=new T.Mesh(new T.CylinderGeometry(.11,.11,.07,14),lam(0xb02020,0x300404));cap.position.set(bp.x,1.04,bp.z);scene.add(cap);
+  FURN.push({x:bp.x,z:bp.z,r:.12,plat:1});C.btn.push({x:bp.x,z:bp.z,cap:cap,i:i})}
+ paintLamps(C);
+ sign(C,'TAPE CHALLENGE · PUZZLE','Light all five lamps to open the glass case. Each button flips its own lamp AND the lamps next to it. '+(touch()?'Tap GRAB':'Press E')+' at a button.')}
+function flip(C,i,quiet){[i-1,i,i+1].forEach(function(k){if(k>=0&&k<C.lit.length)C.lit[k]=C.lit[k]?0:1});if(!quiet)paintLamps(C)}
+function paintLamps(C){C.lampM.forEach(function(m,i){m.material.color.setHex(C.lit[i]?0x6dff8a:0x3a0a0a)})}
+
+// ---------------------------------------------------------------- a sign at the entrance
+function sign(C,title,text){C.title=title;C.text=text;var cv=document.createElement('canvas');cv.width=512;cv.height=160;var x=cv.getContext('2d');x.fillStyle='#0c0f10';x.fillRect(0,0,512,160);x.strokeStyle='#e4d56a';x.lineWidth=4;x.strokeRect(4,4,504,152);
+ x.fillStyle='#e4d56a';x.font='bold 30px monospace';x.textAlign='center';x.fillText(title,256,48);x.fillStyle='#cfe6ff';x.font='17px monospace';
+ var words=text.split(' '),line='',y=82;words.forEach(function(w){var t2=line?line+' '+w:w;if(x.measureText(t2).width>470){x.fillText(line,256,y);y+=22;line=w}else line=t2});if(line)x.fillText(line,256,y);
+ var e=C.ent,ex=cc(e[0]),ez=cc(e[1]),bx=ex-e[2]*(S/2-.06),bz=ez-e[3]*(S/2-.06),mesh=new T.Mesh(new T.PlaneGeometry(1.9,.6),new T.MeshBasicMaterial({map:new T.CanvasTexture(cv),fog:false}));
+ // hang it above the doorway, facing the corridor
+ mesh.position.set(bx-e[2]*.02,2.7,bz-e[3]*.02);mesh.rotation.y=e[2]==1?PI/2:e[2]==-1?-PI/2:e[3]==1?0:PI;scene.add(mesh)}
+
+// ---------------------------------------------------------------- the tape itself, and the rules for picking it up
+var tapeShown=null,TP=document.createElement('div');TP.style.cssText='position:fixed;left:50%;top:60%;transform:translateX(-50%);z-index:8;pointer-events:none;font:bold 15px monospace;color:#cfe6ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none';document.body.appendChild(TP);
+var near=null;
+addEventListener('keydown',function(e){if(e.code!='KeyE'||e.repeat||!CH||CH.type!='puzzle'||CH.solved||!near||!playing())return;e.preventDefault();e.stopImmediatePropagation();press(near)},true);
+function press(b){flip(CH,b.i);tnS(320+b.i*90,420+b.i*90,.12,.12);b.cap.position.y=1.0;setTimeout(function(){b.cap.position.y=1.04},150);
+ if(CH.lit.every(function(v){return v})){CH.solved=true;tnS(660,990,.6,.16);setTimeout(function(){tnS(990,1320,.7,.12)},180);say('All five lamps are lit! The glass case opens.',4);try{HU.toast&&HU.toast('🧩 Puzzle solved','#9fe')}catch(e){}}}
+function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0&&P.x<C.x0+C.SZ&&P.z>C.z0&&P.z<C.z0+C.SZ;
+ // move the level's tape into the challenge (once) and lock it until the challenge is beaten
+ if(TA&&!C.moved){C.moved=1;C.tape=TA;TA.g.position.set(C.spot.x,C.spot.y,C.spot.z);TA.gl.position.set(C.spot.x,C.spot.y+.07,C.spot.z);TA.x=C.spot.x;TA.z=C.spot.z;C.home={x:C.spot.x,z:C.spot.z}}
+ var tp=C.tape;
+ if(tp&&C.home){
+  var unlocked=C.type=='parkour'?(P.y>C.FL-.4):C.type=='puzzle'?C.solved:true;
+  // locked: the tape is moved out of reach of the pickup check (it stays on screen where it is)
+  C.locked=!unlocked;if(unlocked){tp.x=C.home.x;tp.z=C.home.z}else{tp.x=C.home.x+1e4;tp.z=C.home.z+1e4}}
+ // the glass case lifts away once the puzzle is solved
+ if(C.type=='puzzle'&&C.solved&&C.glass.position.y<2.4){C.glass.position.y+=dt*.8;C.gframe.position.y+=dt*.8}
+ if(!playing()){TP.style.display='none';return}
+ if(inRoom&&!C.seen){C.seen=true;say(C.title+': '+C.text,7)}
+ // hints
+ near=null;var h='';
+ if(C.type=='puzzle'&&!C.solved){var bd=1.15;C.btn.forEach(function(b){var d=Math.hypot(b.x-P.x,b.z-P.z);if(d<bd){bd=d;near=b}});if(near)h='🧩 '+(touch()?'Tap <span style="color:#ffe07a">GRAB</span>':'Press <span style="color:#ffe07a">E</span>')+' to press button '+(near.i+1)+' <span style="opacity:.7">(light all five lamps)</span>';
+  else if(tp&&Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<1.6)h='🔒 The case is locked. Light all five lamps to open it.'}
+ if(C.type=='parkour'&&tp&&tp.g.visible!==false&&inRoom&&P.y<.5&&Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<4)h='⬆ The tape is up on the second floor. '+(touch()?'Tap JUMP':'Press SPACE')+' to jump up the crates.';
+ if(h){TP.innerHTML=h;TP.style.display='block'}else TP.style.display='none'}
+
+// ---------------------------------------------------------------- phone: a JUMP button
+function jumpBtn(){try{var acts=document.getElementById('tc-acts');if(acts&&!document.getElementById('b-J')){var b=document.createElement('div');b.className='tb';b.id='b-J';b.dataset.key='Space';b.innerHTML='<i>&#10514;</i><b>JUMP</b>';acts.appendChild(b);
+ b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();b.classList.add('dn');jumpQ=.15;if(navigator.vibrate)try{navigator.vibrate(8)}catch(x){}});
+ var up=function(){b.classList.remove('dn')};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
+ var st=document.createElement('style');st.textContent='#b-J{right:154px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}}catch(e){}}
+jumpBtn();addEventListener('DOMContentLoaded',jumpBtn);addEventListener('load',jumpBtn);
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->

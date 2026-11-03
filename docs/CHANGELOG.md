@@ -1,5 +1,15 @@
 # Changelog
 
+## Jumping + VHS tape challenges (second floor parkour, maze, puzzle)
+- **Jumping:** press **SPACE** to jump (on a phone: the new **JUMP** button next to GRAB). You jump about 1 metre and can land on crates, pillars and ledges. A quick tap jumps; holding SPACE still holds your breath like before. You can still jump a split second after stepping off an edge.
+- **Tape challenges (Levels 0-9):** each level's VHS tape is now inside a special 12 × 12 m challenge room, and beating the challenge is the **only** way to get the tape. A sign over the doorway says which challenge it is. Each level and run picks one of three:
+  - **PARKOUR – the second floor:** the ceiling opens into a tall shaft with a balcony (a real second floor) high above. Jump from crate to crate, then up the pillars and a high ledge, then leap onto the second floor to grab the tape. Fall and you just land on the floor and try again. Standing under the tape on the ground doesn't work.
+  - **MAZE:** the tape is hidden in the middle of a walled mini-maze with one way in. The walls are too tall to jump over.
+  - **PUZZLE:** the tape is locked in a glass case. Light all five lamps to open it: each button flips its own lamp and the lamps next to it (press **E** / tap **GRAB** at a button). The case lifts away when all five are green.
+- Works on every level from 0 to 9, including the Dark Forest (there the room is an open clearing).
+- The compass and map still point to the tape while it's locked.
+- **Co-op:** every player gets the same challenge room (it comes from the level seed), and teammates see each other jump and stand on platforms.
+
 ## Co-op runs only end when the whole team is down
 - Going down in co-op never ends your run. You stay in the game spectating, and your run keeps going until a teammate revives you or everyone is down.
 - More forgiving teammate check: a teammate counts as "still standing" unless they've sent nothing for 10 seconds (it was 2.5 seconds). A lag spike or a quick reconnect no longer makes you die for real instead of going down.
