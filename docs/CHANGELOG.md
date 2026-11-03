@@ -1,5 +1,10 @@
 # Changelog
 
+## Fix: the white flashlight glare
+- **Bug fixed:** the flashlight's narrow, very bright beam was never actually switched off. A speed value in the movement code had the same name and blocked the update. So a bright white circle with a hard dark edge was always on, even with your flashlight off; close walls and the elevator doors glowed white.
+- The narrow beam now turns on and off with your flashlight, is a bit gentler, and has a soft edge instead of a hard white-and-black ring.
+- **Co-op elevator:** the level lights no longer flicker or black out while you wait inside, and the elevator doors are a darker brushed metal, so they don't glare white right in front of you.
+
 ## Jumping + VHS tape challenges (second floor parkour, maze, puzzle)
 - **Jumping:** press **SPACE** to jump (on a phone: the new **JUMP** button next to GRAB). You jump about 1 metre and can land on crates, pillars and ledges. A quick tap jumps; holding SPACE still holds your breath like before. You can still jump a split second after stepping off an edge.
 - **Tape challenges (Levels 0-9):** each level's VHS tape is now inside a special 12 × 12 m challenge room, and beating the challenge is the **only** way to get the tape. A sign over the doorway says which challenge it is. Each level and run picks one of three:

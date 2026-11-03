@@ -624,7 +624,7 @@ const scene=new THREE.Scene();scene.background=new THREE.Color(CF.f);scene.fog=n
 const cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,80);cam.rotation.order='YXZ';scene.add(cam);
 const amb=new THREE.AmbientLight(0xfff0a0,.6);scene.add(amb);
 const pl=new THREE.PointLight(0xffe9a0,.5,14);cam.add(pl);
-const sp=new THREE.SpotLight(0xfffbe0,2.4,45,.62,.6,1.2),sp2=new THREE.SpotLight(0xffffff,2,60,.16,.4,1);sp.target.position.set(0,0,-1);sp2.target.position.set(0,0,-1);cam.add(sp,sp.target,sp2,sp2.target);
+const sp=new THREE.SpotLight(0xfffbe0,2.4,45,.62,.6,1.2),sp2=new THREE.SpotLight(0xffffff,2,60,.16,.4,1);sp.target.position.set(0,0,-1);sp2.target.position.set(0,0,-1);cam.add(sp,sp.target,sp2,sp2.target);const FBEAM=sp2;FBEAM.intensity=0;FBEAM.penumbra=.95;
 function tex(w,h,fn,rx,ry){const c=document.createElement('canvas');c.width=w;c.height=h;fn(c.getContext('2d'),w,h);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(rx,ry);return t}
 const nz=(x,w,h,a,n)=>{for(let i=0;i<n;i++){x.fillStyle=`rgba(${R()<.5?0:70},${R()<.5?0:45},0,${R()*a})`;x.fillRect(R()*w,R()*h,2,2)}};
 const wallT=tex(512,512,GFX.wall,1,1);if(SV.lv==9)GFX.galaxy(wallT.image,wallT);
@@ -792,7 +792,7 @@ cam.rotation.set(P.pit,P.yaw+Math.sin(P.t*.9)*.01*insane,-P.lean*.14+Math.sin(P.
 ren.domElement.style.filter=insane>0?`blur(${insane*1.8}px) hue-rotate(${Math.sin(P.t)*insane*30}deg)`:'';
 // flashlight battery
 if(P.fl&&P.bat>0){P.bat=Math.max(0,P.bat-.3*dt);if(P.bat==0){P.fl=false;say('The flashlight dies.')}}
-sp.intensity=P.fl?(P.bat<10?(R()<.8?2.4:.2):2.4):0;sp2.intensity=sp.intensity*.8;
+sp.intensity=P.fl?(P.bat<10?(R()<.8?2.4:.2):2.4):0;FBEAM.intensity=sp.intensity*.55;
 // lights
 L.nb-=dt;if(L.nb<=0&&!L.black){L.black=9+R()*10;L.nb=(14+R()*18)/(CF.out||1);say('The power dies...',3);flickerHit()}
 if(L.black>0){L.black-=dt;L.lvl=R()<.04?.5:0;if(L.black<=0){L.lvl=1;L.fk=.7}}
@@ -904,7 +904,7 @@ addEventListener('resize',o.rs);return o}
 function buildElev(sc){const E={},G=new THREE.Group();sc.add(G);E.g=G;
 const wM=new THREE.MeshLambertMaterial({map:tex(128,128,(x,w,h)=>{const g=x.createLinearGradient(0,0,w,0);g.addColorStop(0,'#7c7f84');g.addColorStop(.5,'#a6a9ae');g.addColorStop(1,'#74777c');x.fillStyle=g;x.fillRect(0,0,w,h);for(let i=0;i<320;i++){x.fillStyle='rgba(0,0,0,'+R()*.14+')';x.fillRect(R()*w,R()*h,1,6+R()*24)}x.fillStyle='rgba(40,25,0,.25)';x.fillRect(0,h-10,w,10)},3,1)}),
 fM=new THREE.MeshLambertMaterial({map:tex(64,64,(x,w,h)=>{x.fillStyle='#38393d';x.fillRect(0,0,w,h);x.fillStyle='#4e5056';for(let i=0;i<w;i+=16)for(let j=0;j<h;j+=16){x.save();x.translate(i+8,j+8);x.rotate((i+j)%32?.7:-.7);x.fillRect(-5,-1.5,10,3);x.restore()}},4,5)}),
-cM=CM(0x55575c),frM=CM(0x45474b),dM=new THREE.MeshLambertMaterial({map:tex(64,128,(x,w,h)=>{x.fillStyle='#a8abb0';x.fillRect(0,0,w,h);for(let i=0;i<120;i++){x.fillStyle='rgba(0,0,0,'+R()*.1+')';x.fillRect(R()*w,R()*h,1,10+R()*30)}x.fillStyle='rgba(60,40,10,.35)';x.fillRect(0,h-14,w,14)},1,1)}),rail=CM(0xbbbbbb);
+cM=CM(0x55575c),frM=CM(0x45474b),dM=new THREE.MeshLambertMaterial({map:tex(64,128,(x,w,h)=>{x.fillStyle='#7c7f85';x.fillRect(0,0,w,h);for(let i=0;i<120;i++){x.fillStyle='rgba(0,0,0,'+R()*.1+')';x.fillRect(R()*w,R()*h,1,10+R()*30)}x.fillStyle='rgba(60,40,10,.35)';x.fillRect(0,h-14,w,14)},1,1)}),rail=CM(0xbbbbbb);
 bxm(G,2.2,.1,2.5,0,-.05,1.25,fM);bxm(G,2.2,.1,2.5,0,2.55,1.25,cM);
 bxm(G,.1,2.6,2.5,-1.05,1.25,1.25,wM);bxm(G,.1,2.6,2.5,1.05,1.25,1.25,wM);bxm(G,2.2,2.6,.1,0,1.25,2.5,wM);
 bxm(G,.05,.05,2.2,-.96,.95,1.3,rail);bxm(G,.05,.05,2.2,.96,.95,1.3,rail);bxm(G,1.9,.05,.05,0,.95,2.4,rail);
@@ -7110,6 +7110,7 @@ function tvTick(dt){var V=CAR&&CAR.tv;if(!V)return;V.ph+=dt;var x=V.x,W2=512,H2=
 function openDoors(remote){if(!waiting())return;ST.open=curSeed();saveST();if(NET.isHost())bcast({t:'open',seed:curSeed()});if(CAR&&CAR.flWas!=null){P.fl=CAR.flWas;CAR.flWas=null}
  try{if(typeof AC!='undefined'&&AC&&!muted){tone({f:880,d:1.2,v:.12});tone({f:1320,d:1.2,v:.08,at:.25})}}catch(e){}if(inLevel())say(remote?'The doors open. Stay together.':'You opened the doors. Stay together.',4)}
 NET.openDoors=function(){if(NET.isHost())openDoors(false)};
+(function(){try{if(typeof L=='undefined'||L.__hold)return;L.__hold=1;['lvl','fk','black'].forEach(function(k){var v=L[k];Object.defineProperty(L,k,{configurable:true,get:function(){return NET.on&&NET.hold?(k=='lvl'?1:0):v},set:function(x){v=x}})})}catch(e){}})();
 function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var E=CAR.E;try{tvTick(dt)}catch(e){}
  var tgt=waiting()?0:1;if(CAR.k!==tgt){CAR.k+=(tgt-CAR.k)*Math.min(1,dt*1.6);if(Math.abs(CAR.k-tgt)<.01)CAR.k=tgt;E.doors(CAR.k)}
  var L=toLocal(P.x,P.z),inBox=L.x>-1.1&&L.x<1.1&&L.z>-.05&&L.z<2.55;
@@ -7121,7 +7122,8 @@ function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var
   if(inBox&&L.z<=.5&&Math.abs(L.x)>.85){var w2=toWorld(Math.sign(L.x)*.85,L.z);P.x=w2.x;P.z=w2.z}}
  var L2=toLocal(P.x,P.z);CAR.inside=L2.x>-1.1&&L2.x<1.1&&L2.z>-.05&&L2.z<2.55;CAR.px=P.x;CAR.pz=P.z;
  // nothing else happens while you wait: no blackouts, and 14 - 1 - 20 - 8 - 1 - 14 stays away
- if(waiting()){try{if(HU.LO&&HU.LO.ph==0)HU.LO.cd=Math.max(HU.LO.cd,30)}catch(e){}try{if(HU.kid&&HU.kid.E&&!HU.kid.E.on)HU.kid.E.next=Math.max(HU.kid.E.next||0,40)}catch(e){}}}
+ NET.hold=waiting();if(waiting()){try{if(typeof L!='undefined'){L.fk=0;L.black=0;L.nb=Math.max(L.nb,20)}}catch(e){}   // no flickering lights while you wait in the elevator
+  try{if(HU.LO&&HU.LO.ph==0)HU.LO.cd=Math.max(HU.LO.cd,30)}catch(e){}try{if(HU.kid&&HU.kid.E&&!HU.kid.E.on)HU.kid.E.next=Math.max(HU.kid.E.next||0,40)}catch(e){}}}
 var PROMPT=document.createElement('div');PROMPT.id='mpprompt';PROMPT.style.cssText='position:fixed;left:50%;top:74%;transform:translate(-50%,-50%);z-index:7;pointer-events:none;font:bold 17px monospace;color:#e8f8ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.6';document.body.appendChild(PROMPT);
 function inCar(){var n=1;Object.keys(NET.players).forEach(function(k){var b=NET.players[k].b;if(b&&b.lv===curLv()&&b.seed===curSeed()&&performance.now()-NET.players[k].last<4000)n++});return n}
 function prompt2(){if(!NET.on||!inLevel()||!waiting()){PROMPT.style.display='none';return}PROMPT.style.display='block';var n=inCar(),hostName=(NET.players.host&&NET.players.host.name)||'the host';
