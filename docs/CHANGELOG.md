@@ -1,5 +1,14 @@
 # Changelog
 
+## Smoother: less lag, no stutters
+Measured on the same level and the same walk, frame time roughly halved on both computers and phones, and nothing gets "first-time" prepared mid-game anymore.
+- **Adaptive resolution:** the game watches the frame rate all the time. If frames start to slow down, the 3D view is drawn slightly smaller (the film grain hides it); when there is room again it gets sharp again. Before, it only reacted below about 28 frames a second, and only once.
+- **Fewer pixels for nothing:** the game no longer draws more pixels than your screen has (on a normal monitor, the "High" setting was drawing 2.25 times the pixels). Phones draw at 1×.
+- **Phones:** edge smoothing (antialiasing) is off on phones. It was wasted work, because the camera effect redraws the picture anyway.
+- **No more first-time stutters:** right after a level starts, the game prepares every shader in advance, so monsters, effects and items don't freeze the game for a moment the first time they appear.
+- **Co-op:** friends' flashlights are created at the start, so a friend joining no longer makes everyone's game freeze for a moment. The elevator TV no longer adds an extra light.
+- **Cheaper effects:** the TV-static texture updates 20 times a second instead of every frame. The low-sanity blur (a very expensive full-screen effect) is skipped on phones and updated 10 times a second on computers.
+
 ## Fix: the white flashlight glare
 - **Bug fixed:** the flashlight's narrow, very bright beam was never actually switched off. A speed value in the movement code had the same name and blocked the update. So a bright white circle with a hard dark edge was always on, even with your flashlight off; close walls and the elevator doors glowed white.
 - The narrow beam now turns on and off with your flashlight, is a bit gentler, and has a soft edge instead of a hard white-and-black ring.

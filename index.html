@@ -619,7 +619,7 @@ function bfs(sx,sz,tx,tz){const q=[[sx,sz]],pv=new Int32Array(W*W).fill(-2);pv[s
 for(let h=0;h<q.length;h++){const[x,z]=q[h];if(x==tx&&z==tz)break;for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const nx=x+a,nz=z+b;if(nx<0||nz<0||nx>=W||nz>=W||g[nx][nz]||CL[nx*W+nz]||pv[nx*W+nz]!=-2)continue;pv[nx*W+nz]=x*W+z;q.push([nx,nz])}}
 const p=[];let c=tx*W+tz;if(pv[c]==-2)return p;while(pv[c]>=0){p.unshift([(c/W)|0,c%W]);c=pv[c]}return p}
 // ---------- render ----------
-const ren=new THREE.WebGLRenderer({antialias:true});ren.setPixelRatio(Math.min(devicePixelRatio,1.5));ren.setSize(innerWidth,innerHeight);document.body.prepend(ren.domElement);
+const ren=new THREE.WebGLRenderer({antialias:!(window.matchMedia&&matchMedia('(pointer:coarse)').matches),powerPreference:'high-performance'});ren.setPixelRatio(Math.min(devicePixelRatio,(window.matchMedia&&matchMedia('(pointer:coarse)').matches)?1:1.5));ren.setSize(innerWidth,innerHeight);document.body.prepend(ren.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(CF.f);scene.fog=new THREE.FogExp2(CF.f,CF.fd);
 const cam=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,.1,80);cam.rotation.order='YXZ';scene.add(cam);
 const amb=new THREE.AmbientLight(0xfff0a0,.6);scene.add(amb);
@@ -639,7 +639,7 @@ const pan=open.filter(([i,j])=>i%2&&j%2&&R()<.7),pm=new THREE.MeshBasicMaterial(
 pan.forEach(([i,j],k)=>{m4.makeRotationX(Math.PI/2);m4.setPosition(cc(i),H-.02,cc(j));pim.setMatrixAt(k,m4)});scene.add(pim);pim.visible=!CF.open;
 const sc=document.createElement('canvas');sc.width=64;sc.height=128;const sx=sc.getContext('2d'),sid=sx.createImageData(64,128),stt=new THREE.CanvasTexture(sc);
 const STM=new THREE.MeshBasicMaterial({map:stt,transparent:true,opacity:.8,depthWrite:false,blending:THREE.AdditiveBlending});
-function staticTick(){const d=sid.data;for(let i=0;i<d.length;i+=4){const v=R()*255*(R()<.15?1:.5);d[i]=v*.85;d[i+1]=v*.92;d[i+2]=v;d[i+3]=255}sx.putImageData(sid,0,0);const tt=performance.now()/1000;sx.strokeStyle='rgba(255,40,40,.9)';sx.lineWidth=2;for(let v=0;v<4;v++){sx.beginPath();for(let y=0;y<=128;y+=8){const x=8+v*16+Math.sin(y*.15+tt*6+v)*5;y?sx.lineTo(x,y):sx.moveTo(x,y)}sx.stroke()}stt.needsUpdate=true}
+let stT=0;function staticTick(){const nw=performance.now();if(nw-stT<50)return;stT=nw;const d=sid.data;for(let i=0;i<d.length;i+=4){const v=R()*255*(R()<.15?1:.5);d[i]=v*.85;d[i+1]=v*.92;d[i+2]=v;d[i+3]=255}sx.putImageData(sid,0,0);const tt=performance.now()/1000;sx.strokeStyle='rgba(255,40,40,.9)';sx.lineWidth=2;for(let v=0;v<4;v++){sx.beginPath();for(let y=0;y<=128;y+=8){const x=8+v*16+Math.sin(y*.15+tt*6+v)*5;y?sx.lineTo(x,y):sx.moveTo(x,y)}sx.stroke()}stt.needsUpdate=true}
 const st2=$('stat'),sx2=st2.getContext('2d'),sid2=sx2.createImageData(96,54);
 function statTick(op){st2.style.opacity=op;if(op<.02)return;const d=sid2.data;for(let i=0;i<d.length;i+=4){const v=R()*255;d[i]=d[i+1]=d[i+2]=v;d[i+3]=255}sx2.putImageData(sid2,0,0)}
 // monster model
@@ -789,7 +789,7 @@ cam.position.set(P.x+rx*(lx+sw),P.h+Math.sin(P.bob)*.04*P.ba,P.z+rz*(lx+sw));
 // sanity wobble
 const insane=P.san<50?(50-P.san)/50:0;
 cam.rotation.set(P.pit,P.yaw+Math.sin(P.t*.9)*.01*insane,-P.lean*.14+Math.sin(P.t*.5)*.02*insane);
-ren.domElement.style.filter=insane>0?`blur(${insane*1.8}px) hue-rotate(${Math.sin(P.t)*insane*30}deg)`:'';
+{const fs=insane>0&&!(window.matchMedia&&matchMedia('(pointer:coarse)').matches)?`blur(${(insane*1.8).toFixed(1)}px) hue-rotate(${Math.round(Math.sin(P.t)*insane*30/3)*3}deg)`:'';if(fs!==ren.__fs&&(!fs||!ren.__ft||P.t-ren.__ft>.1)){ren.domElement.style.filter=fs;ren.__fs=fs;ren.__ft=P.t}}
 // flashlight battery
 if(P.fl&&P.bat>0){P.bat=Math.max(0,P.bat-.3*dt);if(P.bat==0){P.fl=false;say('The flashlight dies.')}}
 sp.intensity=P.fl?(P.bat<10?(R()<.8?2.4:.2):2.4):0;FBEAM.intensity=sp.intensity*.55;
@@ -832,7 +832,7 @@ let MENU=true,mt2=0,lt=0,muted=false,NG=false;
 const mp=$('mp'),BAD=/nigg|faggot|(^|[^a-z])rape|hitler/i,RES=/^(admin|administrator|moderator|mod|staff)$/i;
 function brName(n){return Array.from(String(n||'').replace(/[<>&"'`\\\u0000-\u001f\u007f]/g,'').replace(/\s+/g,' ').trim()).slice(0,20).join('')}
 function vName(n){const k=n.replace(/[\s_]/g,'');if(!n.length)return 'Type a name first.';if(RES.test(k))return 'That name belongs to the game staff.';if(BAD.test(k))return 'Please choose a different name.';return ''}
-function applyS(){if(master)master.gain.value=muted?0:SET.vol;ren.setPixelRatio(SET.q=='Low'?.6:SET.q=='Medium'?1:SET.q=='High'?1.5:devicePixelRatio);ren.setSize(innerWidth,innerHeight);sp.color.set(SET.fc);sp2.color.set(SET.fc)}
+function applyS(){if(master)master.gain.value=muted?0:SET.vol;ren.setPixelRatio(Math.min(SET.q=='Low'?.6:SET.q=='Medium'?1:SET.q=='High'?1.5:devicePixelRatio,Math.max(1,devicePixelRatio||1),(window.matchMedia&&matchMedia('(pointer:coarse)').matches)?1:9));ren.setSize(innerWidth,innerHeight);sp.color.set(SET.fc);sp2.color.set(SET.fc)}
 function sv(k,v){SET[k]=v;applyS();try{localStorage.setItem('brs',JSON.stringify(SET))}catch(e){}}
 function saveStats(){PS.play+=P.t-lt;lt=P.t;PS.best=Math.max(PS.best,P.t);PS.sc=Math.max(PS.sc,ST.score);try{localStorage.setItem('brp',JSON.stringify(PS))}catch(e){}}
 function pnl(h){mp.innerHTML='<div class="pn">'+h+'<div class="bt" data-a="back">BACK</div></div>';mp.style.display='flex'}
@@ -1651,9 +1651,13 @@ function fear(){var f=0;try{if(typeof mon!='undefined'&&mon.visible){var d=Math.
  f=Math.max(f,(100-P.san)/100*.7);if(P.dead)f=1}catch(e){}return Math.max(0,Math.min(1,f))}
 // per-frame bits: flicker, dust drift, monster twitch, then draw through the camera effect
 var jit=null;
-var FT={last:0,acc:0,n:0,step:0};
+var FT={last:0,acc:0,n:0,step:0,bad:0},RTS0=RTS;
 window.PFX=function(sc,cm){clockT+=1/60;var now=performance.now();if(FT.last&&started){var dtm=now-FT.last;if(dtm<250){FT.acc+=dtm;FT.n++}}FT.last=now;
- if(FT.n>=180){var avg=FT.acc/FT.n;FT.acc=0;FT.n=0;if(avg>36&&FT.step<2){FT.step++;if(FT.step==1)RTS=Math.min(RTS,.7);else{PF.on=false;console.info('camera effect turned off to keep the game smooth')}}}
+ // adaptive resolution: if frames get slow the 3D view is drawn a little smaller (the film grain hides it), and sharper again when there is room
+ if(FT.n>=45){var avg=FT.acc/FT.n;FT.acc=0;FT.n=0;var mn=RTS0*.5;
+  if(avg>24){if(RTS>mn+.01)RTS=Math.max(mn,RTS-(avg>34?.15:.07));else if(avg>40&&PF.on&&++FT.bad>=3){PF.on=false;console.info('camera effect turned off to keep the game smooth')}}
+  else{FT.bad=0;if(avg<18.5&&RTS<RTS0)RTS=Math.min(RTS0,RTS+.04)}
+  window.__RTS=RTS}
  try{for(var i=0;i<FLK.length;i++){var f=FLK[i];f.t-=1/60;if(f.t<=0){f.on=f.on?0:1;f.t=f.on?(.05+Math.random()*(Math.random()<.3?2.5:.25)):(.03+Math.random()*.25);col.setRGB(f.on?1:.12,f.on?1:.11,f.on?1:.1);pim.setColorAt(f.k,col);pim.instanceColor.needsUpdate=true}}}catch(e){}
  try{var lit=(typeof L!='undefined')?L.lvl:1;if(glow){glow.visible=!OPEN&&lit>.3}
   var a=dg.attributes.position.array;for(var i=0;i<DN;i++){var o=i*3;a[o]+=dv[i][0]*.016;a[o+1]+=dv[i][1]*.016;a[o+2]+=dv[i][2]*.016;var dx=a[o]-cm.position.x,dz=a[o+2]-cm.position.z;if(dx>6)a[o]-=12;else if(dx<-6)a[o]+=12;if(dz>6)a[o+2]-=12;else if(dz<-6)a[o+2]+=12;if(a[o+1]<0)a[o+1]+=3;else if(a[o+1]>3)a[o+1]-=3}
@@ -7033,8 +7037,12 @@ function mkPlayer(id,d){var p={id:id,name:cleanName(d&&d.name),si:(d&&d.si&&/^#[
 function buildModel(p){if(p.model||typeof scene=='undefined'||!HU.buildPlayer)return;try{var g=HU.buildPlayer({si:p.si,eq:p.eq,name:p.name});g.visible=false;scene.add(g);p.model=g;
  var c=document.createElement('canvas');c.width=256;c.height=64;var x=c.getContext('2d');x.font='bold 30px monospace';x.textAlign='center';x.lineWidth=6;x.strokeStyle='rgba(0,0,0,.8)';x.strokeText(p.name,128,42);x.fillStyle='#bff3ff';x.fillText(p.name,128,42);
  var sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),depthTest:false,transparent:true,opacity:.85}));sp.scale.set(1.2,.3,1);sp.position.y=2.15;sp.renderOrder=999;g.add(sp);p.tag=sp;
- if(LIGHTS<3){LIGHTS++;var sl=new T.SpotLight(0xfff4d8,1.4,22,.48,.6,1.3);var tg=new T.Object3D();scene.add(tg);sl.target=tg;scene.add(sl);p.light=sl;p.lt=tg}}catch(e){console.warn('mp model',e)}}
-function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light){scene.remove(p.light);scene.remove(p.lt);LIGHTS--}}catch(e){}delete NET.players[id]}
+ var L2=takeLight();if(L2){p.light=L2.sl;p.lt=L2.tg}}catch(e){console.warn('mp model',e)}}
+var LPOOL=[];function makePool(){if(LPOOL.length||typeof scene=='undefined')return;for(var i=0;i<3;i++){var sl=new T.SpotLight(0xfff4d8,0,22,.48,.6,1.3),tg=new T.Object3D();scene.add(tg);sl.target=tg;scene.add(sl);LPOOL.push({sl:sl,tg:tg,used:false})}}
+function takeLight(){makePool();var f=LPOOL.find(function(q){return !q.used});if(f){f.used=true;return f}return null}
+function giveLight(sl){LPOOL.forEach(function(q){if(q.sl===sl){q.used=false;q.sl.intensity=0}})}
+if(ST&&ST.on)makePool();
+function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light)giveLight(p.light)}catch(e){}delete NET.players[id]}
 function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),t:performance.now()};
  p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
 function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,name:d.name,si:d.si,eq:d.eq}}
@@ -7090,8 +7098,7 @@ function makeTV(G){var c=document.createElement('canvas');c.width=512;c.height=3
  var bez=new T.Mesh(new T.BoxGeometry(.9,.56,.06),new T.MeshLambertMaterial({color:0x1b1b1e}));bez.position.z=-.035;B.add(bez);
  var arm=new T.Mesh(new T.BoxGeometry(.08,.08,.12),new T.MeshLambertMaterial({color:0x2a2a2e}));arm.position.z=-.1;B.add(arm);
  var scr=new T.Mesh(new T.PlaneGeometry(.82,.48),new T.MeshBasicMaterial({map:t,fog:false}));scr.position.z=.001;B.add(scr);
- var glow=new T.PointLight(0x7fd8ff,.35,2.2);glow.position.set(0,0,.3);B.add(glow);
- return {c:c,x:x,t:t,last:'',ph:0,glow:glow}}
+ return {c:c,x:x,t:t,last:'',ph:0,glow:null}}
 function tvTick(dt){var V=CAR&&CAR.tv;if(!V)return;V.ph+=dt;var x=V.x,W2=512,H2=300;
  var me=myName(),host=NET.isHost()?me:((NET.players.host&&NET.players.host.name)||'the host'),n=inCar(),wait=waiting(),touch=document.body.classList.contains('touch');
  var key=[host,n,wait,Math.floor(V.ph*2)%2,touch].join('|');if(key===V.last)return;V.last=key;var blink=Math.floor(V.ph*2)%2;
@@ -7106,7 +7113,7 @@ function tvTick(dt){var V=CAR&&CAR.tv;if(!V)return;V.ph+=dt;var x=V.x,W2=512,H2=
  else{x.fillStyle='#5fe08a';x.font='bold 30px monospace';x.fillText('DOORS OPEN',W2/2,220);x.font='bold 22px monospace';x.fillStyle='#ffffff';x.fillText("STAY TOGETHER. DON'T LOOK BACK.",W2/2,258)}
  // scanlines
  x.fillStyle='rgba(0,0,0,.18)';for(var y=0;y<H2;y+=4)x.fillRect(0,y,W2,2);
- V.t.needsUpdate=true;V.glow.intensity=wait?.35:.2}
+ V.t.needsUpdate=true}
 function openDoors(remote){if(!waiting())return;ST.open=curSeed();saveST();if(NET.isHost())bcast({t:'open',seed:curSeed()});if(CAR&&CAR.flWas!=null){P.fl=CAR.flWas;CAR.flWas=null}
  try{if(typeof AC!='undefined'&&AC&&!muted){tone({f:880,d:1.2,v:.12});tone({f:1320,d:1.2,v:.08,at:.25})}}catch(e){}if(inLevel())say(remote?'The doors open. Stay together.':'You opened the doors. Stay together.',4)}
 NET.openDoors=function(){if(NET.isHost())openDoors(false)};
@@ -7672,6 +7679,20 @@ function jumpBtn(){try{var acts=document.getElementById('tc-acts');if(acts&&!doc
  var up=function(){b.classList.remove('dn')};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);
  var st=document.createElement('style');st.textContent='#b-J{right:154px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}}catch(e){}}
 jumpBtn();addEventListener('DOMContentLoaded',jumpBtn);addEventListener('load',jumpBtn);
+})();
+</script>
+<!-- ===== SMOOTH: shaders prepared up front so nothing stutters the first time it appears ===== -->
+<script>
+(function(){
+// SMOOTH: prepare every shader once, right after the level starts, so monsters, items and effects
+// do not stutter the first time they appear (each new kind of material is compiled the first time it is drawn).
+if(typeof ren=='undefined'||typeof scene=='undefined'||typeof cam=='undefined')return;
+var done=false;
+function warm(){if(done)return;if(typeof started=='undefined'||!started){requestAnimationFrame(warm);return}done=true;
+ setTimeout(function(){try{var t=performance.now();ren.compile(scene,cam);window.__warmMs=Math.round(performance.now()-t)}catch(e){}},700)}
+requestAnimationFrame(warm);
+// lights that get added later (a friend's flashlight, an elevator) change the lighting setup: prepare again once, quietly
+var lastN=-1;setInterval(function(){if(!done||typeof started=='undefined'||!started)return;var n=0;scene.traverseVisible(function(o){if(o.isLight)n++});if(lastN>=0&&n!==lastN){try{ren.compile(scene,cam)}catch(e){}}lastN=n},3000);
 })();
 </script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
