@@ -1,5 +1,10 @@
 # Changelog
 
+## Co-op runs only end when the whole team is down
+- Going down in co-op never ends your run. You stay in the game spectating, and your run keeps going until a teammate revives you or everyone is down.
+- More forgiving teammate check: a teammate counts as "still standing" unless they've sent nothing for 10 seconds (it was 2.5 seconds). A lag spike or a quick reconnect no longer makes you die for real instead of going down.
+- When nobody is left standing, players who are down wait 5 seconds (it was 4) before the run ends, in case a teammate's connection comes back.
+
 ## Co-op: rag doll, spectating, Revival Scrolls, teammates on the map
 Co-op only. Solo games are unchanged.
 - **Going down:** when you're caught and a teammate is still standing, you go **DOWN** instead of dying. Your view falls to the floor, and everyone else sees your body fall over like a rag doll (arms and legs spread, name tag turns blue).

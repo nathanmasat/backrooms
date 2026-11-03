@@ -2850,7 +2850,7 @@ function track(){if(typeof P=='undefined'||typeof items=='undefined')return;var 
   if(P.hide&&!s.hide)event('hide','Hid in a locker',false);s.hide=!!P.hide;
   if(P.scan&&!s.scan)event('scan','Scanner on',false);s.scan=!!P.scan;
   if(window.SHROOMS&&SHROOMS.log.length>(s.sh||0)){event('forest','The forest noticed you');s.sh=SHROOMS.log.length}
-  var dn=(window.NET&&NET.down&&NET.down());if(P.dead&&!dn&&!s.dead){RUN.deaths++;RUN.result='died';event('death','Death');endRun()}s.dead=P.dead&&!dn;
+  var dn=(window.NET&&NET.down&&NET.down()),coop=!!(window.NET&&NET.on);if(P.dead&&!dn&&!s.dead){RUN.deaths++;event('death','Death');if(!coop){RUN.result='died';endRun()}}s.dead=P.dead&&!dn;
   if(P.won&&!s.won){RUN.result='escaped';event('escape','Escape');endRun()}s.won=P.won}catch(e){}
  if(REC.on)REC.meta&&(function(){var m=REC.meta;if(RUN.next!=null)m.levels=[m.lv,RUN.next];m.dur=recTime();m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.bm=REC.bm;m.score=score();if(performance.now()-(REC.lastSave||0)>2000){REC.lastSave=performance.now();saveRL()}})();
  recUI()}
@@ -3450,7 +3450,7 @@ function onEscape(){if(HU.escaped)return;HU.escaped=1;var r=run();
   if(bonus){HU.raw=1;try{oCash(bonus,'Mutation bonus ('+ms.length+' active)')}finally{HU.raw=0}r.cash=(r.cash||0)+bonus;setTimeout(function(){toast('☣ MUTATION BONUS +$'+bonus+(ms.length>=3?' (hard combination!)':''),'#ff9a5a')},900)}
   if(r.mode=='nightmare'||r.mode=='dlb')HD.meta.flags.hardEsc=Date.now();if(r.mode=='dlb')HD.meta.flags.dlbEsc=1;var rec=HD.rec[r.mode]=HD.rec[r.mode]||{runs:0,best:0,done:0};rec.best=Math.max(rec.best,r.esc);hsave()}
  if(LS.flT<20)HU.ev('nolight');if(!LS.chased)HU.ev('nochase');if(typeof INV!='undefined'&&INV.length<=1)HU.ev('light');if(r&&r.mutOn!==false&&r.muts.length>=2)HU.ev('mut2');if(LS.t<240)HU.ev('fast');if(r&&(r.mode=='nightmare'||r.mode=='dlb'))HU.ev('nm');if(P.san>50)HU.ev('san50')}
-var oDie=die;die=function(){var was=P.dead,res=oDie.apply(this,arguments);if(!was&&P.dead){var r=run();if(r){r.deaths++;hsave();if(mode().perma){endRun('died');setTimeout(function(){try{var p=$('ov').querySelector('p');if(p)p.insertAdjacentHTML('afterbegin','<b style="color:#f33">RUN OVER — DON\'T LOOK BACK MODE</b><br>Levels escaped this run: '+r.esc+'<br><br>')}catch(e){}},16700)}}}return res};
+var oDie=die;die=function(){var was=P.dead,res=oDie.apply(this,arguments);if(!was&&P.dead){var r=run();if(r){r.deaths++;hsave();if(mode().perma&&!(window.NET&&NET.on)){endRun('died');setTimeout(function(){try{var p=$('ov').querySelector('p');if(p)p.insertAdjacentHTML('afterbegin','<b style="color:#f33">RUN OVER — DON\'T LOOK BACK MODE</b><br>Levels escaped this run: '+r.esc+'<br><br>')}catch(e){}},16700)}}}return res};
 var oWin=winGame;winGame=function(){var w=P.won;var res=oWin.apply(this,arguments);if(!w&&P.won){try{onEscape()}catch(e){}endRun('escaped');HD.meta.flags.won=1;hsave()}return res};
 // Broken Elevators: the exit needs the fuse, and the elevator only goes down
 var oExit=exitLevel;exitLevel=function(){if(has('elev')&&LVL<19&&P.cards>=CF.k&&!HU.fuse()){say('The elevator is dead. Find the ELEVATOR FUSE first (marked on your map, M).',4);if(!started&&!P.dead){started=true;try{ren.domElement.requestPointerLock()}catch(e){}}return}return oExit.apply(this,arguments)};
@@ -7232,7 +7232,9 @@ function coopHere(p){var b=p&&p.b;return !!(b&&b.lv===curLv()&&b.seed===curSeed(
 function isTouch(){return document.body.classList.contains('touch')}
 function chime(up){try{if(typeof AC!='undefined'&&AC&&!(typeof muted!='undefined'&&muted)){tone({f:up?660:520,f2:up?990:780,d:.5,v:.14});tone({f:up?990:780,f2:up?1320:1040,d:.7,v:.1,at:.18})}}catch(e){}}
 // ---- going down
-function coopDie(){if(!NET.on||!inLevel())return false;if(DOWN||performance.now()<REVU)return true;if(!others().length)return false;goDown();return true}
+// teammates still standing in this level; a short lag spike or a reconnect does not count as everyone being down
+function mates(){return Object.keys(NET.players).map(function(k){return NET.players[k]}).filter(function(p){var b=p.b;return b&&b.lv===curLv()&&b.seed===curSeed()&&!b.dead&&performance.now()-p.last<10000})}
+function coopDie(){if(!NET.on||!inLevel())return false;if(DOWN||performance.now()<REVU)return true;if(!mates().length)return false;goDown();return true}
 function goDown(){DOWN={x:P.x,z:P.z,yaw:P.yaw,pit:P.pit||0,t:0,watch:null,alone:0,t0:performance.now(),side:Math.random()<.5?-1:1};P.dead=true;P.fl=false;P.hide=null;try{P.scan=false}catch(e){}
  try{if(typeof AC!='undefined'&&AC){tone({t:'sawtooth',f:260,f2:70,d:.9,v:.3,lp:1800});tone({f:55,d:1.6,v:.35,a:.01})}}catch(e){}
  try{var r=document.getElementById('red');r.style.transition='opacity .15s';r.style.opacity=.65;setTimeout(function(){r.style.transition='opacity 2s';r.style.opacity=.22},250)}catch(e){}
@@ -7323,7 +7325,7 @@ function coopTick(dt){
  if(!DOWN){SPEC.style.display='none';return}
  if(!inLevel()){return}
  DOWN.t=(performance.now()-DOWN.t0)/1000;SPC.dt=dt;P.x=DOWN.x;P.z=DOWN.z;P.vx=P.vz=0;P.para=Math.max(P.para||0,.3);P.fl=false;P.dead=true;
- var up=others(),nw=performance.now();if(!up.length){if(!DOWN.alone)DOWN.alone=nw;if(nw-DOWN.alone>4000){say('Nobody is left standing...',3);reallyDie();return}}else DOWN.alone=0;
+ var up=mates(),nw=performance.now();if(!up.length){if(!DOWN.alone)DOWN.alone=nw;if(nw-DOWN.alone>5000){say('Nobody is left standing...',3);reallyDie();return}}else DOWN.alone=0;
  specT-=dt;if(specT<=0){specT=.25;if(DOWN.t<2.6){SPEC.style.display='none'}else{var w=watchTarget();SPEC.style.display='block';SPEC.innerHTML=w?'👁 SPECTATING <span style="color:#7fb4ff">'+e2(w.name)+'</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">You are down. '+(up.length>1?(isTouch()?'Tap':'Click')+' to watch someone else. ':'')+'A teammate with a 📜 Revival Scroll can bring you back.</span>':'<span style="color:#f99">Nobody is left standing...</span>'}}}
 NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;NET.down=function(){return DOWN};NET.revive=reviveMe;NET.scrolls=function(){return SCR};
 })();
