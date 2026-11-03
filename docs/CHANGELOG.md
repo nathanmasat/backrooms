@@ -1,5 +1,17 @@
 # Changelog
 
+## Co-op: rag doll, spectating, Revival Scrolls, teammates on the map
+Co-op only. Solo games are unchanged.
+- **Going down:** when you're caught and a teammate is still standing, you go **DOWN** instead of dying. Your view falls to the floor, and everyone else sees your body fall over like a rag doll (arms and legs spread, name tag turns blue).
+- **Spectating:** after the fall you watch a teammate from behind their shoulder. Click or tap (or press Space) to switch between teammates. The screen says who you're watching.
+- **📜 Revival Scrolls:** two scrolls appear in every co-op level (never in solo). They float and glow so you can spot them. Walk into one to pick it up; everyone sees it disappear, so each scroll can only be taken once. Your scrolls carry over between levels and show in the co-op list (📜 Revival Scrolls: 1).
+- **Reviving:** walk up to a fallen teammate and press **F** (on a phone: tap **ACT**). They stand back up where they fell and are protected for 4 seconds. Without a scroll, the game tells you that you need one.
+- **Nobody left standing:** if everyone else is down too, the last player dies normally, and anyone still down dies after a few seconds.
+- **Map:** teammates show in **blue** on your map: a blue dot with a direction line for where they are, a blue line for where they've been, and a blue ✕ wherever they went down.
+- The co-op list says "DOWN — revive them!" for fallen teammates. Being down doesn't count as a death in your run record; only a real death does.
+- The scroll is an original model (parchment roll, dark rod with brass caps, leather band with gold emblems, rope tie with tassels).
+- Co-op version is now 3: everyone in a game needs this update.
+
 ## The hum is gone
 - The constant fluorescent-light hum (a low electrical drone plus a high buzz) is now **off by default**.
 - If you ever want it back: **SOUND → 💡 LIGHT HUM: OFF (tap to turn on)**. The choice is remembered.

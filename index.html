@@ -2394,7 +2394,7 @@ var oCut=cutscene;cutscene=function(n){try{SV.inv=INV.slice()}catch(e){}return o
 var oRw=levelReward;levelReward=function(){var lv=SV.lv;SV.best=SV.best||{};SV.best[lv]=Math.max(SV.best[lv]||0,ST.score);SV.dd=SV.dd||{};
  if(lv>=10&&lv<=19){achieve('esc'+lv);if(!SV.dd[lv]){achieve('flaw');addCash(150,'Flawless: Level '+lv+' without dying');setTimeout(function(){toast('★ FLAWLESS — LEVEL '+lv+' WITHOUT DYING  +$150','#9f9')},2400)}}
  delete SV.dd[lv];save();return oRw.apply(this,arguments)};
-var ddMark=0;(function dd(){requestAnimationFrame(dd);if(P.dead&&!ddMark){ddMark=1;SV.dd=SV.dd||{};SV.dd[SV.lv]=1;save()}})();
+var ddMark=0;(function dd(){requestAnimationFrame(dd);if(P.dead&&!ddMark&&!(window.NET&&NET.down&&NET.down())){ddMark=1;SV.dd=SV.dd||{};SV.dd[SV.lv]=1;save()}})();
 // ---- saved spot remembers objective progress too ----
 try{document.getElementById('p-save').addEventListener('click',function(){if(!LVX.on||!SV.sp)return;SV.sp.lx={st:LVX.steps.filter(function(s){return s.done}).map(function(s){return s.id}),cn:LVX.cons.map(function(c,i){return c.done?i:-1}).filter(function(i){return i>=0}),tx:LVX.tx||0,pu:LVX.pumped||0,dr:LVX.drain||0,pw:LVX.power||0,ri:LVX.rideOn||0,dk:LVX.dark,er:LVX.enraged||0};save()})}catch(e){}
 var oSG=startGame;startGame=function(){var cont=SV.cont&&SV.sp&&SV.sp.lv==SV.lv&&SV.sp.seed==SEED&&SV.sp.lx;var lx=cont?SV.sp.lx:null;var r=oSG.apply(this,arguments);
@@ -2850,7 +2850,7 @@ function track(){if(typeof P=='undefined'||typeof items=='undefined')return;var 
   if(P.hide&&!s.hide)event('hide','Hid in a locker',false);s.hide=!!P.hide;
   if(P.scan&&!s.scan)event('scan','Scanner on',false);s.scan=!!P.scan;
   if(window.SHROOMS&&SHROOMS.log.length>(s.sh||0)){event('forest','The forest noticed you');s.sh=SHROOMS.log.length}
-  if(P.dead&&!s.dead){RUN.deaths++;RUN.result='died';event('death','Death');endRun()}s.dead=P.dead;
+  var dn=(window.NET&&NET.down&&NET.down());if(P.dead&&!dn&&!s.dead){RUN.deaths++;RUN.result='died';event('death','Death');endRun()}s.dead=P.dead&&!dn;
   if(P.won&&!s.won){RUN.result='escaped';event('escape','Escape');endRun()}s.won=P.won}catch(e){}
  if(REC.on)REC.meta&&(function(){var m=REC.meta;if(RUN.next!=null)m.levels=[m.lv,RUN.next];m.dur=recTime();m.items=RUN.items;m.tapes=RUN.tapes;m.monsters=Object.keys(RUN.mons);m.bm=REC.bm;m.score=score();if(performance.now()-(REC.lastSave||0)>2000){REC.lastSave=performance.now();saveRL()}})();
  recUI()}
@@ -6813,7 +6813,7 @@ try{if(INV.length<=3){INV.push('water');INV.push('water')}}catch(e){}
 // ===================================================================================
 (function(){
 if(typeof THREE=='undefined'||typeof SV=='undefined'||!window.Peer)return;
-var T=THREE,HU=window.HU||{},VER=2,MAXP=4,PFX='backrooms-dlb-v2-',PI=Math.PI;
+var T=THREE,HU=window.HU||{},VER=3,MAXP=4,PFX='backrooms-dlb-v2-',PI=Math.PI;
 var CODECH='ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 var ST=null;try{ST=JSON.parse(sessionStorage.getItem('brmp')||'null')}catch(e){}
 function saveST(){try{if(ST)sessionStorage.setItem('brmp',JSON.stringify(ST));else sessionStorage.removeItem('brmp')}catch(e){}}
@@ -6967,6 +6967,7 @@ function onClientMsg(c,d){var id=c.peer,pl=NET.players[id];
  if(d.t=='st'){applySt(pl,d);d.id=id;bcast(slim(d),id);return}
  if(d.t=='pick'){if(addPick(d.k,d.x,d.z,true))bcast({t:'pick',k:d.k,x:d.x,z:d.z,by:pl.name},id);return}
  if(d.t=='next'){var n=d.n|0;if(n===curLv()+1&&inLevelOrMenu()){note(pl.name+' called the elevator. Everyone goes up!',4);goNext(n,true)}return}
+ if(d.t=='rev'){var to=String(d.to||''),pb=pl.b;if(!pb||pb.dead)return;if(to==='host'){if(DOWN&&Math.hypot(pb.x-DOWN.x,pb.z-DOWN.z)<5)reviveMe(pl.name)}else{var tc=NET.conns[to],tp=NET.players[to];if(tc&&tc.open&&tp&&tp.b&&tp.b.dead&&Math.hypot(pb.x-tp.b.x,pb.z-tp.b.z)<5)try{tc.send({t:'rev',to:to,by:pl.name})}catch(e){}}return}
  if(d.t=='bye'){try{c.close()}catch(e){}}}
 function inLevelOrMenu(){return true}
 
@@ -6985,6 +6986,7 @@ function onHostMsg(d){if(!d||typeof d!='object')return;HOSTT=performance.now();
  if(d.t=='go'){var n=d.n|0,s2=d.seed|0;if(n<0||n>20)return;ST.lv=n;ST.seed=s2;ST.picks=[];ST.auto=1;saveST();NET.reloading=true;
   if(inLevel()&&!P.dead&&typeof oNext=='function'){say('The group is taking the elevator...',3);oNext(n)}else moveTo('The group moved to '+((LV[n]||{}).n||('Level '+n))+'...');return}
  if(d.t=='open'){if((d.seed|0)===curSeed())openDoors(true);return}
+ if(d.t=='rev'){if(DOWN)reviveMe(cleanName(d.by));return}
  if(d.t=='bye'){NET.status=d.why?String(d.why).slice(0,120):'The host closed the room.';toast(NET.status);leaveNet();NET.on=false;ST=null;saveST();render()}}
 var RL=0;
 function moveTo(msg){var k=0;try{var r=JSON.parse(sessionStorage.getItem('brmpRL')||'[]').filter(function(t){return Date.now()-t<20000});k=r.length;r.push(Date.now());sessionStorage.setItem('brmpRL',JSON.stringify(r))}catch(e){}
@@ -6994,10 +6996,10 @@ function moveTo(msg){var k=0;try{var r=JSON.parse(sessionStorage.getItem('brmpRL
 // ---------------------------------------------------------------- shared keycards / objective items
 function sanePicks(a){return (Array.isArray(a)?a:[]).slice(0,60).filter(function(p){return p&&typeof p.k=='string'&&p.k.length<20}).map(function(p){return {k:p.k,x:num(p.x,2000),z:num(p.z,2000)}})}
 function pkey(k,x,z){return k+'@'+Math.round(x)+','+Math.round(z)}
-function addPick(k,x,z,fromRemote,by){if(typeof k!='string'||k!='card')return false;x=num(x,2000);z=num(z,2000);var key=pkey(k,x,z);if(NET.picks[key])return false;NET.picks[key]=1;
+function addPick(k,x,z,fromRemote,by){if(k!=='card'&&k!=='scroll')return false;x=num(x,2000);z=num(z,2000);var key=pkey(k,x,z);if(NET.picks[key])return false;NET.picks[key]=1;
  ST.picks=ST.picks||[];if(!ST.picks.some(function(p){return pkey(p.k,p.x,p.z)===key}))ST.picks.push({k:k,x:x,z:z});saveST();
  applyPick(k,x,z,by);return true}
-function applyPick(k,x,z,by){try{var best=null,bd=2.2;items.forEach(function(it){if(it.type!=k||it.got)return;var d=Math.hypot(it.x-x,it.z-z);if(d<bd){bd=d;best=it}});if(best){best.got=true;best.m.visible=false;LOCAL.add(best)}
+function applyPick(k,x,z,by){if(k==='scroll'){try{hideScroll(x,z,by)}catch(e){}return}try{var best=null,bd=2.2;items.forEach(function(it){if(it.type!=k||it.got)return;var d=Math.hypot(it.x-x,it.z-z);if(d<bd){bd=d;best=it}});if(best){best.got=true;best.m.visible=false;LOCAL.add(best)}
  var n=Object.keys(NET.picks).filter(function(q){return q.indexOf('card@')===0}).length;if(P.cards<n){P.cards=Math.min(CF.k,n);if(by&&inLevel())say(cleanName(by)+' found '+CF.kn+' ('+P.cards+'/'+CF.k+')',4)}}catch(e){}}
 function applyAllPicks(){(ST&&ST.picks||[]).forEach(function(p){var key=pkey(p.k,p.x,p.z);if(!NET.picks[key]){NET.picks[key]=1}applyPick(p.k,p.x,p.z)})}
 var LOCAL=new Set();
@@ -7034,11 +7036,11 @@ function buildModel(p){if(p.model||typeof scene=='undefined'||!HU.buildPlayer)re
  if(LIGHTS<3){LIGHTS++;var sl=new T.SpotLight(0xfff4d8,1.4,22,.48,.6,1.3);var tg=new T.Object3D();scene.add(tg);sl.target=tg;scene.add(sl);p.light=sl;p.lt=tg}}catch(e){console.warn('mp model',e)}}
 function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light){scene.remove(p.light);scene.remove(p.lt);LIGHTS--}}catch(e){}delete NET.players[id]}
 function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,t:performance.now()};
- if(s.dead&&!p.dead&&s.lv===curLv())note(p.name+' was caught!',4);p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
+ p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
 function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,name:d.name,si:d.si,eq:d.eq}}
 function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0}}
 function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!p.b)return;buildModel(p);var g=p.model;if(!g)return;
- var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd&&!p.b.dead;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl?1.4:0;if(!show)return;
+ var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl&&!p.b.dead?1.4:0;if(!show)return;if(p.b.dead){ragPose(p,g,dt);return}unRag(p,g);
  var a=p.a||p.b,b=p.b,span=Math.max(30,b.t-a.t),k=Math.min(1.2,(now-100-a.t)/span);if(k<0)k=0;var x=a.x+(b.x-a.x)*k,z=a.z+(b.z-a.z)*k,dy=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw)),yaw=a.yaw+dy*Math.min(1,k);
  var sp=p.px!=null?Math.hypot(x-p.px,z-p.pz)/Math.max(dt,.001):0;p.px=x;p.pz=z;p.sp=(p.sp||0)+(Math.min(7,sp)-(p.sp||0))*Math.min(1,dt*8);
  g.position.set(x,0,z);g.rotation.y=yaw+PI;var U=g.userData,mv=Math.min(1,p.sp/3),run=p.sp>4;p.ph+=dt*p.sp*2.4;var sw=Math.sin(p.ph)*(run?.8:.5)*mv;
@@ -7064,7 +7066,7 @@ function wrapAI(name,meshFn){var orig=window[name];if(typeof orig!='function')re
 wrapAI('updMon',function(){return typeof mon!='undefined'?mon:null});
 wrapAI('updLM',function(){return typeof lm!='undefined'?lm:null});
 ['updPool','updParty'].forEach(function(n){var o=window[n];if(typeof o=='function')window[n]=function(){if(waiting())return;return o.apply(this,arguments)}});
-if(typeof die=='function'){var oDie=die;die=function(){if(NET.imp)return;return oDie.apply(this,arguments)}}
+if(typeof die=='function'){var oDie=die;die=function(){if(NET.imp)return;if(coopDie())return;return oDie.apply(this,arguments)}}
 function monMesh(){try{if(typeof lm!='undefined'&&lm)return lm;return typeof mon!='undefined'?mon:null}catch(e){return null}}
 function monSynced(){return !(CF.tile||CF.bal)}
 
@@ -7173,7 +7175,7 @@ addEventListener('keydown',function(e){if(e.code!='KeyY'||e.repeat||!NET.on)retu
 // ---------------------------------------------------------------- the network tick
 var sendT=0,monSendT=0,lastF=performance.now();
 (function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-lastF)/1000);lastF=now;if(!NET.on)return;
- if(inLevel())watchPicks();animPlayers(dt);carTick(dt);prompt2();vcTick();vcT-=dt;if(vcT<=0){vcT=2;if(VC.on)callAll();else if(ST&&ST.mic&&!VC.want&&NET.peer&&NET.peer.open){VC.want=true;vcStart()}}if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
+ if(inLevel())watchPicks();animPlayers(dt);try{coopTick(dt)}catch(e){console.warn('coop',e)}carTick(dt);prompt2();vcTick();vcT-=dt;if(vcT<=0){vcT=2;if(VC.on)callAll();else if(ST&&ST.mic&&!VC.want&&NET.peer&&NET.peer.open){VC.want=true;vcStart()}}if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
  sendT-=dt;if(sendT<=0&&typeof P!='undefined'){sendT=1/12;var s=myState();if(NET.isHost()){s.id='host';s.name=myName();s.si=mySuit();s.eq=myEq();bcast(s)}else send(s)}
  if(NET.isHost()&&monSynced()){monSendT-=dt;if(monSendT<=0&&now-NET.aiT<400){monSendT=1/15;var m=monMesh();bcast({t:'mon',x:+M.x.toFixed(2),z:+M.z.toFixed(2),ry:m?+m.rotation.y.toFixed(3):0,lv:curLv(),seed:curSeed()})}}
  hud()})();
@@ -7186,7 +7188,8 @@ var HUD2=document.createElement('div');HUD2.id='mphud';HUD2.style.cssText='posit
 var TOAST=document.createElement('div');TOAST.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;pointer-events:none;font:13px monospace;color:#e8f8ff;background:rgba(0,10,20,.8);border:1px solid #3a6a7a;padding:6px 12px;border-radius:6px;display:none;max-width:90vw;text-align:center';document.body.appendChild(TOAST);var toastT=0;
 function toast(t){TOAST.textContent=t;TOAST.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){TOAST.style.display='none'},4200)}
 function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+(VC.on?'<span style="color:#7f7">🎤 LIVE</span> ':'')+e2(myName())+(NET.isHost()?' (host)':'')+' · you'+(VC.on?'':' <span style="opacity:.6">('+(document.body.classList.contains('touch')?'tap MIC':'Y = mic')+')</span>')+'<br>';
- Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#f77">caught</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
+ Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#7fb4ff">DOWN — revive them!</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
+ if(ST&&ST.scrolls>0)h+='<span style="color:#ffe07a">📜 Revival Scrolls: '+ST.scrolls+'</span><br>';if(DOWN)h+='<span style="color:#7fb4ff">you are DOWN</span><br>';
  if(NET.role=='client'&&!(NET.host&&NET.host.open))h+='<span style="color:#fc6">reconnecting to host…</span>';HUD2.innerHTML=h}
 
 // ---------------------------------------------------------------- the MULTIPLAYER menu
@@ -7220,7 +7223,109 @@ function render(){if(!BOX)return;var IN=BOX.querySelector('[data-in]');if(!IN)re
  if(!NET.on)h+='<div data-mp="close" style="'+bt+'">BACK</div>';IN.innerHTML=h;if(!NET.on){var i=IN.querySelector('#mpcode');if(i&&ST&&ST.room)i.value=ST.room;lobbyStart();lobbyDraw()}}
 function hookBtn(){var b=document.getElementById('b-mp');if(!b)return;b.textContent='👥 MULTIPLAYER (CO-OP)';b.onclick=function(e){if(e)e.stopPropagation();menu()}}
 hookBtn();addEventListener('load',function(){hookBtn();setTimeout(hookBtn,500)});
-NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;
+// ---------------------------------------------------------------- CO-OP: rag doll, spectating, Revival Scrolls, teammates on the map
+// When you are caught in co-op and a teammate is still standing, you go DOWN instead of dying: your body falls like a rag doll
+// (everyone sees it), then you watch your teammates. A teammate with a REVIVAL SCROLL can bring you back.
+// Scrolls only appear in co-op. If nobody is left standing, everyone who is down dies for real.
+var DOWN=null,REVU=0,TRAIL={},DEATHS={},SCR=[],SPC={},trailT=0,specT=0;
+function coopHere(p){var b=p&&p.b;return !!(b&&b.lv===curLv()&&b.seed===curSeed()&&performance.now()-p.last<4000)}
+function isTouch(){return document.body.classList.contains('touch')}
+function chime(up){try{if(typeof AC!='undefined'&&AC&&!(typeof muted!='undefined'&&muted)){tone({f:up?660:520,f2:up?990:780,d:.5,v:.14});tone({f:up?990:780,f2:up?1320:1040,d:.7,v:.1,at:.18})}}catch(e){}}
+// ---- going down
+function coopDie(){if(!NET.on||!inLevel())return false;if(DOWN||performance.now()<REVU)return true;if(!others().length)return false;goDown();return true}
+function goDown(){DOWN={x:P.x,z:P.z,yaw:P.yaw,pit:P.pit||0,t:0,watch:null,alone:0,t0:performance.now(),side:Math.random()<.5?-1:1};P.dead=true;P.fl=false;P.hide=null;try{P.scan=false}catch(e){}
+ try{if(typeof AC!='undefined'&&AC){tone({t:'sawtooth',f:260,f2:70,d:.9,v:.3,lp:1800});tone({f:55,d:1.6,v:.35,a:.01})}}catch(e){}
+ try{var r=document.getElementById('red');r.style.transition='opacity .15s';r.style.opacity=.65;setTimeout(function(){r.style.transition='opacity 2s';r.style.opacity=.22},250)}catch(e){}
+ say('You are DOWN! A teammate can bring you back with a 📜 Revival Scroll.',5)}
+function reviveMe(by){if(!DOWN)return;var d=DOWN;DOWN=null;SPEC.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;P.yaw=d.yaw;P.pit=0;P.para=0;P.vx=P.vz=0;
+ try{P.san=Math.max(P.san,60);P.st=100}catch(e){}REVU=performance.now()+4000;chime(true);
+ try{var r=document.getElementById('red');r.style.transition='opacity 1s';r.style.opacity=0}catch(e){}
+ say('✨ '+by+' revived you with a Revival Scroll! You are safe for a few seconds.',5)}
+function reallyDie(){var d=DOWN;DOWN=null;SPEC.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;try{die()}catch(e){}}
+// ---- the camera while down: fall to the floor, then watch a teammate
+function watchList(){return others().filter(function(p){return p.model&&p.model.visible})}
+function watchTarget(){var L=watchList();if(!L.length)return null;var w=L.find(function(p){return p.id===DOWN.watch});if(!w){w=L[0];DOWN.watch=w.id}return w}
+function specNext(){var L=watchList();if(!L.length)return;var i=L.findIndex(function(p){return p.id===DOWN.watch});DOWN.watch=L[(i+1)%L.length].id;SPC.snap=1}
+function specCam(c){var t=DOWN.t;
+ if(t<2.6){var k=Math.min(1,t/.85),e=k*k,bt=t-.85,bn=bt>0?Math.abs(Math.sin(bt*11))*.07*Math.exp(-bt*5):0;
+  c.position.set(DOWN.x,1.7-1.42*e+bn,DOWN.z);c.rotation.set(DOWN.pit+(1.05-DOWN.pit)*e,DOWN.yaw+.35*e*DOWN.side,1.2*e*DOWN.side+Math.sin(t*3)*.02);SPC.snap=1;return}
+ var p=watchTarget();
+ if(!p){c.position.set(DOWN.x+.01,2.7,DOWN.z+.01);c.rotation.set(-PI/2+.05,DOWN.yaw,0);return}
+ var m=p.model,x=m.position.x,z=m.position.z,yaw=m.rotation.y-PI,bx=Math.sin(yaw),bz=Math.cos(yaw),dist=.6;
+ for(var d=.6;d<=2.8;d+=.2){if(blocked(x+bx*d,z+bz*d,.22))break;dist=d}
+ var tx=x+bx*dist,tz=z+bz*dist,ty=1.75+dist*.12;
+ if(SPC.snap||SPC.x==null){SPC.x=tx;SPC.y=ty;SPC.z=tz;SPC.snap=0}else{var f=Math.min(1,(SPC.dt||.016)*6);SPC.x+=(tx-SPC.x)*f;SPC.y+=(ty-SPC.y)*f;SPC.z+=(tz-SPC.z)*f}
+ c.position.set(SPC.x,SPC.y,SPC.z);c.lookAt(x,1.35,z)}
+var oPFXc=window.PFX;window.PFX=function(s,c){try{if(DOWN&&NET.on&&inLevel())specCam(c)}catch(e){}if(oPFXc)oPFXc(s,c);else ren.render(s,c)};
+var SPEC=document.createElement('div');SPEC.id='mpspec';SPEC.style.cssText='position:fixed;left:50%;top:15%;transform:translateX(-50%);z-index:8;pointer-events:none;font:bold 16px monospace;color:#cfe6ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.5;max-width:80vw';document.body.appendChild(SPEC);
+addEventListener('pointerdown',function(e){if(!DOWN||DOWN.t<2.6)return;var t=e.target;if(t&&t.closest&&t.closest('#mpbox,#pm,.pn,#mp,button,a,input'))return;specNext()},true);
+addEventListener('keydown',function(e){if(!DOWN||DOWN.t<2.6)return;if(e.code=='Space'||e.code=='ArrowRight'||e.code=='KeyE'){e.preventDefault();specNext()}},true);
+// ---- other players' bodies fall like rag dolls
+function ragPose(p,g,dt){var b=p.b,U=g.userData||{};if(!p.rag)p.rag={t:0,s:Math.random()<.5?-1:1,yaw:b.yaw};var r=p.rag;r.t+=dt;var t=r.t,k=Math.min(1,t/.7),e=k*k,bt=t-.7,w=bt>0?Math.sin(bt*16)*Math.exp(-bt*5):0;
+ g.rotation.order='YXZ';g.position.set(b.x,.13*e+Math.abs(w)*.05,b.z);g.rotation.set(-(PI/2)*e*r.s+w*.06,r.yaw+PI,.22*e*r.s);
+ if(U.arms)U.arms.forEach(function(a,i){a.rotation.x=-.5*e+w*.3;a.rotation.z=(i?1:-1)*(1.15*e+w*.25);if(a.userData.el)a.userData.el.rotation.x=-.4*e});
+ if(U.legs)U.legs.forEach(function(l,i){l.rotation.x=(i?.25:-.1)*e;l.rotation.z=(i?1:-1)*.28*e;if(l.userData.kn)l.userData.kn.rotation.x=(i?.6:.2)*e});
+ if(U.head)U.head.rotation.y=.7*e*r.s;if(U.hips)U.hips.position.y=.95;
+ if(p.tag){p.tag.visible=true;p.tag.material.color.setHex(0x6fb0ff)}if(p.light)p.light.intensity=0}
+function unRag(p,g){if(!p.rag)return;p.rag=null;var U=g.userData||{};g.rotation.x=0;g.rotation.z=0;g.position.y=0;if(U.arms)U.arms.forEach(function(a){a.rotation.z=0});if(U.legs)U.legs.forEach(function(l){l.rotation.z=0});if(U.head)U.head.rotation.y=0;if(p.tag)p.tag.material.color.setHex(0xffffff)}
+// ---- reviving a teammate
+var REVP=document.createElement('div');REVP.style.cssText='position:fixed;left:50%;top:58%;transform:translateX(-50%);z-index:8;pointer-events:none;font:bold 15px monospace;color:#cfe6ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none';document.body.appendChild(REVP);var REVT=null;
+function nearDown(){if(!inLevel()||DOWN||P.dead)return null;var best=null,bd=2.4;Object.keys(NET.players).forEach(function(k){var p=NET.players[k];if(!coopHere(p)||!p.b.dead)return;var d=Math.hypot(p.b.x-P.x,p.b.z-P.z);if(d<bd){bd=d;best=p}});return best}
+function doRevive(p){if(!p||!(ST.scrolls>0))return;ST.scrolls--;saveST();var m={t:'rev',to:p.id,by:myName()};
+ if(NET.isHost()){var c=NET.conns[p.id];if(c&&c.open)try{c.send(m)}catch(e){}}else send(m);
+ chime(true);say('📜 You used a Revival Scroll on '+p.name+'.',3);REVT=null;REVP.style.display='none'}
+addEventListener('keydown',function(e){if(e.code!='KeyF'||e.repeat||!NET.on||!REVT||!(ST&&ST.scrolls>0))return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;e.preventDefault();e.stopImmediatePropagation();doRevive(REVT)},true);
+// ---- Revival Scrolls (an original design: a parchment roll on a dark rod with brass caps, a leather band with gold emblems and a rope tie)
+function srng(a){return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function scrollMesh(){var G=new T.Group(),R=new T.Group();G.add(R);R.rotation.z=.55;
+ function M(c,em){return new T.MeshLambertMaterial({color:c,emissive:em||0x000000})}
+ function cyl(r1,r2,h,mat,seg){var m=new T.Mesh(new T.CylinderGeometry(r1,r2,h,seg||14),mat);m.rotation.z=PI/2;R.add(m);return m}
+ cyl(.072,.072,.44,M(0xd8bf86,0x2a1e08));
+ var lip=cyl(.076,.07,.03,M(0xc9ab70,0x1e1506));lip.position.x=.2;var lip2=cyl(.07,.076,.03,M(0xc9ab70,0x1e1506));lip2.position.x=-.2;
+ cyl(.08,.08,.17,M(0x5a3a24,0x120a04));
+ var rod=cyl(.022,.022,.6,M(0x3a2414,0x0a0602));
+ [.3,-.3].forEach(function(x){var cap=cyl(.034,.034,.045,M(0xc9a040,0x3a2a08));cap.position.x=x;var knob=cyl(.022,.03,.03,M(0xd8b050,0x3a2a08));knob.position.x=x+(x>0?.035:-.035)});
+ [[.04,1],[-.04,-1]].forEach(function(q){var em=new T.Mesh(new T.BoxGeometry(.045,.035,.012),M(0xe0b84a,0x4a3408));em.position.set(q[0],.03*q[1],.078*q[1]);R.add(em)});
+ var rope=new T.Mesh(new T.TorusGeometry(.088,.011,6,18),M(0xb8954a,0x2a1e08));rope.rotation.y=PI/2;R.add(rope);
+ [-1,1].forEach(function(s){var tl=new T.Mesh(new T.CylinderGeometry(.006,.006,.12,5),M(0xb8954a,0x2a1e08));tl.position.set(.02*s,-.13,.04);tl.rotation.z=.2*s;R.add(tl);var dk=new T.Mesh(new T.CylinderGeometry(.022,.022,.008,10),M(0xd8b050,0x3a2a08));dk.position.set(.03*s,-.19,.04);dk.rotation.x=PI/2;R.add(dk)});
+ var cv=document.createElement('canvas');cv.width=cv.height=64;var x=cv.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,220,140,.55)');gr.addColorStop(1,'rgba(255,200,100,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
+ var halo=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),transparent:true,depthWrite:false,blending:T.AdditiveBlending,fog:false}));halo.scale.set(1.1,1.1,1);G.add(halo);return G}
+function buildScrolls(){if(SCR.built||!NET.on||typeof g=='undefined'||typeof items=='undefined'||!inLevel())return;SCR.built=1;
+ var r=srng((curSeed()^0x5c7011)|0),cells=[];for(var i=1;i<W-1;i++)for(var j=1;j<W-1;j++)if(!g[i][j])cells.push([i,j]);if(!cells.length)return;
+ var cards=items.filter(function(it){return it.type=='card'}),pick=[],tries=0;
+ while(pick.length<2&&tries<500){tries++;var c=cells[Math.floor(r()*cells.length)],x=cc(c[0]),z=cc(c[1]);if(blocked(x,z,.45))continue;if(cards.some(function(it){return Math.hypot(it.x-x,it.z-z)<S*2}))continue;if(pick.some(function(q){return Math.hypot(q.x-x,q.z-z)<S*8}))continue;pick.push({x:x,z:z})}
+ pick.forEach(function(q,i){var m=scrollMesh();m.position.set(q.x,.95,q.z);scene.add(m);q.m=m;q.ph=i*2;q.key=pkey('scroll',q.x,q.z);if(NET.picks[q.key]){q.got=1;m.visible=false}SCR.push(q)})}
+function grabScroll(q){q.got=1;q.m.visible=false;ST.scrolls=(ST.scrolls|0)+1;NET.picks[q.key]=1;ST.picks=ST.picks||[];ST.picks.push({k:'scroll',x:q.x,z:q.z});saveST();
+ if(NET.isHost())bcast({t:'pick',k:'scroll',x:q.x,z:q.z,by:myName()});else send({t:'pick',k:'scroll',x:q.x,z:q.z});
+ chime(false);say('📜 You found a REVIVAL SCROLL ('+ST.scrolls+'). Walk up to a fallen teammate and '+(isTouch()?'tap ACT':'press F')+' to bring them back.',5)}
+function hideScroll(x,z,by){var best=null,bd=2.2;SCR.forEach(function(q){if(q.got)return;var d=Math.hypot(q.x-x,q.z-z);if(d<bd){bd=d;best=q}});if(best){best.got=1;best.m.visible=false}if(by&&inLevel())say(cleanName(by)+' found a Revival Scroll.',3)}
+// ---- teammates on the map, in blue: where they are, where they have been, and where they went down
+function mapTeam(){var c=mc,k=4/S;c.save();c.lineCap='round';c.lineJoin='round';
+ Object.keys(NET.players).forEach(function(id){var p=NET.players[id],tr=TRAIL[id];
+  if(tr&&tr.lv===curLv()&&tr.seed===curSeed()&&tr.pts.length>1){c.strokeStyle='rgba(70,150,255,.55)';c.lineWidth=1.6;c.beginPath();tr.pts.forEach(function(q,i){if(i)c.lineTo(q[0]*k,q[1]*k);else c.moveTo(q[0]*k,q[1]*k)});c.stroke()}
+  (DEATHS[id]||[]).forEach(function(d){if(d.lv!==curLv()||d.seed!==curSeed())return;var x=d.x*k,y=d.z*k;c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.8)';c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke();c.lineWidth=1.8;c.strokeStyle='#5aa8ff';c.stroke()});
+  if(coopHere(p)&&!p.b.dead){var x=p.b.x*k,y=p.b.z*k;c.fillStyle='#3d8bff';c.strokeStyle='#e8f4ff';c.lineWidth=1.2;c.beginPath();c.arc(x,y,3.4,0,7);c.fill();c.stroke();c.strokeStyle='#bfe0ff';c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.sin(p.b.yaw)*6,y-Math.cos(p.b.yaw)*6);c.stroke()}});
+ c.restore()}
+if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.apply(this,arguments);try{if(NET.on&&MAPON&&mapT>.199)mapTeam()}catch(e){}return r}}
+// ---- every frame
+function coopTick(dt){
+ if(inLevel()){buildScrolls();var tm=performance.now()/1000;SCR.forEach(function(q){if(q.got)return;q.m.rotation.y=tm*1.3+q.ph;q.m.position.y=.95+Math.sin(tm*2+q.ph)*.07;if(!P.dead&&!DOWN&&!waiting()&&Math.hypot(q.x-P.x,q.z-P.z)<1.3)grabScroll(q)})}
+ // trails and death marks
+ trailT-=dt;Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!coopHere(p))return;var b=p.b,tr=TRAIL[id];
+  if(!tr||tr.lv!==b.lv||tr.seed!==b.seed)tr=TRAIL[id]={lv:b.lv,seed:b.seed,pts:[]};
+  if(trailT<=0&&!b.dead){var l=tr.pts[tr.pts.length-1];if(!l||Math.hypot(l[0]-b.x,l[1]-b.z)>1.2){tr.pts.push([b.x,b.z]);if(tr.pts.length>900)tr.pts.shift()}}
+  if(b.dead&&!p.wasDown){p.wasDown=1;(DEATHS[id]=DEATHS[id]||[]).push({x:b.x,z:b.z,lv:b.lv,seed:b.seed});if(DEATHS[id].length>12)DEATHS[id].shift();note(p.name+' is DOWN! Bring them a 📜 Revival Scroll.',4)}
+  else if(!b.dead&&p.wasDown){p.wasDown=0;note(p.name+' is back on their feet!',3)}});
+ if(trailT<=0)trailT=.5;
+ // revive prompt
+ REVT=nearDown();if(REVT){REVP.style.display='block';REVP.innerHTML=ST&&ST.scrolls>0?'📜 '+(isTouch()?'Tap <span style="color:#ffe07a">ACT</span>':'Press <span style="color:#ffe07a">F</span>')+' to revive <span style="color:#7fb4ff">'+e2(REVT.name)+'</span> <span style="opacity:.7">(Revival Scrolls: '+ST.scrolls+')</span>':'<span style="color:#7fb4ff">'+e2(REVT.name)+'</span> is down. You need a 📜 Revival Scroll to bring them back.'}else REVP.style.display='none';
+ // while down
+ if(!DOWN){SPEC.style.display='none';return}
+ if(!inLevel()){return}
+ DOWN.t=(performance.now()-DOWN.t0)/1000;SPC.dt=dt;P.x=DOWN.x;P.z=DOWN.z;P.vx=P.vz=0;P.para=Math.max(P.para||0,.3);P.fl=false;P.dead=true;
+ var up=others(),nw=performance.now();if(!up.length){if(!DOWN.alone)DOWN.alone=nw;if(nw-DOWN.alone>4000){say('Nobody is left standing...',3);reallyDie();return}}else DOWN.alone=0;
+ specT-=dt;if(specT<=0){specT=.25;if(DOWN.t<2.6){SPEC.style.display='none'}else{var w=watchTarget();SPEC.style.display='block';SPEC.innerHTML=w?'👁 SPECTATING <span style="color:#7fb4ff">'+e2(w.name)+'</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">You are down. '+(up.length>1?(isTouch()?'Tap':'Click')+' to watch someone else. ':'')+'A teammate with a 📜 Revival Scroll can bring you back.</span>':'<span style="color:#f99">Nobody is left standing...</span>'}}}
+NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;NET.down=function(){return DOWN};NET.revive=reviveMe;NET.scrolls=function(){return SCR};
 })();
 </script>
 <!-- ===== THE BACKROOMS SONG: "DON'T LOOK BACK" (2:00), an original song about the game and its lore, generated live, sung vocals and lyrics on screen ===== -->
