@@ -64,3 +64,6 @@ You can change most keys in **SETTINGS → CONTROLS** on the main menu.
 ## Notes
 - **Saves:** progress is saved in your browser, with separate save slots.
 - **Multiplayer (beta):** ▶ MODES → 👥 MULTIPLAYER (CO-OP). Host a game to get a 6-letter room code, and friends join with it (2–4 players, peer-to-peer). Shared: the level, keycards, the monster and the elevator. Co-op games start on a random level, and each elevator goes to another random one; your solo save is not changed. Hosting or joining puts you straight into a closed elevator (no PLAY needed), and the host presses ENTER to open the doors. If a direct connection is blocked (strict routers, hotspots, school Wi-Fi), the game automatically uses an encrypted relay instead. Everyone needs the same version of the game, so it's easiest to all play from the same link. Only play with people you know, because direct peer-to-peer connections show your IP address to the other players. Hide and Seek and Stalker still use AI players.
+
+## Play it online
+See [docs/WHERE_TO_PLAY.md](docs/WHERE_TO_PLAY.md) for where to put the game online (your own free site, game portals, and networks that copy it to hundreds of sites).

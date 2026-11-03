@@ -1,5 +1,13 @@
 # Changelog
 
+## BACKROOMS MUSIC: the music video + where to put the game online
+- **🎬 BACKROOMS MUSIC: the music video (2:00)** for the song "DON'T LOOK BACK", made with the movie's engine, sets and characters, so it looks like the movie. Open it from **SOUND → 🎬 BACKROOMS MUSIC** (in the music section, under the song) or from the movie menu (**🎵 BACKROOMS MUSIC**).
+  - It opens and closes with a **BACKROOMS MUSIC** title card, like the movie's title card.
+  - Every shot is cut to the song's bars, and the lights pulse on the beat. The video's clock *is* the song, so picture and music can't drift apart. The sung lyrics appear as subtitles at the exact moment each line is sung (CC turns them off).
+  - Verse 1: walking the yellow Lobby, a shadow far away. Chorus 1: running down a hallway with the Boiled One behind you, and a look back. Verse 2: VHS footage from October 1987 with the Threshold Project sign and the camcorder. Chorus 2: the Poolrooms and a Boiled One close-up. Bridge: "14 · 1 · 20 · 8 · 1 · 14" appears on a red wall one beat at a time, the letters N A T H A N appear under it, then the HELP letter on the desk. Final chorus: security-camera footage and the run to the elevator. Outro: the doors open.
+  - No footsteps or movie sounds play over the song. ⏹ stops it, and ▶ / WATCH AGAIN plays it from the start.
+- **docs/WHERE_TO_PLAY.md:** 70+ real places to put the game online, checked in November 2026: free hosting (GitHub Pages and others), game sites (itch.io, Newgrounds, Game Jolt, CrazyGames, Poki...), distribution networks that copy the game to hundreds of partner sites (GameDistribution, GameMonetize, GamePix, Playgama), app stores, and places to share the link. Sites that have closed (Glitch hosting, 000webhost) are marked.
+
 ## Co-op: the elevator is a safe room
 - While you are inside the co-op elevator, you can't die: not while waiting for the doors, and not while standing inside after they open. Monsters, sanity, imprint and level hazards can't kill you there (imprint is held at half).
 - The host's monster ignores anyone standing in the elevator and goes after players outside instead. If everyone is inside, it loses track and wanders.

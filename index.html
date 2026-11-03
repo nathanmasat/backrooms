@@ -5646,12 +5646,14 @@ function screenTex(w,h){return ctex(w||512,h||320,function(x,W,H){x.fillStyle='#
 // ============================================================================ ENGINE
 var MV={open:false,playing:false,ch:-1,lt:0,B:null,R:null,cam:null,sc:null};window.MOVIE=MV;
 var CH=[];// filled by the chapters
-function total(){return CH.reduce(function(a,c){return a+c.dur},0)}
-function chOff(i){var a=0;for(var j=0;j<i;j++)a+=CH[j].dur;return a}
+var MVID=null;// the music video (set in g_music.js); MV.mode=='mv' plays it instead of the movie
+function LST(){return MV.mode=='mv'&&MVID?[MVID]:CH}
+function total(){return LST().reduce(function(a,c){return a+c.dur},0)}
+function chOff(i){var a=0,L=LST();for(var j=0;j<i;j++)a+=L[j].dur;return a}
 function val(v,k,st){return typeof v=='function'?v(k,st):v}
 function disposeAll(sc){sc.traverse(function(o){if(o.geometry)o.geometry.dispose();if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(function(m){['map','emissiveMap','alphaMap'].forEach(function(k){if(m[k]&&m[k]!==GFX.glowTex&&m[k]!==(STM&&STM.map))try{m[k].dispose()}catch(e){}});if(m!==STM&&m!==GFX.monCore)m.dispose()})}})}
 function unload(){if(!MV.B)return;try{disposeAll(MV.B.sc)}catch(e){}Object.keys(MV.B.tex||{}).forEach(function(k){try{MV.B.tex[k].dispose()}catch(e){}});MV.B=null;CUR=null}
-function load(i){unload();var C=CH[i],sc=new T.Scene();CUR={sc:sc,tex:{},sets:{},lamps:[],nl:0,mons:{},dust:[],waters:[],fx:{}};
+function load(i){unload();var C=LST()[i],sc=new T.Scene();CUR={sc:sc,tex:{},sets:{},lamps:[],nl:0,mons:{},dust:[],waters:[],fx:{}};
  var W=mkWanderer();sc.add(W.g,W.spot,W.tgt,W.halo);CUR.W=W;
  var shots=C.build(CUR)||[];var t=0;shots.forEach(function(s){s.t0=t;t+=s.d;s.t1=t;(s.m||[]).forEach(function(m){if(!CUR.mons[m.id]){var M=mkMon(m.id);M.g.visible=false;sc.add(M.g);CUR.mons[m.id]=M}})});
  if(Math.abs(t-C.dur)>.01)console.warn('movie chapter',i,'is',t,'s, planned',C.dur);
@@ -5670,8 +5672,8 @@ function apply(lt,dt){var B=MV.B,si=shotAt(B,lt),s=B.shots[si],st=clamp(lt-s.t0,
   state={pose:val(ws.pose,k,st)||'idle',ph:ph,fear:val(ws.fear||0,k,st),crouch:val(ws.crouch||0,k,st),look:val(ws.look||0,k,st),pitch:val(ws.pitch||0,k,st),lie:val(ws.lie||0,k,st),raise:val(ws.raise==null?.6:ws.raise,k,st),reach:val(ws.reach||0,k,st),hold:val(ws.hold||0,k,st),cover:val(ws.cover||0,k,st),fall:val(ws.fall||0,k,st),light:val(ws.light==null?true:ws.light,k,st),hide:!!s.fp||val(ws.hide||false,k,st)};
   W.g.position.set(ox+wx,wy,oz+wz);W.g.rotation.y=wyaw;poseW(W,state,t);
   // footsteps follow the walk cycle
-  if(MV.playing&&(state.pose=='walk'||state.pose=='run')&&!val(ws.silent||false,k,st)){var n=Math.floor(ph/PI);if(B.step.n!=null&&n!=B.step.n)SFX.step(s.surf||ws.surf||'carpet',run?1.3:.8);B.step.n=n}
-  if(MV.playing&&(state.fear>.55||run)){B.step.br=(B.step.br||0)-dt;if(B.step.br<=0){B.step.br=run?.75:1.4;SFX.breath(run?1.2:.8)}}}
+  if(MV.playing&&MV.mode!='mv'&&(state.pose=='walk'||state.pose=='run')&&!val(ws.silent||false,k,st)){var n=Math.floor(ph/PI);if(B.step.n!=null&&n!=B.step.n)SFX.step(s.surf||ws.surf||'carpet',run?1.3:.8);B.step.n=n}
+  if(MV.playing&&MV.mode!='mv'&&(state.fear>.55||run)){B.step.br=(B.step.br||0)-dt;if(B.step.br<=0){B.step.br=run?.75:1.4;SFX.breath(run?1.2:.8)}}}
  else{W.g.visible=false}
  var flick=s.flash!=null?val(s.flash,k,st):1;
  if(s.fp&&ws){var bob=(state.pose=='walk'||state.pose=='run')?Math.sin(state.ph*2)*(state.pose=='run'?.05:.025):0,eh=lerp(1.62,1.05,state.crouch)+bob-state.lie*1.3,yaw=wyaw+state.look,pit=state.pitch;
@@ -5703,21 +5705,23 @@ function apply(lt,dt){var B=MV.B,si=shotAt(B,lt),s=B.shots[si],st=clamp(lt-s.t0,
  var cd=s.card?val(s.card,k,st):null;if(cd){UI.card.style.display='flex';UI.card.innerHTML='<div style="font-size:'+(cd.size||4)+'vh;letter-spacing:.2em;color:'+(cd.col||'#e4d56a')+'">'+e2(cd.a||'')+'</div>'+(cd.b?'<div style="margin-top:2vh;font-size:2vh;letter-spacing:.4em;opacity:.8">'+e2(cd.b)+'</div>':'');UI.card.style.opacity=cd.o==null?1:cd.o}else UI.card.style.display='none';
  var subs=(s.sub||[]).filter(function(l){return st>=l[0]&&st<l[1]});UI.sub.style.display=MS.sub&&subs.length?'block':'none';if(subs.length)UI.sub.innerHTML=subs.map(function(l){return (l[3]&&l[3].who?'<span style="color:#e4d56a">'+e2(l[3].who)+':</span> ':'')+e2(l[2])}).join('<br>');
  if(s.credits&&CUR.credits){if(!UI.cred.dataset.on){UI.cred.innerHTML=CUR.credits.map(function(l){return '<div style="margin:1.2vh 0;'+(/^[A-Z0-9 :\'\.\-]+$/.test(l)&&l.length<40?'color:#e4d56a;font-weight:bold;letter-spacing:.15em':'')+'">'+(e2(l)||'&nbsp;')+'</div>'}).join('');UI.cred.dataset.on=1}UI.cred.style.display='block';UI.cred.style.transform='translateY('+lerp(UI.stage.clientHeight,-UI.cred.scrollHeight,k)+'px)'}else{UI.cred.style.display='none';UI.cred.dataset.on=''}
- var gT=chOff(B.i)+lt,sv=Math.max(0,Math.round(lerp(100,0,clamp(gT/chOff(CH.length-1),0,1))));if(B.i<CH.length-1&&!s.black&&!s.card&&s.ov!='vhs'){UI.san.style.display='block';UI.san.textContent='SANITY '+sv+'%';UI.san.style.color=sv<15?'#ff3a2a':sv<40?'#ffb040':'rgba(228,213,106,.75)';UI.san.style.opacity=sv<15?(.6+.4*Math.abs(Math.sin(lt*5))):.7}else UI.san.style.display='none';
+ var gT=MV.mode=='mv'?0:chOff(B.i)+lt,sv=MV.mode=='mv'?100:Math.max(0,Math.round(lerp(100,0,clamp(gT/chOff(CH.length-1),0,1))));if(MV.mode!='mv'&&B.i<CH.length-1&&!s.black&&!s.card&&s.ov!='vhs'){UI.san.style.display='block';UI.san.textContent='SANITY '+sv+'%';UI.san.style.color=sv<15?'#ff3a2a':sv<40?'#ffb040':'rgba(228,213,106,.75)';UI.san.style.opacity=sv<15?(.6+.4*Math.abs(Math.sin(lt*5))):.7}else UI.san.style.display='none';
  setLoops(s,k,dt);
- UI.scene.textContent=CH[B.i].n+'. '+CH[B.i].title;}
+ UI.scene.textContent=MV.mode=='mv'?'🎵 BACKROOMS MUSIC — DON\'T LOOK BACK':CH[B.i].n+'. '+CH[B.i].title;}
 function fire(B,a,b){B.shots.forEach(function(s){if(s.t1<a||s.t0>b)return;(s.cue||[]).forEach(function(c){var tt=s.t0+c[0];if(tt>a&&tt<=b)try{c[1](CUR)}catch(e){console.warn(e)}});(s.sub||[]).forEach(function(l){var tt=s.t0+l[0];if(tt>a&&tt<=b&&l[3]&&l[3].v)speak({text:l[2],v:l[3].v})})})}
 // ---------------------------------------------------------------- play loop
 var lastNow=0;
 function frame(now){if(!MV.open)return;requestAnimationFrame(frame);var dt=Math.min(.1,(now-(lastNow||now))/1000);lastNow=now;if(!MV.B)return;
- if(MV.playing){var a=MV.lt;MV.lt+=dt;fire(MV.B,a,MV.lt);if(MV.lt>=MV.B.dur){if(MVP.watched.indexOf(MV.ch)<0)MVP.watched.push(MV.ch);if(MV.ch<CH.length-1){load(MV.ch+1);MV.lt=0;fire(MV.B,-1,0)}else{finish();return}}
+ if(MV.mode=='mv'){if(MV.playing){var sT=window.SONG?SONG.time():-1;if(sT>=0){MV.mvGo=1;var a0=MV.lt;MV.lt=Math.min(sT,MV.B.dur-.02);fire(MV.B,a0,MV.lt)}else if(MV.mvGo&&!(window.SONG&&SONG.loading)){if(MV.lt<MV.B.dur-3.2){MV.lt=Math.min(MV.lt+dt,MV.B.dur-.02)}else{MV.lt+=dt;if(MV.lt>=MV.B.dur){finish();return}}}}}
+ else if(MV.playing){var a=MV.lt;MV.lt+=dt;fire(MV.B,a,MV.lt);if(MV.lt>=MV.B.dur){if(MVP.watched.indexOf(MV.ch)<0)MVP.watched.push(MV.ch);if(MV.ch<CH.length-1){load(MV.ch+1);MV.lt=0;fire(MV.B,-1,0)}else{finish();return}}
   MV.saveT=(MV.saveT||0)-dt;if(MV.saveT<=0){MV.saveT=3;MVP.ch=MV.ch;MVP.t=MV.lt;saveP()}}
  try{apply(MV.lt,dt);grain(now);MV.R.render(MV.B.sc,MV.cam)}catch(e){if(!frame.e){frame.e=1;console.error('movie frame',e)}}
  updUI()}
-function seekG(g){g=clamp(g,0,total()-.05);var i=0;while(i<CH.length-1&&g>=chOff(i+1))i++;hush();if(i!==MV.ch||!MV.B)load(i);MV.lt=g-chOff(i);MV.lastShot=-1;if(MV.endEl)MV.endEl.style.display='none'}
-function play(){var A=audio();if(A&&A.C.state=='suspended')A.C.resume();MV.playing=true;if(AU)AU.out.gain.setTargetAtTime(1,AU.C.currentTime,.05);try{speechSynthesis.resume()}catch(e){}UI.pp.textContent='⏸'}
-function pause(){MV.playing=false;if(AU)AU.out.gain.setTargetAtTime(0,AU.C.currentTime,.05);try{speechSynthesis.pause()}catch(e){}UI.pp.textContent='▶';MVP.ch=MV.ch;MVP.t=MV.lt;saveP()}
-function finish(){MV.playing=false;stopLoops();hush();MVP.ch=-1;MVP.t=0;saveP();MV.endEl.style.display='flex';UI.pp.textContent='▶'}
+function seekG(g){if(MV.mode=='mv'&&MV.B)return;g=clamp(g,0,total()-.05);var i=0;while(i<CH.length-1&&g>=chOff(i+1))i++;hush();if(i!==MV.ch||!MV.B)load(i);MV.lt=g-chOff(i);MV.lastShot=-1;if(MV.endEl)MV.endEl.style.display='none'}
+function play(){if(MV.mode=='mv'){var A0=audio();if(A0&&A0.C.state=='suspended')A0.C.resume();MV.endEl.style.display='none';MV.lt=0;MV.mvGo=0;MV.lastShot=-1;if(window.SONG){SONG.direct=1;SONG.play()}MV.playing=true;UI.pp.textContent='⏹';return}
+ var A=audio();if(A&&A.C.state=='suspended')A.C.resume();MV.playing=true;if(AU)AU.out.gain.setTargetAtTime(1,AU.C.currentTime,.05);try{speechSynthesis.resume()}catch(e){}UI.pp.textContent='⏸'}
+function pause(){if(MV.mode=='mv'){MV.playing=false;try{SONG.stop()}catch(e){}MV.lt=0;UI.pp.textContent='▶';return}MV.playing=false;if(AU)AU.out.gain.setTargetAtTime(0,AU.C.currentTime,.05);try{speechSynthesis.pause()}catch(e){}UI.pp.textContent='▶';MVP.ch=MV.ch;MVP.t=MV.lt;saveP()}
+function finish(){if(MV.mode=='mv'){MV.playing=false;try{SONG.stop()}catch(e){}MV.endEl.style.display='flex';UI.pp.textContent='▶';return}MV.playing=false;stopLoops();hush();MVP.ch=-1;MVP.t=0;saveP();MV.endEl.style.display='flex';UI.pp.textContent='▶'}
 // ---------------------------------------------------------------- the player screen
 var UI={};
 function el(tag,css,html,par){var d=document.createElement(tag);if(css)d.style.cssText=css;if(html!=null)d.innerHTML=html;(par||document.body).appendChild(d);return d}
@@ -5738,27 +5742,28 @@ function buildPlayer(){if(UI.root)return;var R=el('div','position:fixed;inset:0;
  // controls
  var bar=el('div','position:absolute;left:0;right:0;bottom:0;padding:1.2vh 2vh 1.6vh;background:linear-gradient(transparent,rgba(0,0,0,.85));transition:opacity .4s',null,R);UI.bar=bar;
  var tl=el('div','position:relative;height:2.2vh;margin-bottom:1vh',null,bar);UI.tl=el('input','width:100%;accent-color:#e4d56a;cursor:pointer',null,tl);UI.tl.type='range';UI.tl.min=0;UI.tl.max=total();UI.tl.step=.5;
- CH.forEach(function(c,i){if(i)el('div','position:absolute;top:0;width:2px;height:100%;background:rgba(228,213,106,.6);pointer-events:none;left:'+(chOff(i)/total()*100)+'%',null,tl)});
+ UI.marks=[];CH.forEach(function(c,i){if(i)UI.marks.push(el('div','position:absolute;top:0;width:2px;height:100%;background:rgba(228,213,106,.6);pointer-events:none;left:'+(chOff(i)/total()*100)+'%',null,tl))});
  UI.tl.oninput=function(){UI.drag=true;seekG(+UI.tl.value);showUI()};UI.tl.onchange=function(){UI.drag=false};
  var row=el('div','display:flex;gap:.8vh;align-items:center;flex-wrap:wrap',null,bar);
- var b=function(txt,tip,fn){var q=el('button',BTN,txt,row);q.title=tip;q.onclick=function(e){e.stopPropagation();fn();showUI()};return q};
- b('⏮','Previous chapter',function(){var i=MV.lt>4?MV.ch:Math.max(0,MV.ch-1);seekG(chOff(i))});b('⏪ 10','Back 10 seconds',function(){seekG(chOff(MV.ch)+MV.lt-10)});UI.pp=b('▶','Play / pause (Space)',function(){MV.playing?pause():play()});
- b('10 ⏩','Forward 10 seconds',function(){seekG(chOff(MV.ch)+MV.lt+10)});b('SKIP SCENE','Skip this scene',function(){var s=MV.B.shots[shotAt(MV.B,MV.lt)];seekG(chOff(MV.ch)+s.t1+.01)});b('⏭','Next chapter',function(){if(MV.ch<CH.length-1)seekG(chOff(MV.ch+1));else finish()});
+ UI.movOnly=[];var b=function(txt,tip,fn,movieOnly){var q=el('button',BTN,txt,row);q.title=tip;q.onclick=function(e){e.stopPropagation();fn();showUI()};if(movieOnly)UI.movOnly.push(q);return q};
+ b('⏮','Previous chapter',function(){var i=MV.lt>4?MV.ch:Math.max(0,MV.ch-1);seekG(chOff(i))},1);b('⏪ 10','Back 10 seconds',function(){seekG(chOff(MV.ch)+MV.lt-10)},1);UI.pp=b('▶','Play / pause (Space)',function(){MV.playing?pause():play()});
+ b('10 ⏩','Forward 10 seconds',function(){seekG(chOff(MV.ch)+MV.lt+10)},1);b('SKIP SCENE','Skip this scene',function(){var s=MV.B.shots[shotAt(MV.B,MV.lt)];seekG(chOff(MV.ch)+s.t1+.01)},1);b('⏭','Next chapter',function(){if(MV.ch<CH.length-1)seekG(chOff(MV.ch+1));else finish()},1);
  UI.time=el('span','margin:0 1vh;font-size:1.7vh;color:#cfc8a0',null,row);UI.scene=el('span','flex:1;min-width:10vh;font-size:1.6vh;color:#e4d56a;overflow:hidden;white-space:nowrap;text-overflow:ellipsis',null,row);
- UI.cc=b('CC','Subtitles (C)',function(){MS.sub=MS.sub?0:1;saveS()});b('☰ CHAPTERS','Chapters',function(){pause();openHub('chapters',true)});b('⚙','Movie settings',function(){settings(R,true)});b('⛶','Full screen (F)',fs);b('✕ MENU','Return to main menu (Esc)',closeMovie);
+ UI.cc=b('CC','Subtitles (C)',function(){MS.sub=MS.sub?0:1;saveS()});b('☰ CHAPTERS','Chapters',function(){pause();openHub('chapters',true)},1);b('⚙','Movie settings',function(){settings(R,true)});b('⛶','Full screen (F)',fs);b('✕ MENU','Return to main menu (Esc)',closeMovie);
  // end screen
- MV.endEl=el('div','position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;background:rgba(0,0,0,.88)','<div style="font:bold 4vh monospace;color:#e4d56a;letter-spacing:.2em">THE MOVIE: WHAT WENT DOWN</div><div style="opacity:.7;margin-bottom:2vh">Thank you for watching.</div>',R);
- [['WATCH AGAIN',function(){MV.endEl.style.display='none';seekG(0);play()}],['CHAPTERS',function(){openHub('chapters',true)}],['RETURN TO MAIN MENU',closeMovie]].forEach(function(q){var x=el('button',BTN+';font-size:2.2vh;padding:1.4vh 4vh;min-width:36vh',q[0],MV.endEl);x.onclick=q[1]});
+ MV.endEl=el('div','position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:2vh;background:rgba(0,0,0,.88)','<div data-endt style="font:bold 4vh monospace;color:#e4d56a;letter-spacing:.2em">THE MOVIE: WHAT WENT DOWN</div><div style="opacity:.7;margin-bottom:2vh">Thank you for watching.</div>',R);
+ [['WATCH AGAIN',function(){MV.endEl.style.display='none';if(MV.mode=='mv'){play();return}seekG(0);play()}],['CHAPTERS',function(){openHub('chapters',true)},1],['RETURN TO MAIN MENU',closeMovie]].forEach(function(q){var x=el('button',BTN+';font-size:2.2vh;padding:1.4vh 4vh;min-width:36vh',q[0],MV.endEl);x.onclick=q[1];if(q[2])UI.movOnly.push(x)});
  R.addEventListener('mousemove',showUI);R.addEventListener('click',function(e){if(e.target==MV.R.domElement||e.target==UI.stage){MV.playing?pause():play()}});
  addEventListener('resize',resize);resize()}
+function modeUI(){if(!UI.root)return;var mv=MV.mode=='mv';(UI.movOnly||[]).forEach(function(q){q.style.display=mv?'none':''});(UI.marks||[]).forEach(function(q){q.style.display=mv?'none':''});UI.tl.max=total();UI.tl.disabled=mv;UI.tl.style.cursor=mv?'default':'pointer';var et=MV.endEl&&MV.endEl.querySelector('[data-endt]');if(et)et.textContent=mv?'BACKROOMS MUSIC':'THE MOVIE: WHAT WENT DOWN';UI.pp.title=mv?'Play from the start / stop (Space)':'Play / pause (Space)'}
 function resize(){if(!UI.root)return;var W=innerWidth,H=innerHeight,w=W,h=W*9/16;if(h>H){h=H;w=H*16/9}UI.stage.style.width=w+'px';UI.stage.style.height=h+'px';var pr=[.6,.85,Math.min(devicePixelRatio||1,1.25)][QL()];MV.R.setPixelRatio(pr);MV.R.setSize(w,h,false);MV.R.shadowMap.enabled=QL()==2;MV.R.shadowMap.type=T.PCFSoftShadowMap}
 function showUI(){UI.bar.style.opacity=1;UI.root.style.cursor='default';clearTimeout(UI.ht);UI.ht=setTimeout(function(){if(MV.playing&&!UI.drag){UI.bar.style.opacity=0;UI.root.style.cursor='none'}},2600)}
 function updUI(){var g=chOff(MV.ch)+MV.lt;if(!UI.drag)UI.tl.value=g;UI.time.textContent=fmt(g)+' / '+fmt(total());UI.cc.style.color=MS.sub?'#e4d56a':'#777'}
 function grain(now){if(QL()==0)return;if((now|0)%2)return;var x=UI.grain.getContext('2d'),d=x.createImageData(160,90);for(var i=0;i<d.data.length;i+=4){var v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255}x.putImageData(d,0,0);x.drawImage(UI.grain,0,0,160,90,0,0,320,180)}
 function fs(){try{if(document.fullscreenElement)document.exitFullscreen();else UI.root.requestFullscreen()}catch(e){}}
-function openMovie(fromG){buildPlayer();closeHub();MV.open=true;UI.root.style.display='block';audio();resize();try{if(typeof master!='undefined'&&master)master.gain.value=0}catch(e){}
+function openMovie(fromG){buildPlayer();closeHub();if(MV.mode=='mv'){try{SONG.stop();SONG.direct=0}catch(e){}}MV.mode=null;modeUI();MV.open=true;UI.root.style.display='block';audio();resize();try{if(typeof master!='undefined'&&master)master.gain.value=0}catch(e){}
  seekG(fromG||0);fire(MV.B,MV.lt-.001,MV.lt);play();lastNow=0;requestAnimationFrame(frame);showUI()}
-function closeMovie(){if(!MV.open&&UI.root&&UI.root.style.display=='none')return;if(MV.open){MVP.ch=MV.endEl&&MV.endEl.style.display=='flex'?-1:MV.ch;MVP.t=MV.lt;saveP()}MV.playing=false;MV.open=false;stopLoops();hush();if(AU)AU.out.gain.value=0;unload();if(UI.root)UI.root.style.display='none';try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+function closeMovie(){if(!MV.open&&UI.root&&UI.root.style.display=='none')return;if(MV.mode=='mv'){try{SONG.stop();SONG.direct=0}catch(e){}MV.mode=null;MV.playing=false;MV.open=false;unload();if(UI.root)UI.root.style.display='none';try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}try{if(typeof master!='undefined'&&master)master.gain.value=SET.vol}catch(e){}closeHub();modeUI();return}if(MV.open){MVP.ch=MV.endEl&&MV.endEl.style.display=='flex'?-1:MV.ch;MVP.t=MV.lt;saveP()}MV.playing=false;MV.open=false;stopLoops();hush();if(AU)AU.out.gain.value=0;unload();if(UI.root)UI.root.style.display='none';try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
  try{if(typeof master!='undefined'&&master)master.gain.value=SET.vol}catch(e){}closeHub()}
 // keys while the movie is open (the game never sees them)
 addEventListener('keydown',function(e){if(!MV.open&&!(HUB&&HUB.style.display=='flex'))return;var c=e.code;if(MV.open){if(c=='Space'){MV.playing?pause():play()}else if(c=='ArrowRight')seekG(chOff(MV.ch)+MV.lt+10);else if(c=='ArrowLeft')seekG(chOff(MV.ch)+MV.lt-10);else if(c=='KeyF')fs();else if(c=='KeyC'){MS.sub=MS.sub?0:1;saveS()}else if(c=='Escape'){if(document.fullscreenElement)return;closeMovie()}showUI()}
@@ -6489,13 +6494,102 @@ function openHub(view,fromPlayer){if(!HUB){HUB=el('div','position:fixed;inset:0;
  var col=el('div','display:flex;flex-direction:column;gap:1.2vh;min-width:min(420px,90vw)',null,HUB);
  var B=function(t,fn,hi){var q=el('button',BTN+';font-size:2.1vh;padding:1.4vh 2vh'+(hi?';background:#3a3210;color:#fff;border-color:#e4d56a':''),t,col);q.onclick=fn};
  B('▶ WATCH MOVIE',function(){openMovie(0)},1);if(hasSave)B('⏯ CONTINUE WATCHING ('+fmt(chOff(MVP.ch)+MVP.t)+' — Chapter '+CH[MVP.ch].n+')',function(){openMovie(chOff(MVP.ch)+MVP.t)});
- B('☰ CHAPTERS',function(){openHub('chapters')});B('⚙ MOVIE SETTINGS',function(){settings(document.body,false)});B('◀ BACK TO MAIN MENU',closeHub)}
+ B('🎵 BACKROOMS MUSIC — the music video',function(){openMV()});B('☰ CHAPTERS',function(){openHub('chapters')});B('⚙ MOVIE SETTINGS',function(){settings(document.body,false)});B('◀ BACK TO MAIN MENU',closeHub)}
 // the main menu entry, right under PLAY
 (function(){function addBtn(){var bp=document.getElementById('b-play');if(!bp||document.getElementById('b-movie'))return;var b=document.createElement('div');b.className='bt';b.id='b-movie';b.style.cssText='position:relative;overflow:hidden;border-color:#e4d56a';
   var cv=document.createElement('canvas');cv.width=240;cv.height=60;cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:.45;pointer-events:none';b.appendChild(cv);var sp2=document.createElement('span');sp2.style.cssText='position:relative';sp2.textContent='🎬 THE MOVIE: WHAT WENT DOWN';b.appendChild(sp2);bp.after(b);
   b.onclick=function(e){e.stopPropagation();openHub('main')};var x=cv.getContext('2d');(function an(t){if(!b.isConnected)return;if(b.offsetParent)drawPoster(x,240,60,t/1000);setTimeout(function(){requestAnimationFrame(an)},80)})(0)}
  addBtn();setTimeout(addBtn,600);setTimeout(addBtn,2000)})();
 MV.openHub=openHub;MV.seek=seekG;MV.play=play;MV.pause=pause;MV.CH=CH;MV.total=total;MV.chOff=chOff;MV.load=load;MV.apply=apply;MV.openMovie=openMovie;MV.close=closeMovie;MV.UI=UI;
+// ============================================================================ BACKROOMS MUSIC — "DON'T LOOK BACK" (the music video)
+// A music video for the game's own song, made with the movie's sets and characters. It is not a movie chapter:
+// it plays on its own from the SOUND menu, and its clock IS the song (SONG.time()), so picture and music never drift.
+var MBEAT=60/106,MBAR=MBEAT*4,MLEN=53*MBAR;
+var MLY=[[4,"I slipped through the floor where the world wears thin"],[6,"Yellow walls humming, they're calling me in"],[8,"Damp carpet, dead lights, a door that's not there"],[10,"Endless and empty, but something's aware"],
+ [12,"Don't look back, don't look back"],[14,"Something is breathing just behind the black"],[16,"Find the keycards, find the light, find the elevator door"],[18,"Don't look back... not anymore"],
+ [20,"October '87, they opened a door"],[22,"The Threshold Project wanted to see more"],[24,"Five went in with a camera and a name"],[26,"Now the voices on the tapes don't sound the same"],
+ [28,"Don't look back, don't look back"],[30,"The Boiled One is smiling where the hallways crack"],[32,"Find the keycards, find the light, find the elevator door"],[34,"Don't look back... not anymore"],
+ [36,"Fourteen... one... twenty... eight... one... fourteen..."],[38,"Count every letter, read the name in between"],[40,"A letter on a desk says HELP. But who held the pen?"],
+ [42,"Don't look back, don't look back"],[44,"The cameras keep watching every step of your track"],[46,"Hold your friends, hold the light, find the elevator door"],[48,"Don't look back... not anymore"],
+ [50,"...the doors are opening."],[51.5,"Don't look back."]];
+// how hard the lights hit on each beat (1 on the beat, falling off quickly)
+function mpulse(t){var p=(t%MBEAT)/MBEAT;return Math.exp(-p*7)}
+var MVID={n:0,title:'BACKROOMS MUSIC — DON\'T LOOK BACK',dur:MLEN+3,root:55,mv:true,desc:'The music video for the Backrooms song.',
+build:function(C){
+ // A: Level 0, the Lobby
+ var A=newSet('A',0,0,{fog:[LV[0].f,.035],ai:.5,hemi:[0xfff0b0,0x403418,.5]});lobby(A,0,{seed:21});CUR.dust.push(dust(A.g,260,[-9,9,0,3,-16,4],0xfff0c0,.035));
+ sign(A.g,['THRESHOLD PROJECT','AUTHORIZED PERSONNEL ONLY'],{w:2.2,h:.8,x:0,y:1.9,z:-8.2,fg:'#111',bg:'#e8e2c8',font:'bold 46px monospace',lh:64,ch:192,lit:true});
+ // keep the walkway clear: no random partition walls across the path the camera uses
+ A.g.children.forEach(function(m){var q=m.isMesh&&m.geometry&&m.geometry.parameters;if(!q||!(q.height>2.5))return;var p=m.position;if(Math.abs(p.x)-q.width/2<1.8&&p.z+q.depth/2>-11&&p.z-q.depth/2<5.5)m.visible=false});
+ var sw=bx(A.g,3.4,3.1,.3,0,1.55,-8.45,mat(0xffffff,{map:ltex(0,'wall')}),3.1);
+ [[0,-1],[0,-7],[3,-12]].forEach(function(q){var pl2=new T.PointLight(0xfff0c0,1.1,13,1.4);add(A.g,pl2,q[0],2.8,q[1])});
+ // B: the long hallway that ends at an elevator
+ var B=newSet('B',300,0,{fog:[LV[0].f,.04],ai:.2,hemi:[0xfff0b0,0x302810,.22]});var HB=hall(B,{len:92,w:3.0,h:3.0,lv:0,every:5,li:1.0,end:'none'});
+ var EL=elevator(B.g,0,-88,0);bx(B.g,3.6,3,.3,-3.3,1.5,-88.15,HB.wm,3.1);bx(B.g,3.6,3,.3,3.3,1.5,-88.15,HB.wm,3.1);var elL=new T.PointLight(0xfff4e0,0,14);add(B.g,elL,0,1.6,-88.8);
+ CUR.dust.push(dust(B.g,240,[-1.5,1.5,0,3,-90,0],0xfff0c0,.03));
+ // D: the Poolrooms
+ var D=newSet('D',600,0,{fog:[LV[1].f,.035],ai:.38,hemi:[0xe8fbff,0x2a6070,.3]});hall(D,{len:70,w:3.6,h:3.2,lv:1,every:5,lc:0xeefcff,li:1.0});
+ // F: the red room with the numbers
+ var F=newSet('F',900,0,{fog:[0x140202,.05],ai:.1,bg:0x000000});var HF=hall(F,{len:13,w:9,h:3.1,lv:3,every:4,lc:0xff3a24,li:.9});
+ var nums=['14','1','20','8','1','14'],lets=['N','A','T','H','A','N'],NM=[],LM=[];
+ nums.forEach(function(n,i){var x=-3.5+i*1.4;NM.push(sign(F.g,n,{w:1.2,h:.6,x:x,y:2.05,z:-12.9,fg:'#ff3a24',bg:'rgba(0,0,0,0)',font:'bold 100px monospace',lit:true}));LM.push(sign(F.g,lets[i],{w:1.0,h:.6,x:x,y:1.15,z:-12.9,fg:'#ffe9a0',bg:'rgba(0,0,0,0)',font:'bold 110px "Comic Sans MS",cursive',lit:true}))});
+ var desk=new T.Group();add(F.g,desk,3,0,-6);bx(desk,1.6,.08,.8,0,.76,0,mat(0x4a2e1a));[[-.72,-.32],[.72,-.32],[-.72,.32],[.72,.32]].forEach(function(q){bx(desk,.06,.76,.06,q[0],.38,q[1],mat(0x3a2414))});
+ var letter=sign(desk,['HELP'],{w:.42,h:.3,x:0,y:.805,z:0,fg:'#7a1a10',bg:'#f2ead2',font:'bold 120px "Comic Sans MS",cursive',ch:256});letter.rotation.x=-PI/2;letter.rotation.z=.25;
+ var dl=new T.PointLight(0xffe0b0,.7,4);add(desk,dl,0,1.6,.3);
+ CUR.reset=function(){EL.open(0);EL.btn(0);elL.intensity=0;NM.concat(LM).forEach(function(m){m.visible=true})};
+ // helpers: every shot is a whole number of bars, and knows where it starts on the song
+ var shots=[],T0=0;function S(bars,o){o.d=bars*MBAR;o._t0=T0;T0+=o.d;o.hum=0;o.mus=0;shots.push(o);return o}
+ // (lamp functions get (lamp, k) from the engine, so they read the video clock MV.lt directly)
+ function beat(o,amt){return function(L){return 1-(amt||.45)*(1-mpulse(MV.lt||0))}}
+ function strobe(o){return function(L){return .25+.95*mpulse(MV.lt||0)}}
+ var bo=function(path,anim,k){return {id:'boiled',path:path,anim:anim||'walk',face:!path||path.length<2,k:k}};
+ var o;
+ // ---- intro: the title, like the movie (bars 0-4)
+ o=S(4,{set:'A',cam:cam([0,1.4,3],[0,1.4,-6],[0,1.5,1],[0,1.45,-8]),w:{x:0,z:-30,pose:'idle',hide:true},black:function(k){return k<.42?1:lerp(1,.4,sm(seg(k,.42,.6)))},
+  card:function(k,st){return st<4.4?{a:'BACKROOMS MUSIC',size:6,o:sm(seg(st,.3,1.3))*(1-sm(seg(st,3.6,4.4)))}:{a:"DON'T LOOK BACK",b:'THE BACKROOMS SONG',col:'#fff',size:5,o:sm(seg(st,4.5,5.4))*(1-sm(seg(st,8,9)))}}});
+ // ---- verse 1: the Lobby (bars 4-12)
+ o=S(2,{set:'A',cam:fol(-.45,1.75,-1.8,0,1.45,3),w:wk([[0,2],[0,-4]],'walk',{fear:.15}),surf:'carpet'});o.lamps=beat(o,.35);
+ o=S(2,{set:'A',cam:cam([2.6,.45,-5],[0,1.5,-8],[1.9,.5,-6.5],[0,1.6,-10]),w:wk([[0,-4],[0,-9]],'walk',{fear:.2,look:function(k){return Math.sin(k*5)*.35}})});o.lamps=function(L){return flickF(MV.lt||0,L.z,.18)};
+ o=S(2,{set:'A',fp:1,w:wk([[2.4,-1],[4.4,-11]],'walk',{fear:.3,look:function(k){return Math.sin(k*3)*.3}})});o.lamps=lampsOffBehind(function(k){return lerp(-1,-11,k)});
+ o=S(2,{set:'A',cam:cam([-6,3.0,4],[2,1,-14],[-5,3.0,3],[2,1,-15]),w:{x:3,z:-12,yaw:PI,pose:'idle',fear:.5,look:function(k){return sm(seg(k,.3,.7))*.9}},m:[{id:'shadow',x:-1,z:-38,yaw:0,anim:'still'}]});o.lamps=beat(o,.3);
+ // ---- chorus 1: the run (bars 12-20)
+ o=S(2,{set:'B',cam:cam([0,1.5,-34],[0,1.3,-10],[0,1.5,-36],[0,1.3,-30]),w:wk([[0,-8],[0,-31]],'run',{fear:.9}),m:[bo([[0,4],[0,-19]],'run')]});o.lamps=strobe(o);
+ o=S(2,{set:'B',fp:1,w:wk([[0,-31],[0,-52]],'run',{fear:1,look:function(k){return sm(seg(k,.25,.45))*PI*.9*(1-sm(seg(k,.62,.8)))}}),m:[bo([[0,-19],[0,-41]],'run')]});o.lamps=strobe(o);
+ o=S(2,{set:'B',cam:fol(1.0,1.35,-.6,0,1.35,2.5,52),w:wk([[0,-52],[0,-74]],'run',{fear:.9})});o.lamps=strobe(o);
+ o=S(2,{set:'B',cam:cam([.35,1.62,-80.8],[0,1.6,-79],[.3,1.62,-80.5],[0,1.62,-79]),w:{x:0,z:-79.6,yaw:0,pose:'idle',fear:function(k){return lerp(.9,.3,k)},look:function(k){return lerp(.4,0,sm(k))}},fo:.9});o.lamps=beat(o,.3);
+ // ---- verse 2: the tapes from October 1987 (bars 20-28)
+ o=S(2,{set:'A',ov:'vhs',cam:cam([.4,1.55,3.2],[0,1.4,-4],[.2,1.5,1.5],[0,1.4,-6]),w:wk([[0,1],[0,-5.5]],'walk',{fear:.1,hold:.95}),shake:.006,card:function(k,st){return st<3.5?{a:'OCT 21 1987',size:2.6,col:'#fff',o:.85*(1-sm(seg(st,2.8,3.5)))}:null}});o.lamps=beat(o,.25);
+ o=S(2,{set:'A',ov:'vhs',cam:cam([0,1.85,-4.8],[0,1.9,-8.2],[0,1.88,-5.8],[0,1.9,-8.2],48),w:{x:-1.2,z:-6.6,yaw:PI,pose:'idle',fear:.2},shake:.006});
+ o=S(2,{set:'A',ov:'vhs',cam:cam([0,1.35,-3.2],[0,1.45,-1],[0,1.35,-2.9],[0,1.48,-1]),w:{x:0,z:-1.3,yaw:0,pose:'idle',hold:.95,fear:.25,pitch:-.05},shake:.007});
+ o=S(2,{set:'A',ov:'vhs',cam:cam([1.8,1.2,-1],[-2,1.4,-10],[1.6,1.25,-1.6],[-2,1.4,-11]),w:{x:-.6,z:-6,yaw:PI,pose:'idle',fear:.6},m:[{id:'shadow',x:-3,z:-16,yaw:0,anim:'still',vis:function(k){return k>.5}}],
+  black:function(k,st){return flickF(st,3,.08)<1?.85:0},shake:.012});
+ // ---- chorus 2: the Poolrooms, and the Boiled One (bars 28-36)
+ o=S(2,{set:'D',cam:fol(-.5,1.7,-2.0,0,1.4,3),w:wk([[0,-4],[0,-27]],'run',{fear:.9}),surf:'tile'});o.lamps=strobe(o);
+ o=S(2,{set:'D',cam:cam([0,1.65,-34.5],[0,1.9,-40],[0,1.75,-37.6],[0,1.95,-40],function(k){return lerp(46,30,sm(k))}),w:{x:0,z:-30,pose:'idle',hide:true},m:[{id:'boiled',x:0,z:-40,yaw:0,anim:'twitch'}],flash:1,shake:.006});o.lamps=strobe(o);
+ o=S(2,{set:'D',fp:1,w:wk([[0,-6],[0,-28]],'run',{fear:1})});o.lamps=strobe(o);
+ o=S(2,{set:'D',cam:cam([1.2,.9,-34],[0,1.5,-30.5],[1.1,1.0,-33.5],[0,1.55,-30.5]),w:{x:0,z:-30.5,yaw:0,pose:'idle',fear:function(k){return lerp(.9,.2,k)}},fo:1});o.lamps=beat(o,.3);
+ // ---- bridge: 14 - 1 - 20 - 8 - 1 - 14 (bars 36-42)
+ o=S(2,{set:'F',cam:cam([0,1.7,-3],[0,1.8,-13],[0,1.7,-4.5],[0,1.8,-13]),w:{x:-3.4,z:-4.2,yaw:PI-.5,pose:'idle',fear:.4},fi:.5,
+  fx:function(k,st){NM.forEach(function(m,i){m.visible=st>=i*MBEAT*1.25});LM.forEach(function(m){m.visible=false})}});o.lamps=beat(o,.6);
+ o=S(2,{set:'F',cam:cam([-3.8,1.55,-9],[-3.5,1.5,-12.9],[3.8,1.55,-9],[3.5,1.5,-12.9]),w:{x:0,z:-5.5,yaw:PI,pose:'idle',hide:true},
+  fx:function(k){NM.forEach(function(m){m.visible=true});LM.forEach(function(m,i){m.visible=k>=i/6})}});o.lamps=beat(o,.5);
+ o=S(2,{set:'F',cam:cam([3.9,1.6,-4.9],[3,.8,-6],[3.6,1.45,-5.3],[3,.8,-6],40),w:{x:3,z:-5.0,yaw:PI,pose:'idle',reach:function(k){return sm(seg(k,.2,.6))*.9},fear:.5,pitch:-.5}});o.lamps=beat(o,.4);
+ // ---- final chorus: watched, then the elevator (bars 42-50)
+ o=S(2,{set:'B',cam:fol(-.45,1.7,-1.9,0,1.4,3),w:wk([[0,-18],[0,-40]],'run',{fear:.8})});o.lamps=strobe(o);
+ o=S(2,{set:'B',ov:'cam',camLabel:'CAM 14',camDate:'2026-11-03',cam:cam([1.3,2.75,-54],[0,1,-46],[1.3,2.75,-54],[0,1,-50]),w:wk([[0,-40],[0,-62]],'run',{fear:.8})});
+ o=S(2,{set:'B',cam:fol(.5,1.6,-2.2,0,1.5,4),w:wk([[0,-62],[0,-82]],'run',{fear:.7}),fx:function(k){elL.intensity=.4+k*.6}});o.lamps=strobe(o);
+ o=S(2,{set:'B',cam:cam([1.0,1.5,-80.5],[0,1.6,-87],[.6,1.6,-81.5],[0,1.6,-87]),w:wk([[0,-82],[0,-85.6]],'walk',{fear:.4}),fx:function(k){elL.intensity=1;EL.btn(k>.6?1:0)}});o.lamps=beat(o,.3);
+ // ---- outro: the doors open (bars 50-53, then the end card)
+ o=S(3,{set:'B',cam:cam([0,1.6,-80.5],[0,1.5,-88],[0,1.6,-82.5],[0,1.5,-89]),w:function(k){var g2=sm(seg(k,.35,.9));return {x:0,z:lerp(-85.6,-89.4,g2),yaw:PI,pose:g2>0&&g2<1?'walk':'idle',fear:.2}},
+  fx:function(k){EL.btn(1);EL.open(sm(seg(k,.05,.4)));elL.intensity=1+sm(seg(k,.1,.6))*3},black:function(k){return sm(seg(k,.85,1))},fadeCol:'#fff8e0'});
+ S(3/MBAR,{set:'B',black:1,card:function(k,st){return {a:'BACKROOMS MUSIC',b:"DON'T LOOK BACK · AN ORIGINAL SONG FROM THE BACKROOMS",size:5,o:sm(seg(st,0,.6))*(1-sm(seg(st,2.4,3)))}},w:{x:0,z:-30,pose:'idle',hide:true}});
+ // the lyrics, as subtitles, at the exact bar where each line is sung
+ shots.forEach(function(s){var a=s._t0,b=s._t0+s.d;s.sub=[];MLY.forEach(function(l,i){var t=l[0]*MBAR,e=i<MLY.length-1?Math.min(MLY[i+1][0]*MBAR,t+2*MBAR):t+3*MBAR;if(t>=a-.001&&t<b-.001)s.sub.push([t-a,Math.min(e,b)-a,l[1]])})});
+ return shots}};
+// ---------------------------------------------------------------- playing it (from the SOUND menu, or the movie menu)
+function openMV(){buildPlayer();closeHub();MV.mode='mv';MV.open=true;UI.root.style.display='block';audio();resize();try{if(typeof master!='undefined'&&master)master.gain.value=0}catch(e){}
+ modeUI();load(0);MV.lt=0;MV.endEl.style.display='none';MV.playing=false;play();lastNow=0;requestAnimationFrame(frame);showUI()}
+MV.openMV=openMV;
 })();
 </script>
 <!-- ===== TITLE SCREEN: the title sign and a START HERE button before the opening cutscene ===== -->
@@ -7433,7 +7527,7 @@ function loadVox(ctx){if(VOXBUF)return Promise.resolve(VOXBUF);if(VOXP)return VO
 SONG.render=function(ctx,lm){var R=rig(ctx,ctx.destination);events(lm).forEach(function(e){e.fn(R,e.t+.05)});return ctx.startRendering()};
 SONG.play=function(){SONG.stop();SONG.loading=1;var ctx=(typeof AC!='undefined'&&AC)?AC:null;if(!ctx){try{initAudio();ctx=AC}catch(e){}}if(!ctx){try{ctx=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return}}try{ctx.resume()}catch(e){}
  var token=SONG.tok=(SONG.tok||0)+1;(SONG.vox?loadVox(ctx):Promise.resolve(null)).then(function(vb){if(token!==SONG.tok)return;SONG.loading=0;
- var dest=(typeof MUSB!='undefined'&&MUSB)?MUSB:ctx.destination,g=ctx.createGain();g.gain.value=.8;var lim=ctx.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=2;lim.ratio.value=20;lim.attack.value=.002;lim.release.value=.12;g.connect(lim);lim.connect(dest);var R=rig(ctx,g),EV=events(vb&&SONG.vox?.3:1),i=0,t0=ctx.currentTime+.25;
+ var dest=(!SONG.direct&&typeof MUSB!='undefined'&&MUSB)?MUSB:ctx.destination,g=ctx.createGain();g.gain.value=.8;var lim=ctx.createDynamicsCompressor();lim.threshold.value=-4;lim.knee.value=2;lim.ratio.value=20;lim.attack.value=.002;lim.release.value=.12;g.connect(lim);lim.connect(dest);var R=rig(ctx,g),EV=events(vb&&SONG.vox?.3:1),i=0,t0=ctx.currentTime+.25;
  var vs=null;if(vb&&SONG.vox){vs=ctx.createBufferSource();vs.buffer=vb;var vg=ctx.createGain();vg.gain.value=VOXG*.9;vs.connect(vg);vg.connect(g);vs.start(t0);R.nodes.push(vs)}
  LIVE={ctx:ctx,R:R,g:g,t0:t0,iv:setInterval(function(){var now=ctx.currentTime-t0;while(i<EV.length&&EV[i].t<now+1.2){try{EV[i].fn(R,t0+EV[i].t)}catch(e){}i++}if(now>LEN+3)SONG.stop()},100),vs:vs};window.SONGON=1})};
 SONG.stop=function(){SONG.tok=(SONG.tok||0)+1;SONG.loading=0;if(!LIVE)return;try{if(LIVE.vs)LIVE.vs.stop()}catch(e){}var L=LIVE;LIVE=null;clearInterval(L.iv);try{L.g.gain.setTargetAtTime(0,L.ctx.currentTime,.15)}catch(e){}setTimeout(function(){L.R.nodes.forEach(function(n){try{n.stop()}catch(e){}});try{L.g.disconnect()}catch(e){}},700);window.SONGON=0;if(UIx)paint(-1)};
@@ -8168,7 +8262,7 @@ function pct(v){return Math.round(v*100)+'%'}
 function sl(k,l){return '<div class="sl"><span>'+l+'</span><input type="range" data-k="'+k+'" min="0" max="100" value="'+Math.round(SET[k]*100)+'"><span id="pv-'+k+'">'+pct(SET[k])+'</span></div>'}
 function panel(){var h='<div class="snd"><h3>&#127925; MUSIC &amp; SOUND</h3>'+sl('vol','Master volume')+sl('mus','Music')+sl('sfx','Sound effects')+sl('amb','Light hum')+
  '<div style="margin-top:10px">Music track:</div><div class="trk">'+Object.keys(TR).map(function(k){return '<div class="tb2'+(SET.trk==k?' on':'')+'" data-snd="trk:'+k+'">'+TR[k].n+'<small>'+TR[k].d+'</small></div>'}).join('')+'<div class="tb2'+(SET.trk=='off'?' on':'')+'" data-snd="trk:off">Off<small>no music</small></div></div>'+
- '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div><div class="row2"><div class="tb2'+(SET.hum?' on':'')+'" data-snd="hum">'+(SET.hum?'&#128161; LIGHT HUM: ON (tap to turn off)':'&#128161; LIGHT HUM: OFF (tap to turn on)')+'<small>the buzzing of the fluorescent lights</small></div></div><div class="row2"><div class="tb2" data-snd="song" style="border-color:#e4d56a">&#127908; THE BACKROOMS SONG: &quot;DON&#39;T LOOK BACK&quot; (2:00)<small>an original song about the game and its lore, with on-screen lyrics</small></div></div></div>';
+ '<div class="row2"><div class="tb2'+(muted?' on':'')+'" data-snd="mute">'+(muted?'&#128263; SOUND IS MUTED (tap to unmute)':'&#128266; MUTE EVERYTHING')+'</div><div class="tb2" data-snd="test">&#9654; TEST SOUND</div></div><div class="row2"><div class="tb2'+(SET.hum?' on':'')+'" data-snd="hum">'+(SET.hum?'&#128161; LIGHT HUM: ON (tap to turn off)':'&#128161; LIGHT HUM: OFF (tap to turn on)')+'<small>the buzzing of the fluorescent lights</small></div></div><div class="row2"><div class="tb2" data-snd="song" style="border-color:#e4d56a">&#127908; THE BACKROOMS SONG: &quot;DON&#39;T LOOK BACK&quot; (2:00)<small>an original song about the game and its lore, with on-screen lyrics</small></div></div><div class="row2"><div class="tb2" data-snd="mvid" style="border-color:#e4d56a">&#127916; BACKROOMS MUSIC: the music video (2:00)<small>&quot;DON&#39;T LOOK BACK&quot; with a video made from the game, just like the movie</small></div></div></div>';
  pnl(h)}
 window.openSound=function(){if(!AC){try{initAudio();applyS()}catch(e){}}try{AC&&AC.resume()}catch(e){}panel()};
 if(btn){btn.onclick=function(e){e.stopPropagation();openSound()};paintBtn()}
@@ -8177,6 +8271,7 @@ mp.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest
  if(v.indexOf('trk:')==0){sv('trk',v.slice(4))}
  else if(v=='mute'){muted=!muted;SET.muted=muted?1:0;sv('muted',SET.muted);paintBtn()}
  else if(v=='song'){if(window.SONG)SONG.open();return}
+ else if(v=='mvid'){try{var m=document.getElementById('mp');if(m)m.style.display='none'}catch(x){}if(window.MOVIE&&MOVIE.openMV)MOVIE.openMV();return}
  else if(v=='hum'){SET.hum=SET.hum?0:1;sv('hum',SET.hum);try{A.hg.gain.setTargetAtTime(SET.hum?1:0,AC.currentTime,.1)}catch(x){}}
  else if(v=='test'){if(AC){try{AC.resume();tone({f:520,f2:780,d:.25,v:.35});burst({f:1800,q:3,d:.12,v:.4})}catch(x){}}}
  panel()});
