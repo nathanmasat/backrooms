@@ -1,5 +1,10 @@
 # Changelog
 
+## Co-op: the elevator is a safe room
+- While you are inside the co-op elevator, you can't die: not while waiting for the doors, and not while standing inside after they open. Monsters, sanity, imprint and level hazards can't kill you there (imprint is held at half).
+- The host's monster ignores anyone standing in the elevator and goes after players outside instead. If everyone is inside, it loses track and wanders.
+- As soon as you step out of the elevator, the normal rules apply again.
+
 ## Smoother: less lag, no stutters
 Measured on the same level and the same walk, frame time roughly halved on both computers and phones, and nothing gets "first-time" prepared mid-game anymore.
 - **Adaptive resolution:** the game watches the frame rate all the time. If frames start to slow down, the 3D view is drawn slightly smaller (the film grain hides it); when there is room again it gets sharp again. Before, it only reacted below about 28 frames a second, and only once.

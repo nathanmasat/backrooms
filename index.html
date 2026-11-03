@@ -7043,10 +7043,10 @@ function takeLight(){makePool();var f=LPOOL.find(function(q){return !q.used});if
 function giveLight(sl){LPOOL.forEach(function(q){if(q.sl===sl){q.used=false;q.sl.intensity=0}})}
 if(ST&&ST.on)makePool();
 function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light)giveLight(p.light)}catch(e){}delete NET.players[id]}
-function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),t:performance.now()};
+function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),ic:d.ic?1:0,t:performance.now()};
  p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
-function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,name:d.name,si:d.si,eq:d.eq}}
-function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0,y:+(P.y||0).toFixed(2)}}
+function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,ic:d.ic,name:d.name,si:d.si,eq:d.eq}}
+function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0,y:+(P.y||0).toFixed(2),ic:inSafeCar()?1:0}}
 function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!p.b)return;buildModel(p);var g=p.model;if(!g)return;
  var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl&&!p.b.dead?1.4:0;if(!show)return;if(p.b.dead){ragPose(p,g,dt);return}unRag(p,g);
  var a=p.a||p.b,b=p.b,span=Math.max(30,b.t-a.t),k=Math.min(1.2,(now-100-a.t)/span);if(k<0)k=0;var x=a.x+(b.x-a.x)*k,z=a.z+(b.z-a.z)*k,dy=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw)),yaw=a.yaw+dy*Math.min(1,k);
@@ -7060,7 +7060,9 @@ function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forE
 
 // ---------------------------------------------------------------- the monster: the host runs it, everyone sees the same one
 function others(){return Object.keys(NET.players).map(function(k){return NET.players[k]}).filter(function(p){var b=p.b;return b&&b.lv===curLv()&&b.seed===curSeed()&&!b.dead&&performance.now()-p.last<2500})}
-function pickTarget(){var me=!P.dead?{me:1,x:P.x,z:P.z}:null,list=others(),best=me,bd=me?Math.hypot(M.x-P.x,M.z-P.z):1e9;list.forEach(function(p){var d=Math.hypot(M.x-p.b.x,M.z-p.b.z);if(NET.tgt===p.id)d*=.75;if(d<bd){bd=d;best=p}});NET.tgt=best&&best.id||null;return best}
+function pickTarget(){var me=!P.dead&&!inSafeCar()?{me:1,x:P.x,z:P.z}:null,list=others().filter(function(p){return !p.b.ic}),best=me,bd=me?Math.hypot(M.x-P.x,M.z-P.z):1e9;list.forEach(function(p){var d=Math.hypot(M.x-p.b.x,M.z-p.b.z);if(NET.tgt===p.id)d*=.75;if(d<bd){bd=d;best=p}});NET.tgt=best&&best.id||null;
+ // everyone is safe in the elevator: the monster loses track and wanders
+ if(!best)best={decoy:1,b:{x:M.x,z:M.z,hd:1,fl:0,yaw:0}};return best}
 function wrapAI(name,meshFn){var orig=window[name];if(typeof orig!='function')return;window[name]=function(dt){
  if(!NET.on)return orig.apply(this,arguments);
  if(waiting())return;
@@ -7074,7 +7076,7 @@ function wrapAI(name,meshFn){var orig=window[name];if(typeof orig!='function')re
 wrapAI('updMon',function(){return typeof mon!='undefined'?mon:null});
 wrapAI('updLM',function(){return typeof lm!='undefined'?lm:null});
 ['updPool','updParty'].forEach(function(n){var o=window[n];if(typeof o=='function')window[n]=function(){if(waiting())return;return o.apply(this,arguments)}});
-if(typeof die=='function'){var oDie=die;die=function(){if(NET.imp)return;if(coopDie())return;return oDie.apply(this,arguments)}}
+if(typeof die=='function'){var oDie=die;die=function(){if(NET.imp)return;if(inSafeCar()){try{P.imp=Math.min(P.imp,50)}catch(e){}return}if(coopDie())return;return oDie.apply(this,arguments)}}
 function monMesh(){try{if(typeof lm!='undefined'&&lm)return lm;return typeof mon!='undefined'?mon:null}catch(e){return null}}
 function monSynced(){return !(CF.tile||CF.bal)}
 
@@ -7118,6 +7120,8 @@ function openDoors(remote){if(!waiting())return;ST.open=curSeed();saveST();if(NE
  try{if(typeof AC!='undefined'&&AC&&!muted){tone({f:880,d:1.2,v:.12});tone({f:1320,d:1.2,v:.08,at:.25})}}catch(e){}if(inLevel())say(remote?'The doors open. Stay together.':'You opened the doors. Stay together.',4)}
 NET.openDoors=function(){if(NET.isHost())openDoors(false)};
 (function(){try{if(typeof L=='undefined'||L.__hold)return;L.__hold=1;['lvl','fk','black'].forEach(function(k){var v=L[k];Object.defineProperty(L,k,{configurable:true,get:function(){return NET.on&&NET.hold?(k=='lvl'?1:0):v},set:function(x){v=x}})})}catch(e){}})();
+function inSafeCar(){return !!(NET.on&&typeof CAR!='undefined'&&CAR&&inLevel()&&(waiting()||CAR.inside))}
+NET.safe=inSafeCar;
 function carTick(dt){if(!NET.on||!inLevel())return;buildCar();if(!CAR)return;var E=CAR.E;try{tvTick(dt)}catch(e){}
  var tgt=waiting()?0:1;if(CAR.k!==tgt){CAR.k+=(tgt-CAR.k)*Math.min(1,dt*1.6);if(Math.abs(CAR.k-tgt)<.01)CAR.k=tgt;E.doors(CAR.k)}
  var L=toLocal(P.x,P.z),inBox=L.x>-1.1&&L.x<1.1&&L.z>-.05&&L.z<2.55;
