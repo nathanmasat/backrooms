@@ -1,0 +1,4 @@
+# Godot's import cache (rebuilt automatically when the project opens)
+.godot/
+*.import
+export/

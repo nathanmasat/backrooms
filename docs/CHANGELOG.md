@@ -1,5 +1,12 @@
 # Changelog
 
+## Godot version started (folder godot/)
+- New **godot/** folder: the game rebuilt in **Godot 4.7.2** (the same build as Nathan's Steam copy). Open it with Godot → Import → godot/project.godot → F5.
+- **Level 0 uses the same maze as the browser game:** the browser's random numbers and Chrome 141's sorting are copied exactly, and a test checks 8 reference mazes cell by cell (all match).
+- Walls, carpet, ceiling, glowing panels, fog, flickering lights, a pool of real lights that follow you, and the player (walk, sprint with stamina, crouch, jump, flashlight with battery). Plus a HUD and a start/pause screen.
+- The level data for all 20 levels is exported from the browser game into godot/data/levels.json.
+- Decisions recorded in the migration plan: Windows, Godot 4.7.2, models made by Claude, co-op up to 6, no web build, same repository.
+
 ## Every VHS tape: parkour + puzzle
 - Every tape room on Levels 0-9 now has **both** challenges, one after the other:
   1. **Parkour:** jump up the crates, pillars and the high ledge to the second floor (SPACE / JUMP).
