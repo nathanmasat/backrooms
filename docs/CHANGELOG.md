@@ -1,5 +1,14 @@
 # Changelog
 
+## Every VHS tape: parkour + puzzle
+- Every tape room on Levels 0-9 now has **both** challenges, one after the other:
+  1. **Parkour:** jump up the crates, pillars and the high ledge to the second floor (SPACE / JUMP).
+  2. **Puzzle:** up on the second floor, the tape is locked in a glass case. Light all five lamps to open it; each button flips its own lamp and the ones next to it (E / tap GRAB).
+- The tape only comes out when you're up on the second floor **and** the puzzle is solved. The buttons only work from up there, not from the floor under the balcony.
+- The buttons and lamps are on one side of the balcony and the case on the other, so the spot where you land from the jump stays clear.
+- This replaces the old random pick of one challenge per level. (The maze still exists in the code if you want it back on some levels.)
+- The doorway sign says "TAPE CHALLENGE · PARKOUR + PUZZLE", and its text now shrinks to fit.
+
 ## BACKROOMS MUSIC: the music video + where to put the game online
 - **🎬 BACKROOMS MUSIC: the music video (2:00)** for the song "DON'T LOOK BACK", made with the movie's engine, sets and characters, so it looks like the movie. Open it from **SOUND → 🎬 BACKROOMS MUSIC** (in the music section, under the song) or from the movie menu (**🎵 BACKROOMS MUSIC**).
   - It opens and closes with a **BACKROOMS MUSIC** title card, like the movie's title card.
