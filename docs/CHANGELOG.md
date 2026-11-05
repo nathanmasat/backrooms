@@ -1,6 +1,7 @@
 # Changelog
 
 ## Three tape challenge rooms per level
+- Fix: "Cannot read properties of undefined (reading 'length')" when a level loaded straight into play before the rooms were built.
 - Levels 0-8 now have **three** tape challenge rooms (TAPE CHALLENGE 1, 2 and 3), spread well apart. Each one has the parkour to the second floor and the lamp puzzle.
 - **One keycard (or valve, party favor, and so on) is locked in each room's glass case**, so you need to beat all three rooms to escape. The VHS tape is in room 1.
 - Level 9 has only one escape item, so it keeps one room. The extra item on Nightmare / Don't Look Back goes in room 3.

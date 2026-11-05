@@ -7782,7 +7782,7 @@ function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0
  return h}
 function what(C){return C.q==0?'the tape and one of the '+KN():'one of the '+KN()}
 // every room: tick it, put the escape items in the cases (one per room, extras in the last room), lock them, show one hint
-function tickAll(dt){if(!CHS.length)return;near=null;var h='';
+function tickAll(dt){if(!CHS||!CHS.length)return;near=null;var h='';
  CHS.forEach(function(C){var x=tickChallenge(C,dt);if(x&&!h)h=x});
  if(typeof items!='undefined'){var nC=0;
   items.forEach(function(it){if(it.type!='card'||it._chOut)return;
