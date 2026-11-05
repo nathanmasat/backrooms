@@ -1,5 +1,11 @@
 # Changelog
 
+## Three tape challenge rooms per level
+- Levels 0-8 now have **three** tape challenge rooms (TAPE CHALLENGE 1, 2 and 3), spread well apart. Each one has the parkour to the second floor and the lamp puzzle.
+- **One keycard (or valve, party favor, and so on) is locked in each room's glass case**, so you need to beat all three rooms to escape. The VHS tape is in room 1.
+- Level 9 has only one escape item, so it keeps one room. The extra item on Nightmare / Don't Look Back goes in room 3.
+- When you solve a puzzle, a message tells you how many rooms are done (for example 2/3). The compass and the map point to the nearest locked keycard.
+
 ## The tape challenge is the only way out
 - On Levels 0-9, the things you need to escape (keycards, pump valves, party favors, and so on) are no longer spread around the maze. They're **locked in the glass case on the second floor of the tape challenge room**, together with the VHS tape.
 - To escape you have to do the parkour up to the second floor **and** light all five lamps. Then you can take the keycards and the tape. You can't pick them up from below or through the glass.
