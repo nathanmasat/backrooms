@@ -1,9 +1,16 @@
 # Changelog
 
+## Fun with friends + no tracker bar
+- **Emote & quick-chat wheel (U, phone: EMOTE):** 1 Wave, 2 Dance, 3 Point, 4 Thumbs up, 5 "Help!", 6 "Follow me!", 7 "Monster here!", 8 "Found something!". Your friends see your hazmat suit do it, with a speech bubble over your head. The phrases also pop up on their screen with how far away you are. Only these fixed emotes and phrases can be sent, no free typing.
+- **High five:** wave at a friend standing right next to you while they wave back (within 3.5 s), and you both get a HIGH FIVE and +10 sanity.
+- **Pings (middle mouse, or 9 in the wheel, phone: PING):** mark the spot you're looking at. Everyone sees a glowing blue beam with your name for 8 seconds, and a dot on the map.
+- **The tracker bar at the top of the screen is gone.** If you ever want it back, press O.
+- Fix: pressing G for GIVE UP no longer also drops a glow stick.
+
 ## More scares (and flares)
 - **The Follower:** every minute or two, a tall black figure with pale eyes walks the path you just took, a few metres behind you. You hear its footsteps. **Turn around and it's gone.** If you never look back, it reaches you: a breath on your neck, a red flash, and you lose sanity.
 - **Mannequins:** 3 pale, faceless mannequins stand somewhere on each level. **They only move while nobody is looking at them**, a step at a time towards you. If one gets right behind you, the next time you turn around it's there (jump scare).
-- **Flares:** 2 flares are hidden on each level. Press **X** (phone: **FLARE**) to throw one. It bounces, burns red for 25 s and lights up the hallway, and **the monster won't come near it**: it's stunned for 4 s if it tries. Flares in your pocket show above the stats.
+- **Flares:** 2 flares are hidden on each level. Press **K** (phone: **FLARE**) to throw one (K, because X is lean right). It bounces, burns red for 25 s and lights up the hallway, and **the monster won't come near it**: it's stunned for 4 s if it tries. Flares in your pocket show above the stats.
 - **Lockers:** about 1 in 14 lockers has something already inside the first time you open it (never while the monster is chasing you).
 - Scares shake the camera, flash the screen red and make a noise the monster can hear. Everything is captions only, no voices.
 

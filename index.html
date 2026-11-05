@@ -4908,7 +4908,7 @@ var oEv=HU.ev;HU.ev=function(id){if(id=='black'||id=='gen'||id=='tape'||id=='res
 // =====================================================================
 // 1. COMPASS & OBJECTIVE MARKERS (O to toggle)
 // =====================================================================
-if(SET.cmp==null)SET.cmp=1;
+if(SET.cmp==null||!SET.cmpOff){SET.cmp=0;SET.cmpOff=1}   // the tracker bar at the top is off by default now (press O to bring it back)
 var CV=document.createElement('canvas');CV.id='cmp';CV.width=420;CV.height=40;CV.style.cssText='position:fixed;left:50%;top:6px;transform:translateX(-50%);z-index:6;pointer-events:none;width:min(420px,80vw);height:auto;display:none';document.body.appendChild(CV);var CX=CV.getContext('2d');
 addEventListener('keydown',function(e){if(e.code!='KeyO'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(typeof started=='undefined'||!started)return;SET.cmp=SET.cmp?0:1;try{localStorage.setItem('brs',JSON.stringify(SET))}catch(x){}say('Compass '+(SET.cmp?'on':'off')+' (O)',1.5)});
 function markers(){var m=[];try{var ok=P.cards>=CF.k&&(!HU.fuse||HU.fuse());m.push({x:EL.x||cc(EL.i),z:EL.z||cc(EL.j),c:ok?'#3f8':'#f55',s:'▣',l:ok?'EXIT':'EXIT 🔒'});
@@ -7159,6 +7159,8 @@ function onClientMsg(c,d){var id=c.peer,pl=NET.players[id];
  if(d.t=='st'){applySt(pl,d);d.id=id;bcast(slim(d),id);return}
  if(d.t=='pick'){if(addPick(d.k,d.x,d.z,true))bcast({t:'pick',k:d.k,x:d.x,z:d.z,by:pl.name},id);return}
  if(d.t=='next'){var n=d.n|0;if(n===curLv()+1&&inLevelOrMenu()){note(pl.name+' called the elevator. Everyone goes up!',4);goNext(n,true)}return}
+ if(d.t=='em'){if(!EMK[d.k])return;var nw=performance.now();if(nw-(pl.emLast||0)<700)return;pl.emLast=nw;gotEmote(id,d.k,pl.name);bcast({t:'em',k:d.k,id:id,name:pl.name},id);return}
+ if(d.t=='ping'){var nw2=performance.now();if(nw2-(pl.pgLast||0)<700)return;pl.pgLast=nw2;var px=num(d.x,2000),pz=num(d.z,2000);addPing(px,pz,pl.name,false);bcast({t:'ping',x:px,z:pz,id:id,name:pl.name},id);return}
  if(d.t=='gu'){var v=d.v?1:0;gotGU(id,v,pl.name);bcast({t:'gu',id:id,v:v,name:pl.name},id);return}
  if(d.t=='rev'){var to=String(d.to||''),pb=pl.b;if(!pb||pb.dead)return;if(to==='host'){if(DOWN&&Math.hypot(pb.x-DOWN.x,pb.z-DOWN.z)<5)reviveMe(pl.name)}else{var tc=NET.conns[to],tp=NET.players[to];if(tc&&tc.open&&tp&&tp.b&&tp.b.dead&&Math.hypot(pb.x-tp.b.x,pb.z-tp.b.z)<5)try{tc.send({t:'rev',to:to,by:pl.name})}catch(e){}}return}
  if(d.t=='bye'){try{c.close()}catch(e){}}}
@@ -7179,6 +7181,8 @@ function onHostMsg(d){if(!d||typeof d!='object')return;HOSTT=performance.now();
  if(d.t=='go'){var n=d.n|0,s2=d.seed|0;if(n<0||n>20)return;ST.lv=n;ST.seed=s2;ST.picks=[];ST.auto=1;saveST();NET.reloading=true;
   if(inLevel()&&!P.dead&&typeof oNext=='function'){say('The group is taking the elevator...',3);oNext(n)}else moveTo('The group moved to '+((LV[n]||{}).n||('Level '+n))+'...');return}
  if(d.t=='open'){if((d.seed|0)===curSeed())openDoors(true);return}
+ if(d.t=='em'){if(d.id&&d.id!==NET.myId&&EMK[d.k])gotEmote(String(d.id),d.k,d.name);return}
+ if(d.t=='ping'){if(d.id!==NET.myId)addPing(num(d.x,2000),num(d.z,2000),cleanName(d.name||'Teammate'),false);return}
  if(d.t=='gu'){if(d.id&&d.id!==NET.myId)gotGU(String(d.id),d.v,d.name);return}
  if(d.t=='rev'){if(DOWN)reviveMe(cleanName(d.by));return}
  if(d.t=='bye'){NET.status=d.why?String(d.why).slice(0,120):'The host closed the room.';toast(NET.status);leaveNet();NET.on=false;ST=null;saveST();render()}}
@@ -7245,6 +7249,7 @@ function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forE
  if(U.legs)U.legs.forEach(function(l,i){l.rotation.x=(i?-sw:sw)+(b.cr?-1.1:0);if(l.userData.kn)l.userData.kn.rotation.x=(b.cr?1.9:0)+Math.max(0,Math.sin(p.ph+(i?PI:0)))*.6*mv});
  if(U.hips)U.hips.position.y=b.cr?.62:.95+Math.abs(Math.sin(p.ph))*.03*mv;
  if(U.arms)U.arms.forEach(function(ar,i){ar.rotation.x=i&&b.fl?-1.2:(i?sw:-sw)*.8;if(ar.userData.el)ar.userData.el.rotation.x=i&&b.fl?-.2:-.25*mv});
+ try{emotePose(p,g,dt)}catch(e){}
  if(p.tag){var d=Math.hypot(x-P.x,z-P.z);p.tag.visible=d>2.2;p.tag.scale.set(1.2+d*.03,.3+d*.0075,1)}
  if(p.light){p.light.position.set(x-Math.sin(yaw)*.3,b.cr?1.05:1.45,z-Math.cos(yaw)*.3);p.lt.position.set(x-Math.sin(yaw)*6,(b.cr?1.05:1.45)-.4,z-Math.cos(yaw)*6)}})}
 
@@ -7378,7 +7383,7 @@ addEventListener('keydown',function(e){if(e.code!='KeyY'||e.repeat||!NET.on)retu
 // ---------------------------------------------------------------- the network tick
 var sendT=0,monSendT=0,lastF=performance.now();
 (function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-lastF)/1000);lastF=now;if(!NET.on)return;
- if(inLevel())watchPicks();animPlayers(dt);try{coopTick(dt)}catch(e){console.warn('coop',e)}carTick(dt);prompt2();vcTick();vcT-=dt;if(vcT<=0){vcT=2;if(VC.on)callAll();else if(ST&&ST.mic&&!VC.want&&NET.peer&&NET.peer.open){VC.want=true;vcStart()}}if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
+ if(inLevel())watchPicks();animPlayers(dt);try{coopTick(dt)}catch(e){console.warn('coop',e)}try{funTick(dt)}catch(e){console.warn('fun',e)}carTick(dt);prompt2();vcTick();vcT-=dt;if(vcT<=0){vcT=2;if(VC.on)callAll();else if(ST&&ST.mic&&!VC.want&&NET.peer&&NET.peer.open){VC.want=true;vcStart()}}if(typeof P!='undefined'&&P.dead&&ST&&!ST.auto){ST.auto=1;saveST()}
  sendT-=dt;if(sendT<=0&&typeof P!='undefined'){sendT=1/12;var s=myState();if(NET.isHost()){s.id='host';s.name=myName();s.si=mySuit();s.eq=myEq();bcast(s)}else send(s)}
  if(NET.isHost()&&monSynced()){monSendT-=dt;if(monSendT<=0&&now-NET.aiT<400){monSendT=1/15;var m=monMesh();bcast({t:'mon',x:+M.x.toFixed(2),z:+M.z.toFixed(2),ry:m?+m.rotation.y.toFixed(3):0,lv:curLv(),seed:curSeed()})}}
  hud()})();
@@ -7461,7 +7466,7 @@ function checkGU(){if(GUdone||!NET.on||!inLevel())return;var c=guCount();if(c.y>
 var GUB=document.createElement('button');GUB.id='mpgu';GUB.style.cssText='position:fixed;right:16px;top:64px;z-index:9;display:none;font:bold 13px monospace;padding:8px 12px;border-radius:8px;border:1px solid #f88;background:#2a0a0acc;color:#fcc;cursor:pointer';document.body.appendChild(GUB);
 GUB.addEventListener('pointerdown',function(e){e.stopPropagation()},true);
 GUB.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();voteGU(!GU.me)});
-addEventListener('keydown',function(e){if(e.code!='KeyG'||e.repeat||!NET.on||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;var c=guCount();if(!DOWN&&!(c.y>0))return;e.preventDefault();voteGU(!GU.me)},true);
+addEventListener('keydown',function(e){if(e.code!='KeyG'||e.repeat||!NET.on||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;var c=guCount();if(!DOWN&&!(c.y>0))return;e.preventDefault();e.stopImmediatePropagation();voteGU(!GU.me)},true);
 function guUI(){if(!NET.on||!inLevel()){GUB.style.display='none';return}var c=guCount();var show=!!DOWN||c.y>0;GUB.style.display=show?'block':'none';if(!show)return;
  GUB.textContent=(GU.me?'✔ GAVE UP':'🏳 GIVE UP')+' ('+c.y+'/'+c.n+')'+(isTouch()?'':' [G]');GUB.style.borderColor=GU.me?'#8f8':'#f88'}
 // ---- the camera while down: fall to the floor, then watch a teammate
@@ -7527,7 +7532,7 @@ function mapTeam(){var c=mc,k=4/S;c.save();c.lineCap='round';c.lineJoin='round';
   (DEATHS[id]||[]).forEach(function(d){if(d.lv!==curLv()||d.seed!==curSeed())return;var x=d.x*k,y=d.z*k;c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.8)';c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke();c.lineWidth=1.8;c.strokeStyle='#5aa8ff';c.stroke()});
   if(coopHere(p)&&!p.b.dead){var x=p.b.x*k,y=p.b.z*k;c.fillStyle='#3d8bff';c.strokeStyle='#e8f4ff';c.lineWidth=1.2;c.beginPath();c.arc(x,y,3.4,0,7);c.fill();c.stroke();c.strokeStyle='#bfe0ff';c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.sin(p.b.yaw)*6,y-Math.cos(p.b.yaw)*6);c.stroke()}});
  c.restore()}
-if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.apply(this,arguments);try{if(NET.on&&MAPON&&mapT>.199)mapTeam()}catch(e){}return r}}
+if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.apply(this,arguments);try{if(NET.on&&MAPON&&mapT>.199){mapTeam();mapPings()}}catch(e){}return r}}
 // ---- every frame
 function coopTick(dt){
  if(inLevel()){buildScrolls();var tm=performance.now()/1000;SCR.forEach(function(q){if(q.got)return;q.m.rotation.y=tm*1.3+q.ph;q.m.position.y=.95+Math.sin(tm*2+q.ph)*.07;if(!P.dead&&!DOWN&&!waiting()&&Math.hypot(q.x-P.x,q.z-P.z)<1.3)grabScroll(q)})}
@@ -7550,6 +7555,63 @@ function coopTick(dt){
  DOWN.t=(performance.now()-DOWN.t0)/1000;SPC.dt=dt;P.x=DOWN.x;P.z=DOWN.z;P.vx=P.vz=0;P.para=Math.max(P.para||0,.3);P.fl=false;P.dead=true;
  var up=mates();
  specT-=dt;if(specT<=0){specT=.25;if(DOWN.t<2.6){SPEC.style.display='none'}else{var w=watchTarget();SPEC.style.display='block';var gc=guCount();SPEC.innerHTML=w?'👁 SPECTATING <span style="color:#7fb4ff">'+e2(w.name)+'</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">You are down. '+(up.length>1?(isTouch()?'Tap':'Click')+' to watch someone else. ':'')+'A teammate with a 📜 Revival Scroll can bring you back.<br>The run only ends if the whole team gives up ('+gc.y+'/'+gc.n+').</span>':'<span style="color:#f99">Everyone is down.</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">Nobody can reach a scroll right now. Wait for a teammate who is still in the game, or vote 🏳 GIVE UP together ('+gc.y+'/'+gc.n+').</span>'}}}
+// ---------------------------------------------------------------- FUN WITH FRIENDS: emotes + quick chat (U / EMOTE), pings (middle mouse, wheel 9 / PING), high fives
+// Only fixed emotes and fixed phrases are sent (no free text), so nobody can send anything nasty through them.
+var EMO=[{k:'wave',n:'👋 Wave'},{k:'dance',n:'💃 Dance'},{k:'point',n:'👉 Point'},{k:'thumbs',n:'👍 Thumbs up'},{k:'help',n:'🆘 "Help!"',say:'Help!'},{k:'follow',n:'➡️ "Follow me!"',say:'Follow me!'},{k:'monster',n:'👹 "Monster here!"',say:'Monster here!'},{k:'found',n:'🔑 "Found something!"',say:'Found something!'}];
+var EMK={};EMO.forEach(function(e){EMK[e.k]=e});var myWave=0,PINGS=[],emoT=0;
+var EW=document.createElement('div');EW.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;display:none;background:#0c0a04ee;border:1px solid #e4d56a;border-radius:12px;padding:10px 12px;font:14px monospace;color:#e4d56a;min-width:240px';document.body.appendChild(EW);
+EW.innerHTML='<div style="text-align:center;margin-bottom:6px;letter-spacing:.1em">EMOTES & QUICK CHAT</div>'+EMO.map(function(e,i){return '<div data-em="'+e.k+'" style="padding:6px 8px;margin:3px 0;border:1px solid #554a1a;border-radius:6px;cursor:pointer;color:#f2e8b0">'+(i+1)+'  '+e.n+'</div>'}).join('')+'<div data-em="ping" style="padding:6px 8px;margin:3px 0;border:1px solid #2a5a7a;border-radius:6px;cursor:pointer;color:#9fe0ff">9  📍 Ping where I\'m looking</div><div style="text-align:center;opacity:.6;font-size:12px;margin-top:4px">press 1-9, or U / Esc to close · middle mouse = ping</div>';
+EW.addEventListener('pointerdown',function(e){var d=e.target.closest&&e.target.closest('[data-em]');e.stopPropagation();e.preventDefault();if(d){var k=d.getAttribute('data-em');closeEW();if(k=='ping')doPing();else doEmote(k)}},true);
+function openEW(){if(!NET.on||!inLevel()||P.dead)return;EW.style.display='block'}
+function closeEW(){EW.style.display='none'}
+function sendNet(m){if(NET.isHost()){m.id='host';m.name=myName();bcast(m)}else send(m)}
+function doEmote(k){if(!EMK[k]||emoT>0)return;emoT=1.2;sendNet({t:'em',k:k});var e=EMK[k];
+ if(k=='wave'){myWave=performance.now();highFive(null)}
+ toast('You: '+e.n);if(e.say)try{say('You: "'+e.say+'"',2)}catch(x){}}
+// someone did an emote
+function gotEmote(id,k,name){var p=NET.players[id],e=EMK[k];if(!p||!e)return;p.em=k;if(k=='wave')p.lastWave=performance.now();p.emT=performance.now()+(k=='dance'?5000:2600);
+ bubble(p,e.say?'"'+e.say+'"':e.n);
+ if(coopHere(p)){var d=Math.hypot(p.b.x-P.x,p.b.z-P.z);if(e.say)note(cleanName(name||p.name)+': "'+e.say+'" ('+Math.round(d)+'m)',3);
+  if(k=='wave'&&d<3&&performance.now()-myWave<3500)highFive(p)}}
+function highFive(p){if(!p){Object.keys(NET.players).forEach(function(id){var q=NET.players[id];if(coopHere(q)&&performance.now()-(q.lastWave||0)<3500&&Math.hypot(q.b.x-P.x,q.b.z-P.z)<3)highFive(q)});return}
+ if(p.hf&&performance.now()-p.hf<4000)return;p.hf=performance.now();try{P.san=Math.min(100,P.san+10)}catch(e){}chime(true);note('🙌 HIGH FIVE with '+p.name+'! (+10 sanity)',3)}
+// a speech bubble above someone's head
+function bubble(p,txt){if(!p.model)return;try{if(p.bub){p.model.remove(p.bub);p.bub.material.map.dispose()}var c=document.createElement('canvas');c.width=512;c.height=96;var x=c.getContext('2d');x.font='bold 40px sans-serif';var w=Math.min(500,x.measureText(txt).width+40);
+ x.fillStyle='rgba(255,255,255,.92)';x.beginPath();if(x.roundRect)x.roundRect((512-w)/2,8,w,70,24);else x.rect((512-w)/2,8,w,70);x.fill();x.fillStyle='#111';x.textAlign='center';x.fillText(txt,256,58);
+ var sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(1.6,.3,1);sp.position.y=2.55;sp.renderOrder=1000;p.model.add(sp);p.bub=sp;p.bubT=performance.now()+3500}catch(e){}}
+// poses for emotes on teammates' bodies (called after the walk animation)
+function emotePose(p,g,dt){var U=g.userData||{};if(p.bub&&performance.now()>p.bubT){g.remove(p.bub);p.bub=null}
+ if(!p.em||performance.now()>p.emT){if(p.em){p.em=null;if(U.torso)U.torso.rotation.y=0}return}var t=performance.now()/1000,A=U.arms||[];
+ if(p.em=='wave'&&A[1]){A[1].rotation.set(0,0,2.5+Math.sin(t*12)*.35);if(A[1].userData.el)A[1].userData.el.rotation.x=-.3}
+ else if(p.em=='point'&&A[1]){A[1].rotation.set(-1.55,0,0);if(A[1].userData.el)A[1].userData.el.rotation.x=0}
+ else if(p.em=='thumbs'&&A[1]){A[1].rotation.set(-1.4,0,0);if(A[1].userData.el)A[1].userData.el.rotation.x=-1.2}
+ else if(p.em=='dance'){A.forEach(function(a,i){a.rotation.set(0,0,(i?1:-1)*(2.2+Math.sin(t*8+i*PI)*.6));if(a.userData.el)a.userData.el.rotation.x=-.6});if(U.hips)U.hips.position.y=.95+Math.abs(Math.sin(t*8))*.08;if(U.torso)U.torso.rotation.y=Math.sin(t*4)*.5;if(U.legs)U.legs.forEach(function(l,i){l.rotation.x=Math.sin(t*8+i*PI)*.35})}
+ else if((p.em=='help'||p.em=='monster')&&A.length){A.forEach(function(a,i){a.rotation.set(-2.6,0,(i?1:-1)*.3+Math.sin(t*14)*.15)})}
+ else if((p.em=='follow'||p.em=='found')&&A[1]){A[1].rotation.set(-1.2+Math.sin(t*8)*.4,0,.3)}}
+// ---- pings: mark the spot you're looking at for everyone (8 s, also on the map)
+var PBM=new T.MeshBasicMaterial({color:0x66ccff,transparent:true,opacity:.55,depthWrite:false,blending:T.AdditiveBlending,fog:false});
+function doPing(){if(!NET.on||!inLevel()||P.dead||emoT>0)return;emoT=.8;var cy=Math.cos(P.pit||0),dx=-Math.sin(P.yaw),dz=-Math.cos(P.yaw),x=P.x,z=P.z,hit=false;
+ var down=Math.tan(-(P.pit||0)),eye=1.6,maxD=down>.05?Math.min(30,eye/down):30;
+ for(var d=.5;d<=maxD;d+=.25){var nx=P.x+dx*d,nz=P.z+dz*d;if(blocked(nx,nz,.15)){hit=true;break}x=nx;z=nz}
+ sendNet({t:'ping',x:+x.toFixed(2),z:+z.toFixed(2)});addPing(x,z,myName(),true)}
+function addPing(x,z,name,mine){var G=new T.Group(),beam=new T.Mesh(new T.CylinderGeometry(.06,.18,3,10,1,true),PBM);beam.position.y=1.5;G.add(beam);
+ var ring=new T.Mesh(new T.RingGeometry(.25,.4,24),PBM);ring.rotation.x=-PI/2;ring.position.y=.03;G.add(ring);
+ var c=document.createElement('canvas');c.width=256;c.height=64;var cx=c.getContext('2d');cx.font='bold 30px monospace';cx.textAlign='center';cx.lineWidth=6;cx.strokeStyle='rgba(0,0,0,.85)';var lab='📍 '+cleanName(name);cx.strokeText(lab,128,42);cx.fillStyle='#9fe0ff';cx.fillText(lab,128,42);
+ var sp=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(c),depthTest:false,transparent:true}));sp.scale.set(1.4,.35,1);sp.position.y=3.2;sp.renderOrder=999;G.add(sp);
+ G.position.set(x,0,z);scene.add(G);PINGS.push({x:x,z:z,g:G,t:8,name:name,ring:ring});if(PINGS.length>6){var o=PINGS.shift();scene.remove(o.g)}
+ chime(false);if(!mine)note('📍 '+cleanName(name)+' pinged a spot ('+Math.round(Math.hypot(x-P.x,z-P.z))+'m away)',2.5)}
+function pingTick(dt){for(var i=PINGS.length-1;i>=0;i--){var q=PINGS[i];q.t-=dt;var s=1+Math.sin(performance.now()/150)*.15;q.ring.scale.set(s,s,1);if(q.t<=0){scene.remove(q.g);PINGS.splice(i,1)}}}
+// keys + phone buttons
+addEventListener('keydown',function(e){if(!NET.on)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;
+ if(EW.style.display=='block'){var m=/^Digit([1-9])$/.exec(e.code);if(m){e.preventDefault();e.stopImmediatePropagation();closeEW();if(m[1]=='9')doPing();else doEmote(EMO[+m[1]-1].k);return}if(e.code=='KeyU'||e.code=='Escape'){e.preventDefault();e.stopImmediatePropagation();closeEW();return}}
+ if(e.repeat||!inLevel())return;if(e.code=='KeyU'){e.preventDefault();e.stopImmediatePropagation();openEW()}},true);
+addEventListener('mousedown',function(e){if(e.button===1&&NET.on&&inLevel()&&document.pointerLockElement){e.preventDefault();doPing()}},true);
+function funBtns(){try{var acts=document.getElementById('tc-acts');if(!acts)return;var on=NET.on&&inLevel();
+ [['b-EM','💬','EMOTE',function(){EW.style.display=='block'?closeEW():openEW()},'right:274px'],['b-PG','📍','PING',doPing,'right:334px']].forEach(function(d){var b=document.getElementById(d[0]);
+  if(!b){b=document.createElement('div');b.className='tb';b.id=d[0];b.innerHTML='<i>'+d[1]+'</i><b>'+d[2]+'</b>';acts.appendChild(b);b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();d[3]()});var st=document.createElement('style');st.textContent='#'+d[0]+'{'+d[4]+';bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}
+  b.style.display=on?'':'none'})}catch(e){}}
+function funTick(dt){emoT=Math.max(0,emoT-dt);pingTick(dt);if((funTick.n=(funTick.n|0)+1)%30==0)funBtns()}
+function mapPings(){var c=mc,k=4/S;PINGS.forEach(function(q){c.fillStyle='#66ccff';c.strokeStyle='#fff';c.lineWidth=1;c.beginPath();c.arc(q.x*k,q.z*k,3.5,0,7);c.fill();c.stroke()})}
 NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;NET.down=function(){return DOWN};NET.revive=reviveMe;NET.scrolls=function(){return SCR};
 })();
 </script>
@@ -7932,7 +7994,7 @@ requestAnimationFrame(warm);
 var lastN=-1;setInterval(function(){if(!done||typeof started=='undefined'||!started)return;var n=0;scene.traverseVisible(function(o){if(o.isLight)n++});if(lastN>=0&&n!==lastN){try{ren.compile(scene,cam)}catch(e){}}lastN=n},3000);
 })();
 </script>
-<!-- ===== MORE SCARES: the Follower (don't look back), mannequins that move when you look away, flares (X / FLARE) that scare the monster off, and something in the lockers ===== -->
+<!-- ===== MORE SCARES: the Follower (don't look back), mannequins that move when you look away, flares (K / FLARE) that scare the monster off, and something in the lockers ===== -->
 <script>
 (function(){
 // -----------------------------------------------------------------------------------------------------
@@ -7941,7 +8003,7 @@ var lastN=-1;setInterval(function(){if(!done||typeof started=='undefined'||!star
 //                  neck and takes some of your sanity.
 // MANNEQUINS     — pale faceless mannequins stand around the level. They only move while nobody is looking at them.
 //                  If one gets right behind you, the next time you turn around... it's there.
-// FLARES         — 2 flares per level. Press X (phone: FLARE) to throw one. It burns red for 25 s, lights the area
+// FLARES         — 2 flares per level. Press K (phone: FLARE) to throw one. It burns red for 25 s, lights the area
 //                  and the monster won't come near it (stunned for 4 s if it tries).
 // LOCKERS        — sometimes something is already inside.
 // All captions only (no voices). Everything here is fiction inside the game.
@@ -8037,16 +8099,16 @@ function mkFlareStick(){var G=new T.Group();var s=new T.Mesh(new T.CylinderGeome
 (function placeFlares(){var tries=0,sx=typeof cc=='function'?cc(1):6;while(FLR.picks.length<2&&tries<500){tries++;var c=open[Math.floor(r()*open.length)];if(!c)continue;var x=cc(c[0])+(r()-.5),z=cc(c[1])+(r()-.5);if(Math.hypot(x-sx,z-sx)<14)continue;
  if(FLR.picks.some(function(q){return Math.hypot(q.x-x,q.z-z)<30}))continue;var m=mkFlareStick();m.position.set(x,.06,z);scene.add(m);FLR.picks.push({x:x,z:z,m:m,got:false})}})();
 var FH=document.createElement('div');FH.style.cssText='position:fixed;left:16px;bottom:200px;font:13px monospace;color:#ff9a7a;text-shadow:0 0 6px #000;pointer-events:none;display:none;z-index:5';document.body.appendChild(FH);
-function flareHUD(){FH.style.display=FLR.n>0&&playing()?'block':'none';FH.textContent='🧨 FLARES: '+FLR.n+(touch()?'  (FLARE button)':'  (X to throw)');
+function flareHUD(){FH.style.display=FLR.n>0&&playing()?'block':'none';FH.textContent='🧨 FLARES: '+FLR.n+(touch()?'  (FLARE button)':'  (K to throw)');
  try{var hr=document.getElementById('gun').style.display!='none'?document.getElementById('gun').getBoundingClientRect():document.getElementById('hud').getBoundingClientRect();if(hr.height)FH.style.bottom=Math.round(innerHeight-hr.top+4)+'px'}catch(e){}}
 function throwFlare(){if(!playing()||FLR.n<=0||P.hide)return;if(FLR.live){say('One flare at a time.',1.5);return}FLR.n--;
  var m=mkFlareStick();scene.add(m);var cy=Math.cos(P.pit||0),dir=[-Math.sin(P.yaw)*cy,Math.sin(P.pit||0),-Math.cos(P.yaw)*cy];
  FLR.live={m:m,x:P.x+dir[0]*.5,y:1.3,z:P.z+dir[2]*.5,vx:dir[0]*7,vy:2.4+dir[1]*5,vz:dir[2]*7,t:25,cool:0};
  if(au())try{burst({f:1800,q:.8,d:.5,v:.4});tone({f:520,f2:300,d:.3,v:.15})}catch(e){}say('🧨 Flare thrown. The monster hates the light.',2.5)}
-addEventListener('keydown',function(e){if(e.code!='KeyX'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(!playing())return;throwFlare()},false);
+addEventListener('keydown',function(e){if(e.code!='KeyK'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(!playing())return;throwFlare()},false);
 function flareTick(dt){
  FLR.picks.forEach(function(q){if(q.got)return;q.m.rotation.y+=dt*1.5;var s=.6+Math.sin(performance.now()/180)*.15;q.m.userData.halo.scale.set(s,s,1);
-  if(Math.hypot(q.x-P.x,q.z-P.z)<1.2&&playing()){q.got=true;q.m.visible=false;FLR.n++;if(au())try{tone({f:700,f2:1000,d:.2,v:.2})}catch(e){}say('🧨 Picked up a FLARE ('+FLR.n+'). '+(touch()?'Tap FLARE':'Press X')+' to throw it. The monster won\'t come near it.',5)}});
+  if(Math.hypot(q.x-P.x,q.z-P.z)<1.2&&playing()){q.got=true;q.m.visible=false;FLR.n++;if(au())try{tone({f:700,f2:1000,d:.2,v:.2})}catch(e){}say('🧨 Picked up a FLARE ('+FLR.n+'). '+(touch()?'Tap FLARE':'Press K')+' to throw it. The monster won\'t come near it.',5)}});
  var L=FLR.live;if(!L){flLight.intensity=0;return}
  L.t-=dt;
  // flight with a bounce, then it lies on the floor
