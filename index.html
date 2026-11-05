@@ -820,11 +820,11 @@ if(ed<-1){if(P.cards>=CF.k&&!P.won){if(SV.lv<9){nextLv(SV.lv+1);return}award(500
 else if(!P.hide&&lockers.some(l=>Math.hypot(l.position.x-P.x,l.position.z-P.z)<2.4)&&msgT<=0)say('[F] Hide',.1);
 if(P.hide&&msgT<=0)say('[F] Leave locker',.1);
 // hud
-$('s1').style.width=P.st+'%';$('s2').style.width=P.bat+'%';$('s3').style.width=P.san+'%';$('s4').style.width=P.imp+'%';rooms();sbRender();radar(dt);mapTick(dt);elTick();BAL.forEach(b=>{b.position.y+=Math.sin(P.t+b.userData.o)*.003;if(Math.hypot(b.position.x-P.x,b.position.z-P.z)>8)b.position.x+=Math.sin(P.t*.5+b.userData.o)*.01});const cold=Math.max(0,1-Math.hypot(M.x-P.x,M.z-P.z)/14);$('vig').style.boxShadow='inset 0 0 160px rgba(120,170,255,'+cold*.35+')';L.br-=dt;if(L.br<=0){L.br=2.4;$('br').style.opacity=cold>.1?cold*.5:0;setTimeout(()=>$('br').style.opacity=0,500)}L.sec-=dt;if(L.sec<=0&&P.imp>20){L.sec=22+R()*25;say(SEC[R()*SEC.length|0],4);glyph()}statTick(Math.min(.95,P.imp/130+(ghost.visible?.25:0)+(M.state=='chase'?.25:0)+(P.para>0?.5:0)));
+$('s1').style.width=P.st+'%';$('s2').style.width=P.bat+'%';$('s3').style.width=P.san+'%';$('s4').style.width=P.imp+'%';rooms();sbRender();radar(dt);mapTick(dt);elTick();BAL.forEach(b=>{b.position.y+=Math.sin(P.t+b.userData.o)*.003;if(Math.hypot(b.position.x-P.x,b.position.z-P.z)>8)b.position.x+=Math.sin(P.t*.5+b.userData.o)*.01});const cold=Math.max(0,1-Math.hypot(M.x-P.x,M.z-P.z)/14);$('vig').style.boxShadow='inset 0 0 160px rgba(120,170,255,'+cold*.35+')';L.br-=dt;if(L.br<=0){L.br=2.4;$('br').style.opacity=cold>.1?cold*.5:0;setTimeout(()=>$('br').style.opacity=0,500)}L.sec-=dt;if(L.sec<=0&&P.imp>20){L.sec=22+R()*25;say(SEC[R()*SEC.length|0],4);glyph()}statTick((window.NET&&NET.down&&NET.down())?0:Math.min(.95,P.imp/130+(ghost.visible?.25:0)+(M.state=='chase'?.25:0)+(P.para>0?.5:0)));
 $('inv').textContent=CF.kn.toUpperCase()+' '+P.cards+'/'+CF.k+'  '+(P.fl?'  [LIGHT ON]':'')+(P.scan?'  [SCANNER]':'');$('obj').textContent=CF.n;
 if(msgT>0){msgT-=dt;if(msgT<=0)$('msg').textContent=''}
 }
-else if(CUT){cutTick(dt)}else if(MENU){menuTick(dt)}else if(P.dead){$('rad').style.opacity=0;statTick(.85);cam.position.y+=(.3-cam.position.y)*.02;cam.rotation.x+=(.7-cam.rotation.x)*.01}
+else if(CUT){cutTick(dt)}else if(MENU){menuTick(dt)}else if(P.dead){$('rad').style.opacity=0;statTick((window.NET&&NET.down&&NET.down()&&NET.down().t>2.6)?0:.85);cam.position.y+=(.3-cam.position.y)*.02;cam.rotation.x+=(.7-cam.rotation.x)*.01}
 if(!CSON){if(window.PFX)PFX(scene,cam);else ren.render(scene,cam)}}
 {const p=$('ov').querySelector('p'),m=document.createElement('div');m.style.cssText='margin-top:14px;font:13px monospace';m.innerHTML='<div style="opacity:.7">DISCOVERED LEVELS (escape to reach deeper)</div>'+LV.map((l,i)=>i<=SV.max?'<span data-l="'+i+'" style="display:inline-block;margin:3px;padding:3px 8px;border:1px solid '+(i==SV.lv?'#e4d56a':'#665a20')+';color:'+(i==SV.lv?'#e4d56a':'#aa9a40')+'">'+i+' · '+l.n.split('— ')[1]+' · danger '+l.d+'/10</span>':'<span style="display:inline-block;margin:3px;padding:3px 8px;border:1px solid #222;color:#444">'+i+' · ??? · undiscovered</span>').join('');p.append(m);m.onclick=e=>{const l=e.target.dataset.l;if(l!==undefined){e.stopPropagation();SV.lv=+l;save();location.reload()}};p.insertAdjacentHTML('afterbegin','<b style="color:#f44">'+CF.n+'</b><br><br>')}
 {const b=document.createElement('div');b.textContent='[ COPY GAME LINK ]';b.style.cssText='margin-top:14px;cursor:pointer;font:13px monospace;color:#e4d56a';b.onclick=e=>{e.stopPropagation();const f=()=>b.textContent='Copy blocked here: copy the link from your address bar';try{navigator.clipboard.writeText('https://claude.ai/artifact/XJjLHQX32F1ioutiWuFZzm').then(()=>b.textContent='LINK COPIED',f)}catch(x){f()}};$('ov').querySelector('p').append(b)}
@@ -7233,10 +7233,10 @@ function takeLight(){makePool();var f=LPOOL.find(function(q){return !q.used});if
 function giveLight(sl){LPOOL.forEach(function(q){if(q.sl===sl){q.used=false;q.sl.intensity=0}})}
 if(ST&&ST.on)makePool();
 function dropPlayer(id){var p=NET.players[id];if(!p)return;try{if(p.model){scene.remove(p.model);p.model.traverse(function(m){if(m.geometry)m.geometry.dispose()})}if(p.light)giveLight(p.light)}catch(e){}delete NET.players[id]}
-function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),ic:d.ic?1:0,t:performance.now()};
+function applySt(p,d){var s={x:num(d.x,2000),z:num(d.z,2000),yaw:num(d.yaw,100),cr:d.cr?1:0,fl:d.fl?1:0,hd:d.hd?1:0,dead:d.dead?1:0,lv:d.lv|0,seed:d.seed|0,mic:d.mic?1:0,y:Math.max(0,Math.min(12,num(d.y,20))),ic:d.ic?1:0,pt:Math.max(-1.5,Math.min(1.5,num(d.pt,2))),t:performance.now()};
  p.dead=!!s.dead;p.a=p.b||s;p.b=s;p.last=s.t;p.st=s}
-function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,ic:d.ic,name:d.name,si:d.si,eq:d.eq}}
-function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0,y:+(P.y||0).toFixed(2),ic:inSafeCar()?1:0}}
+function slim(d){return {t:'st',id:d.id,x:d.x,z:d.z,yaw:d.yaw,cr:d.cr,fl:d.fl,hd:d.hd,dead:d.dead,lv:d.lv,seed:d.seed,mic:d.mic,y:d.y,ic:d.ic,pt:d.pt,name:d.name,si:d.si,eq:d.eq}}
+function myState(){return {t:'st',x:+P.x.toFixed(2),z:+P.z.toFixed(2),yaw:+P.yaw.toFixed(3),cr:(P.h||1.7)<1.35?1:0,fl:P.fl&&P.bat>0?1:0,hd:P.hide?1:0,dead:P.dead?1:0,lv:curLv(),seed:curSeed(),mic:VC.on?1:0,y:+(P.y||0).toFixed(2),ic:inSafeCar()?1:0,pt:+(P.pit||0).toFixed(2)}}
 function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!p.b)return;buildModel(p);var g=p.model;if(!g)return;
  var here=p.b.lv===curLv()&&p.b.seed===curSeed()&&inLevel(),stale=now-p.last>4000,show=here&&!stale&&!p.b.hd;g.visible=show;if(p.light)p.light.intensity=show&&p.b.fl&&!p.b.dead?1.4:0;if(!show)return;if(p.b.dead){ragPose(p,g,dt);return}unRag(p,g);
  var a=p.a||p.b,b=p.b,span=Math.max(30,b.t-a.t),k=Math.min(1.2,(now-100-a.t)/span);if(k<0)k=0;var x=a.x+(b.x-a.x)*k,z=a.z+(b.z-a.z)*k,dy=Math.atan2(Math.sin(b.yaw-a.yaw),Math.cos(b.yaw-a.yaw)),yaw=a.yaw+dy*Math.min(1,k);
@@ -7473,12 +7473,11 @@ function specCam(c){var t=DOWN.t;
   c.position.set(DOWN.x,1.7-1.42*e+bn,DOWN.z);c.rotation.set(DOWN.pit+(1.05-DOWN.pit)*e,DOWN.yaw+.35*e*DOWN.side,1.2*e*DOWN.side+Math.sin(t*3)*.02);SPC.snap=1;return}
  var p=watchTarget();
  if(!p){c.position.set(DOWN.x+.01,2.7,DOWN.z+.01);c.rotation.set(-PI/2+.05,DOWN.yaw,0);return}
- var m=p.model,x=m.position.x,z=m.position.z,yaw=m.rotation.y-PI,bx=Math.sin(yaw),bz=Math.cos(yaw),dist=.6;
- for(var d=.6;d<=2.8;d+=.2){if(blocked(x+bx*d,z+bz*d,.22))break;dist=d}
- var tx=x+bx*dist,tz=z+bz*dist,ty=1.75+dist*.12;
- if(SPC.snap||SPC.x==null){SPC.x=tx;SPC.y=ty;SPC.z=tz;SPC.snap=0}else{var f=Math.min(1,(SPC.dt||.016)*6);SPC.x+=(tx-SPC.x)*f;SPC.y+=(ty-SPC.y)*f;SPC.z+=(tz-SPC.z)*f}
- c.position.set(SPC.x,SPC.y,SPC.z);c.lookAt(x,1.35,z)}
-var oPFXc=window.PFX;window.PFX=function(s,c){try{if(DOWN&&NET.on&&inLevel())specCam(c)}catch(e){}if(oPFXc)oPFXc(s,c);else ren.render(s,c)};
+ // see exactly what they see: from their eyes, looking where they look (their own body is hidden for this frame)
+ var m=p.model,b=p.b,x=m.position.x,z=m.position.z,ey=(b.cr?1.05:1.62)+(b.y||0),yaw=m.rotation.y-PI,pt=b.pt||0;
+ if(SPC.snap||SPC.yaw==null){SPC.yaw=yaw;SPC.pt=pt;SPC.ey=ey;SPC.snap=0}else{var f=Math.min(1,(SPC.dt||.016)*14);SPC.yaw+=Math.atan2(Math.sin(yaw-SPC.yaw),Math.cos(yaw-SPC.yaw))*f;SPC.pt+=(pt-SPC.pt)*f;SPC.ey+=(ey-SPC.ey)*f}
+ c.rotation.order='YXZ';c.position.set(x,SPC.ey,z);c.rotation.set(SPC.pt,SPC.yaw,0);SPC.hide=m;m.visible=false;if(p.tag)p.tag.visible=false}
+var oPFXc=window.PFX;window.PFX=function(s,c){SPC.hide=null;try{if(DOWN&&NET.on&&inLevel())specCam(c)}catch(e){}try{if(oPFXc)oPFXc(s,c);else ren.render(s,c)}finally{if(SPC.hide){SPC.hide.visible=true;SPC.hide=null}}};
 var SPEC=document.createElement('div');SPEC.id='mpspec';SPEC.style.cssText='position:fixed;left:50%;top:15%;transform:translateX(-50%);z-index:8;pointer-events:none;font:bold 16px monospace;color:#cfe6ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.5;max-width:80vw';document.body.appendChild(SPEC);
 addEventListener('pointerdown',function(e){if(!DOWN||DOWN.t<2.6)return;var t=e.target;if(t&&t.closest&&t.closest('#mpbox,#pm,.pn,#mp,button,a,input'))return;specNext()},true);
 addEventListener('keydown',function(e){if(!DOWN||DOWN.t<2.6)return;if(e.code=='Space'||e.code=='ArrowRight'||e.code=='KeyE'){e.preventDefault();specNext()}},true);
@@ -7532,6 +7531,9 @@ if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.ap
 // ---- every frame
 function coopTick(dt){
  if(inLevel()){buildScrolls();var tm=performance.now()/1000;SCR.forEach(function(q){if(q.got)return;q.m.rotation.y=tm*1.3+q.ph;q.m.position.y=.95+Math.sin(tm*2+q.ph)*.07;if(!P.dead&&!DOWN&&!waiting()&&Math.hypot(q.x-P.x,q.z-P.z)<1.3)grabScroll(q)})}
+ // lockers: the first time you hide in each one there is a 50% chance a Revival Scroll is tucked inside
+ if(inLevel()&&P.hide&&P.hide!==coopTick.lk){coopTick.lk=P.hide;var L0=P.hide,ud=L0.userData||(L0.userData={});if(!ud.scrChk){ud.scrChk=1;if(Math.random()<.5){ST.scrolls=(ST.scrolls|0)+1;saveST();chime(false);say('📜 There is a REVIVAL SCROLL tucked in this locker! ('+ST.scrolls+')',4)}}}
+ if(!P.hide)coopTick.lk=null;
  // trails and death marks
  trailT-=dt;Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!coopHere(p))return;var b=p.b,tr=TRAIL[id];
   if(!tr||tr.lv!==b.lv||tr.seed!==b.seed)tr=TRAIL[id]={lv:b.lv,seed:b.seed,pts:[]};

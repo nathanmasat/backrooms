@@ -1,5 +1,10 @@
 # Changelog
 
+## Co-op: see what your teammate sees + scrolls in lockers
+- **Spectating is now first-person:** while you're down you see exactly what your teammate sees, from their eyes, looking where they look (left/right and up/down) and lit by their flashlight. Their own body is hidden so it doesn't block the view. Click / tap to switch teammates.
+- The heavy static on the screen is gone while you spectate, so you can actually watch.
+- **Revival Scrolls in lockers:** in co-op, the first time you hide in each locker there's a **50% chance a Revival Scroll is tucked inside**. Each locker can only give you one roll. The 2 scrolls lying around each level are still there too.
+
 ## Co-op: nobody leaves until the team gives up
 - In co-op you **always go down and spectate** when you're caught, even if you were the last one standing. You watch your teammates (click / tap to switch) until someone revives you with a 📜 Revival Scroll.
 - **The run no longer ends by itself** when everyone is down. It only ends when **every player votes 🏳 GIVE UP**: press **G** or use the GIVE UP button (top right). The button shows the votes, for example 1/3. Players who are still standing see the button as soon as someone votes, and must agree too.
