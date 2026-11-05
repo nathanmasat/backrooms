@@ -7576,6 +7576,7 @@ var T=THREE,PI=Math.PI,LV0=SV.lv|0,HU=window.HU||{};
 function rng(a){return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function lam(c,em){return new T.MeshLambertMaterial({color:c,emissive:em||0})}
 function box(w,h,d,mat,x,y,z,par){var m=new T.Mesh(new T.BoxGeometry(w,h,d),mat);m.position.set(x,y,z);(par||scene).add(m);return m}
+function KN(){try{return String(CF.kn||'keycards').replace(/^the /,'')}catch(e){return 'keycards'}}
 function touch(){return document.body.classList.contains('touch')}
 function tnS(f,f2,d,v){try{if(typeof AC!='undefined'&&AC&&!(typeof muted!='undefined'&&muted))tone({f:f,f2:f2,d:d,v:v})}catch(e){}}
 function playing(){return typeof started!='undefined'&&started&&!P.dead&&!(typeof MENU!='undefined'&&MENU)}
@@ -7654,7 +7655,7 @@ function build(){
  // a sign over the room
  var tall=type=='parkour'||type=='combo';var lamp=new T.PointLight(tall?0xbfd8ff:type=='maze'?0xb8ffc8:0xffe0a8,tall?1.3:1.0,tall?20:14,1.6);lamp.position.set(X0,tall?7.6:2.9,Z0);scene.add(lamp);C.lamp=lamp;
  if(type=='combo'){buildParkour(C,true);buildPuzzle(C,{y:C.FL,ped:[9.6,11.0],lampV:11.85,btnV:10.2,u0:1.5,du:1.2,noSign:true});
-  sign(C,'TAPE CHALLENGE · PARKOUR + PUZZLE','Jump up the crates to the second floor ('+(touch()?'JUMP button':'SPACE')+'). Then light all five lamps up there to open the glass case. Each button flips its own lamp and the ones next to it.')}
+  sign(C,'TAPE CHALLENGE · PARKOUR + PUZZLE','The tape AND the '+KN()+' you need to escape are in the glass case on the second floor. Jump up the crates ('+(touch()?'JUMP button':'SPACE')+'), then light all five lamps up there to open it. Each button flips its own lamp and the ones next to it.')}
  else if(type=='parkour')buildParkour(C);else if(type=='maze')buildMaze(C);else buildPuzzle(C);
  C.tick=function(dt){tickChallenge(C,dt)};C.plat=PLAT;
  return C}
@@ -7723,9 +7724,9 @@ function buildMaze(C){var N=4,cs=2.3,off=(C.SZ-N*cs)/2,r=C.r,wallH=2.5,th=.24;
 
 // ---------------------------------------------------------------- PUZZLE: light all five lamps to open the glass case
 function buildPuzzle(C,o){o=o||{};var r=C.r,N=5,ry=rotY(C),yb=o.y||0,pd=o.ped||[6,8.2],lv=o.lampV==null?6.6:o.lampV,bv=o.btnV==null?5.4:o.btnV,u0=o.u0==null?3:o.u0,du=o.du||1.5;C.puzY=yb;
- var ped=W2(C,pd[0],pd[1]);box(.9,.9,.9,lam(0x3a3632,0x080706),ped.x,yb+.45,ped.z).rotation.y=ry;FURN.push({x:ped.x,z:ped.z,r:.55,plat:1});
- var glass=new T.Mesh(new T.BoxGeometry(.7,.6,.7),new T.MeshLambertMaterial({color:0xa8e4ff,transparent:true,opacity:.28,emissive:0x0a2030}));glass.position.set(ped.x,yb+1.2,ped.z);scene.add(glass);C.glass=glass;C.gTop=yb+2.4;
- var frame=box(.74,.04,.74,lam(0xc9a040,0x2a1c04),ped.x,yb+1.52,ped.z);C.gframe=frame;
+ var ped=W2(C,pd[0],pd[1]);box(1.1,.9,1.1,lam(0x3a3632,0x080706),ped.x,yb+.45,ped.z).rotation.y=ry;FURN.push({x:ped.x,z:ped.z,r:.65,plat:1});
+ var glass=new T.Mesh(new T.BoxGeometry(1.0,.6,1.0),new T.MeshLambertMaterial({color:0xa8e4ff,transparent:true,opacity:.28,emissive:0x0a2030}));glass.position.set(ped.x,yb+1.2,ped.z);scene.add(glass);C.glass=glass;C.gTop=yb+2.4;
+ var frame=box(1.04,.04,1.04,lam(0xc9a040,0x2a1c04),ped.x,yb+1.52,ped.z);C.gframe=frame;
  C.spot={x:ped.x,y:yb+.98,z:ped.z};
  // lamps on a beam above, buttons on posts in front
  C.lit=[];C.lampM=[];C.btn=[];for(var i=0;i<N;i++)C.lit.push(1);
@@ -7762,6 +7763,18 @@ function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0
   var up=P.y>(C.FL||0)-.4,unlocked=C.type=='combo'?(up&&C.solved):C.type=='parkour'?up:C.type=='puzzle'?C.solved:true;
   // locked: the tape is moved out of reach of the pickup check (it stays on screen where it is)
   C.locked=!unlocked;if(unlocked){tp.x=C.home.x;tp.z=C.home.z}else{tp.x=C.home.x+1e4;tp.z=C.home.z+1e4}}
+ // the things you need to escape (keycards etc.) go in the case too: the challenge is the ONLY way to get them
+ var up2=P.y>(C.FL||0)-.4,unl=C.type=='combo'?(up2&&C.solved):C.type=='parkour'?up2:C.type=='puzzle'?C.solved:true;
+ if(C.spot&&typeof items!='undefined'){
+  items.forEach(function(it){if(it.type!='card'||it.got||it._chOut)return;
+   if(!it._ch){var k=(C.cards=C.cards||[]).length;it._ch={k:k};C.cards.push(it)}
+   else if(it._ch.hx!=null&&Math.hypot(it.x-it._ch.hx,it.z-it._ch.hz)>.05){it._chOut=1;it.cd=0;return}   // something else moved it (admin fix): let it go
+  });
+  var cs=(C.cards||[]).filter(function(it){return !it.got&&!it._chOut}),n=Math.max(1,C.cards?C.cards.length:1);
+  cs.forEach(function(it){if(it._ch.hx==null){var a=it._ch.k*2*PI/n+PI/4;it._ch.hx=C.spot.x+Math.cos(a)*.3;it._ch.hz=C.spot.z+Math.sin(a)*.3;
+     it.x=it._ch.hx;it.z=it._ch.hz;it.m.position.set(it.x,C.spot.y-.06,it.z)}
+   it.cd=unl?0:Infinity});   // locked: the pickup check skips it (it stays visible in the case, and the compass / map point at it)
+  C.cardsLocked=!unl}
  // the glass case lifts away once the puzzle is solved
  if((C.type=='puzzle'||C.type=='combo')&&C.solved&&C.glass.position.y<C.gTop){C.glass.position.y+=dt*.8;C.gframe.position.y+=dt*.8}
  if(!playing()){TP.style.display='none';return}
@@ -7770,8 +7783,8 @@ function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0
  near=null;var h='';
  var atPuz=Math.abs(P.y-(C.puzY||0))<.6;
  if((C.type=='puzzle'||C.type=='combo')&&!C.solved&&atPuz){var bd=1.15;C.btn.forEach(function(b){var d=Math.hypot(b.x-P.x,b.z-P.z);if(d<bd){bd=d;near=b}});if(near)h='🧩 '+(touch()?'Tap <span style="color:#ffe07a">GRAB</span>':'Press <span style="color:#ffe07a">E</span>')+' to press button '+(near.i+1)+' <span style="opacity:.7">(light all five lamps)</span>';
-  else if(tp&&Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<1.6)h='🔒 The case is locked. Light all five lamps to open it.'}
- if((C.type=='parkour'||C.type=='combo')&&tp&&tp.g.visible!==false&&inRoom&&P.y<.5&&(C.type=='combo'||Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<4)&&!h)h='⬆ The tape is up on the second floor. '+(touch()?'Tap JUMP':'Press SPACE')+' to jump up the crates.';
+  else if(tp&&Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<1.6)h='🔒 The case is locked. Light all five lamps to get the tape and the '+KN()+'.'}
+ if((C.type=='parkour'||C.type=='combo')&&tp&&tp.g.visible!==false&&inRoom&&P.y<.5&&(C.type=='combo'||Math.hypot(C.spot.x-P.x,C.spot.z-P.z)<4)&&!h)h='⬆ The tape and the '+KN()+' are up on the second floor. '+(touch()?'Tap JUMP':'Press SPACE')+' to jump up the crates.';
  if(h){TP.innerHTML=h;TP.style.display='block'}else TP.style.display='none'}
 
 // ---------------------------------------------------------------- phone: a JUMP button
@@ -7781,6 +7794,7 @@ function jumpBtn(){try{var acts=document.getElementById('tc-acts');if(acts&&!doc
  var st=document.createElement('style');st.textContent='#b-J{right:154px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}}catch(e){}}
 jumpBtn();addEventListener('DOMContentLoaded',jumpBtn);addEventListener('load',jumpBtn);
 })();
+
 </script>
 <!-- ===== SMOOTH: shaders prepared up front so nothing stutters the first time it appears ===== -->
 <script>

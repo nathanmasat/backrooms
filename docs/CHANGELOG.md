@@ -1,5 +1,12 @@
 # Changelog
 
+## The tape challenge is the only way out
+- On Levels 0-9, the things you need to escape (keycards, pump valves, party favors, and so on) are no longer spread around the maze. They're **locked in the glass case on the second floor of the tape challenge room**, together with the VHS tape.
+- To escape you have to do the parkour up to the second floor **and** light all five lamps. Then you can take the keycards and the tape. You can't pick them up from below or through the glass.
+- The compass, the map and the "nearest" arrow point at the case, and the room's sign and hints say the keycards are in there.
+- The case is a little bigger so everything fits. The extra keycard on Nightmare / Don't Look Back goes in the case too. In co-op, keycards are still shared: when one player opens the case and grabs them, everyone has them.
+- Admin "reset item" still works: an item it moves is let out of the case.
+
 ## Godot version started (folder godot/)
 - New **godot/** folder: the game rebuilt in **Godot 4.7.2** (the same build as Nathan's Steam copy). Open it with Godot → Import → godot/project.godot → F5.
 - **Level 0 uses the same maze as the browser game:** the browser's random numbers and Chrome 141's sorting are copied exactly, and a test checks 8 reference mazes cell by cell (all match).
