@@ -1,5 +1,10 @@
 # Changelog
 
+## New hazmat suit model + the white suit
+- **New player model** (co-op teammates, the rag doll, the phone camera, selfies): a baggy hazmat suit with soft wrinkled fabric, a loose hood around a black gas mask with two round eye lenses and three filter canisters, a big biohazard symbol on the chest and back, a black belt with a suit-coloured buckle and a pouch, black gloves and tall black rubber boots. The old reflective stripes and air tank are gone.
+- **White by default:** until you wear a suit from a closet or the shop, your suit is plain white. Every coloured suit uses the same new model in its colour.
+- **Opening cutscene:** after you walk away from the car, you look down and **find a folded white hazmat suit with a gas mask**, pick it up and put it on (3.5 seconds, the screen goes dark while you dress). The ghost scene that follows is unchanged.
+
 ## You have to find the stun gun
 - The stun gun is now hidden in a **supply cabinet on every level**, at a random spot far from the start (at least 45 m away when there's room), with no compass arrow. You start each level without it, and your loaded and spare ammo carry over.
 - When you see the cabinet, a message says the stun gun might be inside. Walk up to it and press E (GRAB on a phone).
