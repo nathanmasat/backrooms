@@ -1376,7 +1376,7 @@ LM.stp-=dt;if(LM.stp<=0&&LM.path.length&&!watched&&SV.lv!=9){LM.stp=LM.st=='hunt
 for(let i=FKS.length-1;i>=0;i--){const f=FKS[i],dd=Math.hypot(P.x-f.x,P.z-f.z);if(!f.sign)f.g.rotation.y=Math.atan2(P.x-f.x,P.z-f.z);const lit=P.fl&&P.bat>0&&dd<12&&(fx*(f.x-P.x)+fz*(f.z-P.z))/Math.max(dd,.1)>.8;if((lit&&SV.lv!=9)||dd<(SV.lv==9?2.5:1.6)||dd>40){if(dd<40)say(f.sign?'A false exit sign...':'It was an illusion.',2);scene.remove(f.g);FKS.splice(i,1)}}}
 const ENEMY={stun:{0:10,3:10,4:10,5:10,6:10,7:10,8:10,9:10,10:10,11:10,12:10,13:10,14:10,15:10,16:10,17:10,18:10,19:10,party:10,water:10,grin:10},resist:{9:.4},imm:3};   // a stun hit freezes any monster for 10 seconds
 const GUN=Object.assign({o:0,l:0,r:0},SV.g||{});Object.assign(GUN,{eq:0,t:0,cd:0,rl:0,mg:4});
-function gsave(){SV.g={o:GUN.o,l:GUN.l,r:GUN.r};save()}
+function gsave(){SV.g={o:GUN.o,l:GUN.l,r:GUN.r,lv:SV.lv,sd:typeof SEED!='undefined'?SEED:0};save()}
 const gunG=new THREE.Group(),gm=c=>new THREE.MeshLambertMaterial({color:c}),gl=new THREE.PointLight(0x66ccff,0,8);let gunInd,gunArc;
 {// the stun gun: a sleek two-tone match-pistol shape (black slide, gunmetal frame, textured grip) with glowing coil windows and electrode prongs
  const em=(c,e)=>new THREE.MeshLambertMaterial({color:c,emissive:e}),G=gunG,blk=em(0x1b1c1f,0x0b0b0d),slideM=em(0x26272b,0x101114),frm=em(0x8a8d93,0x2c2e32),dark=em(0x0c0c0e,0x030303),silver=em(0xc4c7cc,0x3a3c40),
@@ -1408,15 +1408,24 @@ const gunG=new THREE.Group(),gm=c=>new THREE.MeshLambertMaterial({color:c}),gl=n
 const SP2=[];for(let i=0;i<30;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.05),new THREE.MeshBasicMaterial({color:i%2?0x66ccff:0xffffaa,fog:false}));m.visible=false;m.userData={l:0};scene.add(m);SP2.push(m)}
 function sparkAt(x,y,z,n){let c=0;SP2.forEach(m=>{if(c<n&&m.userData.l<=0){c++;const u=m.userData;u.l=.35+R()*.3;u.vx=(R()-.5)*5;u.vy=1+R()*3;u.vz=(R()-.5)*5;m.position.set(x,y,z);m.visible=true}})}
 function sparkTick(dt){SP2.forEach(m=>{const u=m.userData;if(u.l<=0)return;u.l-=dt;u.vy-=8*dt;m.position.x+=u.vx*dt;m.position.y+=u.vy*dt;m.position.z+=u.vz*dt;if(u.l<=0)m.visible=false})}
-const CAB=SV.lv==0?{x:7,z:17.5,done:!!GUN.o}:null;
-if(CAB){const G=mkCloset();G.position.set(CAB.x,0,CAB.z);G.rotation.y=Math.atan2(12-CAB.x,12-CAB.z);scene.add(G);FURN.push({x:CAB.x,z:CAB.z,r:.6})}
+// the stun gun is hidden in a supply cabinet somewhere on EVERY level (far from the start, no arrow): you start each level without it, your ammo carries over
+if(!(SV.g&&SV.g.lv===SV.lv&&SV.g.sd===SEED))GUN.o=0;
+const CAB=(function(){let a=(SEED*31+SV.lv*977+12345)|0;const rr=()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+ const sx=cc(1),sz=cc(1);let best=null;
+ for(let t=0;t<600;t++){const c=open[rr()*open.length|0];if(!c)continue;const x0=cc(c[0]),z0=cc(c[1]);if(Math.hypot(x0-sx,z0-sz)<(t<400?45:25))continue;
+  if(c[0]<=0||c[1]<=0||c[0]>=W-1||c[1]>=W-1)continue;const d=wdir(c[0],c[1]);if(!d&&t<450)continue;const dd=d||[0,1];
+  const x=x0+dd[0]*(S/2-.55),z=z0+dd[1]*(S/2-.55);if(FURN.some(f=>Math.hypot(f.x-x,f.z-z)<1.6))continue;best={x:x,z:z,fx:x0,fz:z0};break}
+ if(!best)best={x:7,z:17.5,fx:12,fz:12};
+ return {x:best.x,z:best.z,fx:best.fx,fz:best.fz,done:!!GUN.o,seen:false}})();
+if(SV.g&&SV.g.o&&!GUN.o)setTimeout(()=>{try{say('Your stun gun is gone. Somewhere on this level there is a supply cabinet with another one. Find it.',7)}catch(e){}},9000);
+if(CAB){const G=mkCloset();G.position.set(CAB.x,0,CAB.z);G.rotation.y=Math.atan2(CAB.fx-CAB.x,CAB.fz-CAB.z);scene.add(G);CAB.m=G;FURN.push({x:CAB.x,z:CAB.z,r:.6})}
 const AMMO=[];for(let k=0;k<4;k++){let c,t=0;do{c=open[R()*open.length|0];t++}while((c[0]==0||Math.abs(c[0]-1)+Math.abs(c[1]-1)<5||!wdir(c[0],c[1])||(k==3&&Math.abs(c[0]-ce(M.x))+Math.abs(c[1]-ce(M.z))>8))&&t<400);
 const d=wdir(c[0],c[1])||[0,1],x=cc(c[0])+d[0]*(S/2-.7),z=cc(c[1])+d[1]*(S/2-.7),G=new THREE.Group();bx(G,.6,.5,.6,0,.25,0,0x55585c);bx(G,.26,.12,.18,0,.56,0,0x8a7a50);bx(G,.2,.02,.12,0,.63,0,0x3a3020);G.position.set(x,0,z);G.rotation.y=R()*3;scene.add(G);FURN.push({x,z,r:.5});AMMO.push({x,z,m:G,got:false})}
 function targets(){const t=[];if(CF.tile){if(WM.on)t.push({x:WM.x,z:WM.z,g:wmon,o:WM,d:ENEMY.stun.water,k:'w'})}else if(CF.bal)PG.forEach(p=>t.push({x:p.x,z:p.z,g:p.g,o:p,d:ENEMY.stun.party,k:'p'}));else if(lm)t.push({x:M.x,z:M.z,g:lm,o:LM,d:ENEMY.stun[SV.lv],k:'l'});else t.push({x:M.x,z:M.z,g:mon,o:M,d:ENEMY.stun[0],k:'b'});if(GR.on)t.push({x:GR.x,z:GR.z,g:grin,o:GR,d:ENEMY.stun.grin,k:'g'});return t}
 function recoverLM(){LM.st='search';LM.srch=6;LM.tx=ce(P.x);LM.tz=ce(P.z);lmGo(LM.tx,LM.tz);lm.visible=true;const k=SV.lv;if(k==3||k==4||k==8)LM.buff=8;if(k==5||k==7)tele();if(k==6){LM.st='idle';orbit()}if(k==8)L.fk=1.2;if(k==9)jam()}
 function ePress(){if(P.hide||P.sit||P.vt>0||P.para>0)return false;
 const am=AMMO.find(a=>!a.got&&Math.hypot(P.x-a.x,P.z-a.z)<1.9);if(am){am.got=true;am.m.visible=false;GUN.r+=3;gsave();if(AC){burst({f:1200,q:3,d:.15,v:.5});tone({f:600,f2:900,d:.15,v:.3})}say('+3 stun cartridges (reserve '+GUN.r+')',3);return true}
-if(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2){CAB.done=true;GUN.o=1;GUN.l=Math.max(GUN.l,2);gsave();say('You found a worn-out stun gun (2 loaded). Press E to equip it.',7);return true}
+if(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2){CAB.done=true;GUN.o=1;GUN.l=Math.max(GUN.l,2);gsave();say('You found the stun gun ('+GUN.l+' loaded). Press E to equip it. A hit freezes a monster for 10 seconds.',7);return true}
 if(GUN.o){GUN.eq=GUN.eq?0:1;if(AC){burst({f:800,q:4,d:.1,v:.5});tone({f:200,d:.08,v:.3})}return true}return false}
 function reload(){if(!GUN.o||GUN.rl>0||GUN.l>=GUN.mg||GUN.r<=0)return;GUN.rl=1.2;say('Reloading...',1.2);if(AC)burst({f:600,q:3,d:.2,v:.5})}
 function fire(){if(!GUN.o||!GUN.eq||GUN.cd>0||GUN.rl>0||!started||P.hide||P.sit)return;
@@ -1435,8 +1444,9 @@ sparkAt(best.x,1.4,best.z,10);if(AC){const pn=P3(best.x,best.z,1.4,false);burst(
 function mkTag(){const c=document.createElement('canvas');c.width=128;c.height=32;const x=c.getContext('2d');x.fillStyle='#ff0';x.font='bold 22px monospace';x.fillText('STUNNED',4,24);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(1.6,.4,1);s.position.y=3.2;return s}
 function gunTick(){const dt=.0167;if(P.hide)P.pit=Math.max(-.2,Math.min(.2,P.pit));GUN.cd-=dt;if(GUN.rl>0){GUN.rl-=dt;if(GUN.rl<=0){const n=Math.min(GUN.mg-GUN.l,GUN.r);GUN.l+=n;GUN.r-=n;gsave();if(AC)burst({f:900,q:3,d:.15,v:.5})}}
 GUN.t+=((GUN.eq?1:0)-GUN.t)*.15;gunG.visible=!!GUN.o&&GUN.t>.02;gunG.position.set(.21,-.12-(1-GUN.t)*.5+(GUN.cd>.6?.02:0),-.5+(GUN.cd>.65?.05:0));gl.intensity=Math.max(0,gl.intensity-.5);
-$('xh').style.display=GUN.eq&&started&&GUN.o?'block':'none';const h=$('gun');h.style.display=GUN.o?'block':'none';h.textContent='\ud83d\udd2b STUN GUN: '+GUN.l+' / '+GUN.r+(GUN.rl>0?'  [RELOADING]':GUN.l==0?'  [EMPTY]':'')+(GUN.eq?'  [EQUIPPED]':'');gunInd.material.color.set(GUN.l>0?0x33ff66:0xff3322);if(gunArc){gunArc.visible=GUN.cd>.55||(GUN.eq&&GUN.l>0&&GUN.rl<=0&&Math.random()<.06);gunArc.scale.set(.7+Math.random()*.5,1+Math.random()*2,1);gunArc.position.y=.045+(Math.random()-.5)*.006}
+$('xh').style.display=GUN.eq&&started&&GUN.o?'block':'none';const h=$('gun');h.style.display=GUN.o?'block':'none';if(GUN.o&&(GUN.n|0)%10==0){try{const hr=$('hud').getBoundingClientRect();if(hr.height)h.style.bottom=Math.round(innerHeight-hr.top+6)+'px'}catch(e){}}h.textContent='\ud83d\udd2b STUN GUN: '+GUN.l+' / '+GUN.r+(GUN.rl>0?'  [RELOADING]':GUN.l==0?'  [EMPTY]':'')+(GUN.eq?'  [EQUIPPED]':'');gunInd.material.color.set(GUN.l>0?0x33ff66:0xff3322);if(gunArc){gunArc.visible=GUN.cd>.55||(GUN.eq&&GUN.l>0&&GUN.rl<=0&&Math.random()<.06);gunArc.scale.set(.7+Math.random()*.5,1+Math.random()*2,1);gunArc.position.y=.045+(Math.random()-.5)*.006}
 if(msgT<=0){if(AMMO.some(a=>!a.got&&Math.hypot(P.x-a.x,P.z-a.z)<1.9))say('PRESS E TO COLLECT STUN AMMO',.1);else if(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2)say('PRESS E TO OPEN THE SUPPLY CABINET',.1)}
+if(CAB&&!CAB.done&&!CAB.seen&&GUN.n%15==0&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<9&&los(P.x,P.z,CAB.x,CAB.z)){CAB.seen=true;say('A supply cabinet. The stun gun might be inside.',4)}
 targets().forEach(t=>{const o=t.o;if(o.stun>0){if(R()<.3)sparkAt(t.g.position.x+(R()-.5),1+R()*1.5,t.g.position.z+(R()-.5),2);if(!t.g.userData.tag){t.g.userData.tag=mkTag();t.g.add(t.g.userData.tag)}t.g.userData.tag.visible=true}else if(t.g.userData.tag)t.g.userData.tag.visible=false});sparkTick(dt);GUN.n=(GUN.n||0)+1;if(GUN.n%10==0)monSeen();phG.visible=false}
 addEventListener('mousedown',e=>{if(e.button==0&&started&&document.pointerLockElement)fire()});
 let CASH={bal:0,tx:[]},SHO=[],EQC={},NOTE='',MOND=[],PHT=[];

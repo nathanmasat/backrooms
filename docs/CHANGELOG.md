@@ -1,5 +1,12 @@
 # Changelog
 
+## You have to find the stun gun
+- The stun gun is now hidden in a **supply cabinet on every level**, at a random spot far from the start (at least 45 m away when there's room), with no compass arrow. You start each level without it, and your loaded and spare ammo carry over.
+- When you see the cabinet, a message says the stun gun might be inside. Walk up to it and press E (GRAB on a phone).
+- If you continue a saved spot on the same run, you keep the gun you already found. A new run or a new level means finding it again.
+- In co-op, every player finds their own gun. The cabinet is in the same place for everyone.
+- The "STUN GUN" text now always sits just above the stats panel.
+
 ## New stun gun + 10-second stun
 - **New stun gun model:** a sleek two-tone match-pistol shape with a black slide (grip serrations and glowing blue coil windows), a gunmetal frame with a rail, an orange front sight, a skeleton trigger, a textured raked grip with a flared magwell, and two electrode prongs at the front with a blue spark between them. The spark flashes when you fire, and the ammo light (green / red) is now on the back of the slide where you can see it.
 - **A stun hit freezes any monster for 10 seconds** (it was 0.8-5 seconds depending on the level). After that the monster can't be stunned again for 3 seconds. The Null on Level 9 still shrugs off some shots.
