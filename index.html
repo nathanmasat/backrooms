@@ -75,7 +75,7 @@ canvas{display:block;width:100%;height:100%}
 <div id="hud">STAMINA<div class="b"><i id="s1" style="background:#cc9"></i></div>BATTERY<div class="b"><i id="s2" style="background:#8c8"></i></div>SANITY<div class="b"><i id="s3" style="background:#a6c"></i></div>IMPRINT<div class="b"><i id="s4" style="background:#9ab"></i></div><span id="inv"></span></div>
 <div id="obj"></div><div id="msg"></div>
 <div id='mm'><div id='bal' style='position:absolute;top:14px;right:16px;font:14px monospace;color:#9f9'></div><h1 id='tt'>THE BACKROOMS<br><small>DON'T LOOK BACK</small></h1><div id='hi'></div><div id='mb'><div class='bt pl' id='b-play'>PLAY</div><div class='bt' id='b-mp'>MULTIPLAYER</div><div class='bt' id='b-ch'>CHARACTER</div><div class='bt' id='b-lb'>LEADERBOARD</div><div class='bt' id='b-vo'>VOICE EFFECTS: OFF</div><div class='bt' id='b-ph'>PHONE</div><div class='bt' id='b-st'>STATS &amp; LEVELS</div><div class='bt' id='b-how'>HOW TO PLAY</div><div class='bt' id='b-cr'>CREDITS</div></div><div id='mute'>&#128266;</div></div>
-<div id='pm'><h1 id='tt2' style='color:#e4d56a'>PAUSED</h1><div class='bt pl' id='p-res'>RESUME</div><div class='bt' id='p-save'>SAVE SPOT</div><div class='bt' id='p-menu'>MAIN MENU</div></div><canvas id='map' width='164' height='164' style='position:fixed;left:16px;top:16px;opacity:.85;pointer-events:none;background:#0008;border:1px solid #6a5c20;display:none'></canvas><div id='nz' style='position:fixed;top:14px;left:50%;transform:translateX(-50%);font:16px monospace;color:#9cf;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='mic' style='position:fixed;top:44px;right:16px;font:12px monospace;color:#f66;display:none;pointer-events:none'>● MIC ON — press V to turn off</div><div id='gun' style='position:fixed;left:16px;bottom:150px;font:13px monospace;color:#9fe;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='xh' style='position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px;border:1px solid #9fe;border-radius:50%;display:none;pointer-events:none'></div><div id='hz'></div><div id='mp'></div>
+<div id='pm'><h1 id='tt2' style='color:#e4d56a'>PAUSED</h1><div class='bt pl' id='p-res'>RESUME</div><div class='bt' id='p-save'>SAVE SPOT</div><div class='bt' id='p-menu'>MAIN MENU</div></div><canvas id='map' width='164' height='164' style='position:fixed;left:16px;top:16px;opacity:.85;pointer-events:none;background:#0008;border:1px solid #6a5c20;display:none'></canvas><div id='nz' style='position:fixed;top:14px;left:50%;transform:translateX(-50%);font:16px monospace;color:#9cf;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='mic' style='position:fixed;top:44px;right:16px;font:12px monospace;color:#f66;display:none;pointer-events:none'>● MIC ON — press V to turn off</div><div id='gun' style='position:fixed;left:16px;bottom:176px;font:13px monospace;color:#9fe;display:none;pointer-events:none;text-shadow:0 0 6px #000'></div><div id='xh' style='position:fixed;left:50%;top:50%;width:10px;height:10px;margin:-5px;border:1px solid #9fe;border-radius:50%;display:none;pointer-events:none'></div><div id='hz'></div><div id='mp'></div>
 <div id="ov"><h1>THE BACKROOMS</h1><h1 style="font-size:.5em;margin-top:-6px">DON'T LOOK BACK</h1>
 <p>You wake up on damp carpet. The lights hum. You are not alone.<br><br><b>THE BOILED ONE</b> manifests through television static. It speaks a forbidden language that imprints on the mind. Once you have heard it, it appears at the edge of your sight, and your body begins to fail you. Don't look. Don't listen. Don't let it reach you.<br><br>Collect the required items, then reach the red EXIT door. You have no weapons.<br><br>
 <span id="ov-keys">WASD move · MOUSE look · SHIFT sprint · C crouch · Z/X lean · Q scanner · TAB scores · T flashlight · F hide in lockers / interact</span><br><br>Headphones strongly recommended.<br><br><b>[ CLICK TO BEGIN ]</b></p></div>
@@ -1374,11 +1374,37 @@ if(U.wl)U.wl.intensity=LM.warn>0?(Math.sin(P.t*20)>0?3:0):0;ldv.style.opacity=LM
 if(LM.shake>0){const sk=SET.rs?.2:1;cam.position.x+=(R()-.5)*.1*sk;cam.position.y+=(R()-.5)*.1*sk;if(R()<.1&&AC)burst({f:1800,q:3,d:.3,v:.5,out:A.mp})}
 LM.stp-=dt;if(LM.stp<=0&&LM.path.length&&!watched&&SV.lv!=9){LM.stp=LM.st=='hunt'?.3:.7;if(AC){setP(A.mp,M.x,M.z,1);step(A.mp,SV.lv==6?1.3:.9,true);if(SV.lv==7)burst({f:700,q:1,d:.25,v:.4,out:A.mp});if(SV.lv==3&&LM.st!='hunt')burst({f:1800,q:5,d:.08,v:.25,out:A.mp})}}
 for(let i=FKS.length-1;i>=0;i--){const f=FKS[i],dd=Math.hypot(P.x-f.x,P.z-f.z);if(!f.sign)f.g.rotation.y=Math.atan2(P.x-f.x,P.z-f.z);const lit=P.fl&&P.bat>0&&dd<12&&(fx*(f.x-P.x)+fz*(f.z-P.z))/Math.max(dd,.1)>.8;if((lit&&SV.lv!=9)||dd<(SV.lv==9?2.5:1.6)||dd>40){if(dd<40)say(f.sign?'A false exit sign...':'It was an illusion.',2);scene.remove(f.g);FKS.splice(i,1)}}}
-const ENEMY={stun:{0:.8,3:5,4:4,5:3,6:3,7:4,8:3,9:1,10:3,11:2.5,12:3,13:3,14:3,15:2,16:3,17:2.5,18:3,19:1.5,party:3,water:2,grin:.8},resist:{9:.4},imm:3};
+const ENEMY={stun:{0:10,3:10,4:10,5:10,6:10,7:10,8:10,9:10,10:10,11:10,12:10,13:10,14:10,15:10,16:10,17:10,18:10,19:10,party:10,water:10,grin:10},resist:{9:.4},imm:3};   // a stun hit freezes any monster for 10 seconds
 const GUN=Object.assign({o:0,l:0,r:0},SV.g||{});Object.assign(GUN,{eq:0,t:0,cd:0,rl:0,mg:4});
 function gsave(){SV.g={o:GUN.o,l:GUN.l,r:GUN.r};save()}
-const gunG=new THREE.Group(),gm=c=>new THREE.MeshLambertMaterial({color:c}),gl=new THREE.PointLight(0x66ccff,0,8);let gunInd;
-{const b=new THREE.Mesh(new THREE.BoxGeometry(.09,.15,.3),gm(0x2a2a2e)),gr=new THREE.Mesh(new THREE.BoxGeometry(.07,.16,.09),gm(0x1c1c20)),br=new THREE.Mesh(new THREE.CylinderGeometry(.035,.04,.14,10),gm(0x555a60));gr.position.set(0,-.13,.08);gr.rotation.x=.3;br.rotation.x=Math.PI/2;br.position.set(0,.02,-.2);gunInd=new THREE.Mesh(new THREE.BoxGeometry(.02,.02,.06),new THREE.MeshBasicMaterial({color:0x33ff66}));gunInd.position.set(.05,.05,-.02);gunG.add(b,gr,br,gunInd);gunG.rotation.y=.12;gunG.visible=false;gl.position.set(0,0,-.6);cam.add(gunG,gl)}
+const gunG=new THREE.Group(),gm=c=>new THREE.MeshLambertMaterial({color:c}),gl=new THREE.PointLight(0x66ccff,0,8);let gunInd,gunArc;
+{// the stun gun: a sleek two-tone match-pistol shape (black slide, gunmetal frame, textured grip) with glowing coil windows and electrode prongs
+ const em=(c,e)=>new THREE.MeshLambertMaterial({color:c,emissive:e}),G=gunG,blk=em(0x1b1c1f,0x0b0b0d),slideM=em(0x26272b,0x101114),frm=em(0x8a8d93,0x2c2e32),dark=em(0x0c0c0e,0x030303),silver=em(0xc4c7cc,0x3a3c40),
+  gripM=em(0x1a1a1c,0x09090a),glow=new THREE.MeshBasicMaterial({color:0x66ccff,fog:false}),org=new THREE.MeshBasicMaterial({color:0xff7a1a,fog:false});
+ const B=(w,h,d,m,x,y,z,rx)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);if(rx)o.rotation.x=rx;G.add(o);return o};
+ // slide
+ B(.064,.062,.36,slideM,0,.045,-.03);B(.05,.012,.33,blk,0,.081,-.03);
+ for(let k=0;k<5;k++){B(.066,.05,.006,dark,0,.045,.09+k*.016)}                    // rear grip serrations
+ for(let k=0;k<3;k++){const w=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,.066,10),glow);w.rotation.z=Math.PI/2;w.position.set(0,.06,-.13-k*.026);G.add(w)}  // glowing coil windows
+ B(.066,.022,.03,frm,0,.035,-.2);                                                 // compensator band
+ // sights
+ B(.012,.014,.012,org,0,.092,-.195);B(.04,.016,.02,blk,0,.092,.13);
+ // frame / dust cover with a rail
+ B(.06,.038,.3,frm,0,-.004,-.035);for(let k=0;k<5;k++)B(.062,.008,.012,dark,0,-.024,-.17+k*.025);
+ // hammer, beavertail, safety
+ const hm=B(.016,.035,.012,silver,0,.07,.16);hm.rotation.x=-.5;B(.05,.014,.05,frm,0,.008,.165);B(.008,.01,.05,silver,.034,.03,.11);
+ // trigger guard and a flat skeleton trigger
+ B(.04,.008,.085,frm,0,-.065,-.045);B(.04,.05,.008,frm,0,-.042,-.088);const tg=B(.012,.038,.01,silver,0,-.04,-.03);tg.rotation.x=.25;
+ // textured grip, raked back, with a flared magwell
+ const grp=B(.062,.2,.085,gripM,0,-.11,.085,.28);B(.066,.12,.06,blk,0,-.1,.08,.28).scale.set(1,1,.6);
+ const tex=new THREE.Mesh(new THREE.BoxGeometry(.064,.15,.07),em(0x2c2c30,0x0e0e10));tex.position.set(0,-.11,.09);tex.rotation.x=.28;G.add(tex);
+ B(.074,.026,.1,blk,0,-.215,.115,.28);
+ // electrode prongs + the arc between them
+ [-.017,.017].forEach(x=>{const pr=new THREE.Mesh(new THREE.CylinderGeometry(.004,.004,.03,8),silver);pr.rotation.x=Math.PI/2;pr.position.set(x,.045,-.225);G.add(pr)});
+ gunArc=new THREE.Mesh(new THREE.BoxGeometry(.038,.006,.006),new THREE.MeshBasicMaterial({color:0xbfe8ff,fog:false}));gunArc.position.set(0,.045,-.238);gunArc.visible=false;G.add(gunArc);
+ // ammo light on the back of the slide (green = loaded, red = empty)
+ gunInd=new THREE.Mesh(new THREE.BoxGeometry(.03,.012,.004),new THREE.MeshBasicMaterial({color:0x33ff66}));gunInd.position.set(0,.06,.152);G.add(gunInd);
+ G.scale.setScalar(.8);G.rotation.set(.02,.3,0);G.visible=false;gl.position.set(0,0,-.6);cam.add(G,gl)}
 const SP2=[];for(let i=0;i<30;i++){const m=new THREE.Mesh(new THREE.BoxGeometry(.05,.05,.05),new THREE.MeshBasicMaterial({color:i%2?0x66ccff:0xffffaa,fog:false}));m.visible=false;m.userData={l:0};scene.add(m);SP2.push(m)}
 function sparkAt(x,y,z,n){let c=0;SP2.forEach(m=>{if(c<n&&m.userData.l<=0){c++;const u=m.userData;u.l=.35+R()*.3;u.vx=(R()-.5)*5;u.vy=1+R()*3;u.vz=(R()-.5)*5;m.position.set(x,y,z);m.visible=true}})}
 function sparkTick(dt){SP2.forEach(m=>{const u=m.userData;if(u.l<=0)return;u.l-=dt;u.vy-=8*dt;m.position.x+=u.vx*dt;m.position.y+=u.vy*dt;m.position.z+=u.vz*dt;if(u.l<=0)m.visible=false})}
@@ -1408,8 +1434,8 @@ if((best.k=='l'&&(SV.lv==5||SV.lv==7))||best.k=='w')best.g.visible=false;
 sparkAt(best.x,1.4,best.z,10);if(AC){const pn=P3(best.x,best.z,1.4,false);burst({f:1500,q:2,d:.6,v:1,out:pn});tone({t:'square',f:900,f2:120,d:.5,v:.5,out:pn})}say('STUN HIT',1.5)}
 function mkTag(){const c=document.createElement('canvas');c.width=128;c.height=32;const x=c.getContext('2d');x.fillStyle='#ff0';x.font='bold 22px monospace';x.fillText('STUNNED',4,24);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));s.scale.set(1.6,.4,1);s.position.y=3.2;return s}
 function gunTick(){const dt=.0167;if(P.hide)P.pit=Math.max(-.2,Math.min(.2,P.pit));GUN.cd-=dt;if(GUN.rl>0){GUN.rl-=dt;if(GUN.rl<=0){const n=Math.min(GUN.mg-GUN.l,GUN.r);GUN.l+=n;GUN.r-=n;gsave();if(AC)burst({f:900,q:3,d:.15,v:.5})}}
-GUN.t+=((GUN.eq?1:0)-GUN.t)*.15;gunG.visible=!!GUN.o&&GUN.t>.02;gunG.position.set(.22,-.2-(1-GUN.t)*.5+(GUN.cd>.6?.02:0),-.45+(GUN.cd>.65?.05:0));gl.intensity=Math.max(0,gl.intensity-.5);
-$('xh').style.display=GUN.eq&&started&&GUN.o?'block':'none';const h=$('gun');h.style.display=GUN.o?'block':'none';h.textContent='\ud83d\udd2b STUN GUN: '+GUN.l+' / '+GUN.r+(GUN.rl>0?'  [RELOADING]':GUN.l==0?'  [EMPTY]':'')+(GUN.eq?'  [EQUIPPED]':'');gunInd.material.color.set(GUN.l>0?0x33ff66:0xff3322);
+GUN.t+=((GUN.eq?1:0)-GUN.t)*.15;gunG.visible=!!GUN.o&&GUN.t>.02;gunG.position.set(.21,-.12-(1-GUN.t)*.5+(GUN.cd>.6?.02:0),-.5+(GUN.cd>.65?.05:0));gl.intensity=Math.max(0,gl.intensity-.5);
+$('xh').style.display=GUN.eq&&started&&GUN.o?'block':'none';const h=$('gun');h.style.display=GUN.o?'block':'none';h.textContent='\ud83d\udd2b STUN GUN: '+GUN.l+' / '+GUN.r+(GUN.rl>0?'  [RELOADING]':GUN.l==0?'  [EMPTY]':'')+(GUN.eq?'  [EQUIPPED]':'');gunInd.material.color.set(GUN.l>0?0x33ff66:0xff3322);if(gunArc){gunArc.visible=GUN.cd>.55||(GUN.eq&&GUN.l>0&&GUN.rl<=0&&Math.random()<.06);gunArc.scale.set(.7+Math.random()*.5,1+Math.random()*2,1);gunArc.position.y=.045+(Math.random()-.5)*.006}
 if(msgT<=0){if(AMMO.some(a=>!a.got&&Math.hypot(P.x-a.x,P.z-a.z)<1.9))say('PRESS E TO COLLECT STUN AMMO',.1);else if(CAB&&!CAB.done&&Math.hypot(P.x-CAB.x,P.z-CAB.z)<2)say('PRESS E TO OPEN THE SUPPLY CABINET',.1)}
 targets().forEach(t=>{const o=t.o;if(o.stun>0){if(R()<.3)sparkAt(t.g.position.x+(R()-.5),1+R()*1.5,t.g.position.z+(R()-.5),2);if(!t.g.userData.tag){t.g.userData.tag=mkTag();t.g.add(t.g.userData.tag)}t.g.userData.tag.visible=true}else if(t.g.userData.tag)t.g.userData.tag.visible=false});sparkTick(dt);GUN.n=(GUN.n||0)+1;if(GUN.n%10==0)monSeen();phG.visible=false}
 addEventListener('mousedown',e=>{if(e.button==0&&started&&document.pointerLockElement)fire()});
@@ -4125,7 +4151,7 @@ addEventListener('keydown',function(e){if(e.code!='KeyF'||!playing()||e.repeat)r
 // =====================================================================
 var lt=performance.now();(function tick(){requestAnimationFrame(tick);var n=performance.now(),dt=Math.min(.1,(n-lt)/1000);lt=n;try{
  encTick(dt);aqTick(dt);
- if(TAPE&&TAPE.g.visible&&playing()){TAPE.g.rotation.y+=dt;var d=Math.hypot(TAPE.x-P.x,TAPE.z-P.z),s=vs(TAPE.id);if(!s.d&&d<10&&los(P.x,P.z,TAPE.x,TAPE.z)){s.d=1;hsave();say('A VHS tape glows on the floor nearby.',3)}if(d<1.2){TAPE.g.visible=false;TAPE.gl.visible=false;s.c=1;s.d=1;s.lv=LVL;hsave();say('Found: '+VT[TAPE.id].t+'. Play it at a TV (📺) to archive it.',5);tn({f:900,f2:1300,d:.25,v:.18});HU.toast('📼 '+VT[TAPE.id].t,'#9ad0ff');HU.ev&&HU.ev('tape')}}
+ if(TAPE&&TAPE.g.visible&&playing()){TAPE.g.rotation.y+=dt;var d=Math.hypot(TAPE.x-P.x,TAPE.z-P.z),s=vs(TAPE.id);if(!s.d&&d<10&&los(P.x,P.z,TAPE.x,TAPE.z)){s.d=1;hsave();say('A VHS tape glows on the floor nearby.',3)}if(d<1.2&&!TAPE.lock){TAPE.g.visible=false;TAPE.gl.visible=false;s.c=1;s.d=1;s.lv=LVL;hsave();say('Found: '+VT[TAPE.id].t+'. Play it at a TV (📺) to archive it.',5);tn({f:900,f2:1300,d:.25,v:.18});HU.toast('📼 '+VT[TAPE.id].t,'#9ad0ff');HU.ev&&HU.ev('tape')}}
  if(TV&&playing()&&msgT<=0&&Math.hypot(TV.x-P.x,TV.z-P.z)<2.1)say('[F] TV + VCR — play a tape',.1);if(TV)TV.scr.material.color.setHex(RND()<.5?0x2a3a2a:0x1a2a1a);
  var fr=HD.fut.room;if(fr&&!fr.done&&fr.lv==LVL&&playing()&&Math.hypot(cc(fr.i)-P.x,cc(fr.j)-P.z)<3){fr.done=1;HD.fut.roomDone=1;hsave();P.san=Math.max(0,P.san-5);say('You have seen this room before. On a tape. You were standing right here.',5);HU.raw=1;try{addCash(40,'A future recording came true')}finally{HU.raw=0}}
  }catch(e){if(!tick.e){tick.e=1;console.error('HU2b tick',e)}}})();
@@ -7610,9 +7636,7 @@ var lastT=performance.now();
  tickAll(dt)})();
 // the camera rides along with your height
 var oPFX=window.PFX;window.PFX=function(s,c){try{if(P.y&&!P.dead)c.position.y+=P.y}catch(e){}
- // the compass and map draw during the frame: show them the real tape spot, then hide it from the pickup check again
- var tp=CH&&CH.locked&&CH.tape;if(tp){tp.x=CH.home.x;tp.z=CH.home.z}
- try{if(oPFX)oPFX(s,c);else ren.render(s,c)}finally{if(tp&&CH.locked){tp.x=CH.home.x+1e4;tp.z=CH.home.z+1e4}}};
+ if(oPFX)oPFX(s,c);else ren.render(s,c)};
 HU.jumpY=function(){return P.y};
 
 // ---------------------------------------------------------------- the tape challenge room
@@ -7767,7 +7791,7 @@ function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0
  if(tp&&C.home){
   var up=P.y>(C.FL||0)-.4,unlocked=C.type=='combo'?(up&&C.solved):C.type=='parkour'?up:C.type=='puzzle'?C.solved:true;
   // locked: the tape is moved out of reach of the pickup check (it stays on screen where it is)
-  C.locked=!unlocked;if(unlocked){tp.x=C.home.x;tp.z=C.home.z}else{tp.x=C.home.x+1e4;tp.z=C.home.z+1e4}}
+  C.locked=!unlocked;tp.lock=!unlocked;tp.x=C.home.x;tp.z=C.home.z}   // locked: the pickup check skips it, but the compass and map still point at the real spot
  C.unl=C.type=='combo'?(P.y>(C.FL||0)-.4&&C.solved):C.type=='parkour'?P.y>(C.FL||0)-.4:C.type=='puzzle'?C.solved:true;
  // the glass case lifts away once the puzzle is solved
  if((C.type=='puzzle'||C.type=='combo')&&C.solved&&C.glass.position.y<C.gTop){C.glass.position.y+=dt*.8;C.gframe.position.y+=dt*.8}

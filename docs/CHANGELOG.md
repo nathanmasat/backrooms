@@ -1,5 +1,11 @@
 # Changelog
 
+## New stun gun + 10-second stun
+- **New stun gun model:** a sleek two-tone match-pistol shape with a black slide (grip serrations and glowing blue coil windows), a gunmetal frame with a rail, an orange front sight, a skeleton trigger, a textured raked grip with a flared magwell, and two electrode prongs at the front with a blue spark between them. The spark flashes when you fire, and the ammo light (green / red) is now on the back of the slide where you can see it.
+- **A stun hit freezes any monster for 10 seconds** (it was 0.8-5 seconds depending on the level). After that the monster can't be stunned again for 3 seconds. The Null on Level 9 still shrugs off some shots.
+- The "STUN GUN" text no longer covers the STAMINA label.
+- Fix: the compass could show the locked VHS tape as "14197m" away. The locked tape now stays where it is, and only the pickup is blocked until the room is solved.
+
 ## Three tape challenge rooms per level
 - Fix: "Cannot read properties of undefined (reading 'length')" when a level loaded straight into play before the rooms were built.
 - Levels 0-8 now have **three** tape challenge rooms (TAPE CHALLENGE 1, 2 and 3), spread well apart. Each one has the parkour to the second floor and the lamp puzzle.
