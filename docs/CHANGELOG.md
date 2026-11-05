@@ -1,5 +1,12 @@
 # Changelog
 
+## More scares (and flares)
+- **The Follower:** every minute or two, a tall black figure with pale eyes walks the path you just took, a few metres behind you. You hear its footsteps. **Turn around and it's gone.** If you never look back, it reaches you: a breath on your neck, a red flash, and you lose sanity.
+- **Mannequins:** 3 pale, faceless mannequins stand somewhere on each level. **They only move while nobody is looking at them**, a step at a time towards you. If one gets right behind you, the next time you turn around it's there (jump scare).
+- **Flares:** 2 flares are hidden on each level. Press **X** (phone: **FLARE**) to throw one. It bounces, burns red for 25 s and lights up the hallway, and **the monster won't come near it**: it's stunned for 4 s if it tries. Flares in your pocket show above the stats.
+- **Lockers:** about 1 in 14 lockers has something already inside the first time you open it (never while the monster is chasing you).
+- Scares shake the camera, flash the screen red and make a noise the monster can hear. Everything is captions only, no voices.
+
 ## Co-op: see what your teammate sees + scrolls in lockers
 - **Spectating is now first-person:** while you're down you see exactly what your teammate sees, from their eyes, looking where they look (left/right and up/down) and lit by their flashlight. Their own body is hidden so it doesn't block the view. Click / tap to switch teammates.
 - The heavy static on the screen is gone while you spectate, so you can actually watch.

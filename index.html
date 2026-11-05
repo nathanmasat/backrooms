@@ -7932,6 +7932,154 @@ requestAnimationFrame(warm);
 var lastN=-1;setInterval(function(){if(!done||typeof started=='undefined'||!started)return;var n=0;scene.traverseVisible(function(o){if(o.isLight)n++});if(lastN>=0&&n!==lastN){try{ren.compile(scene,cam)}catch(e){}}lastN=n},3000);
 })();
 </script>
+<!-- ===== MORE SCARES: the Follower (don't look back), mannequins that move when you look away, flares (X / FLARE) that scare the monster off, and something in the lockers ===== -->
+<script>
+(function(){
+// -----------------------------------------------------------------------------------------------------
+// THE FOLLOWER   — every so often a tall, thin figure walks behind you along the path you took. You hear its
+//                  footsteps. If you turn and look, it's gone. If you never look, it reaches you, breathes on your
+//                  neck and takes some of your sanity.
+// MANNEQUINS     — pale faceless mannequins stand around the level. They only move while nobody is looking at them.
+//                  If one gets right behind you, the next time you turn around... it's there.
+// FLARES         — 2 flares per level. Press X (phone: FLARE) to throw one. It burns red for 25 s, lights the area
+//                  and the monster won't come near it (stunned for 4 s if it tries).
+// LOCKERS        — sometimes something is already inside.
+// All captions only (no voices). Everything here is fiction inside the game.
+// -----------------------------------------------------------------------------------------------------
+if(typeof THREE=='undefined'||typeof scene=='undefined'||typeof P=='undefined'||typeof g=='undefined'||typeof open=='undefined')return;
+var T=THREE,PI=Math.PI,LV0=(typeof SV!='undefined'?SV.lv|0:0);
+function playing(){return typeof started!='undefined'&&started&&!P.dead&&!(typeof MENU!='undefined'&&MENU)&&!(typeof CUT!='undefined'&&CUT)}
+function au(){return typeof AC!='undefined'&&AC&&!(typeof muted!='undefined'&&muted)}
+function rng(a){return function(){a=(a+0x6D2B79F5)|0;var t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+var r=rng(((typeof SEED!='undefined'?SEED:1)*13+LV0*7717+99)|0);
+function touch(){return document.body.classList.contains('touch')}
+function coop(){return !!(window.NET&&NET.on)}
+function hostOrSolo(){return !coop()||(NET.isHost&&NET.isHost())}
+function lam(c,em){return new T.MeshLambertMaterial({color:c,emissive:em||0})}
+function sanity(d){try{P.san=Math.max(0,Math.min(100,P.san+d))}catch(e){}}
+function pos3(x,z,y){try{return P3(x,z,y==null?1.4:y,false)}catch(e){return undefined}}
+// is a point on screen and in plain sight?
+function seen(x,z,maxD){var dx=x-P.x,dz=z-P.z,d=Math.hypot(dx,dz);if(d>(maxD||30))return false;if(d<.6)return true;
+ var fx=-Math.sin(P.yaw),fz=-Math.cos(P.yaw),dot=(dx*fx+dz*fz)/d;if(dot<Math.cos(.78))return false;try{return los(P.x,P.z,x,z)}catch(e){return true}}
+// a sharp scare: red flash, shake, a sting, sanity loss, and the monster hears it
+var FL=document.createElement('div');FL.style.cssText='position:fixed;inset:0;z-index:6;pointer-events:none;background:radial-gradient(ellipse at center,rgba(255,255,255,.25),rgba(120,0,0,.85));opacity:0;transition:opacity .5s';document.body.appendChild(FL);
+var shake=0;
+function jolt(txt,san){FL.style.transition='none';FL.style.opacity=1;setTimeout(function(){FL.style.transition='opacity .9s';FL.style.opacity=0},90);shake=.5;sanity(-(san||10));
+ if(au()){try{tone({t:'sawtooth',f:1400,f2:300,d:.45,v:.5,a:.002});tone({t:'square',f:95,f2:60,d:.7,v:.4,a:.002});burst({f:3000,q:.5,d:.4,v:.7,a:.002})}catch(e){}}
+ if(txt)say(txt,3.5);try{noise(9)}catch(e){}}
+var oPFX=window.PFX;window.PFX=function(s,c){if(shake>0&&playing()){c.position.x+=(Math.random()-.5)*shake*.12;c.position.y+=(Math.random()-.5)*shake*.1;c.rotation.z+=(Math.random()-.5)*shake*.05}if(oPFX)oPFX(s,c);else ren.render(s,c)};
+// trail of where you have been (the Follower walks it)
+var TR=[],trT=0;
+// -----------------------------------------------------------------------------------------------------
+// THE FOLLOWER
+function mkFollower(){var G=new T.Group(),k=lam(0x07070a),eye=new T.MeshBasicMaterial({color:0xf2f2ff,fog:false});
+ var body=new T.Mesh(new T.CylinderGeometry(.13,.2,1.55,10),k);body.position.y=1.05;G.add(body);
+ var head=new T.Mesh(new T.SphereGeometry(.15,12,10),k);head.scale.set(.9,1.25,.9);head.position.y=2.02;G.add(head);
+ [-.05,.05].forEach(function(x){var e=new T.Mesh(new T.SphereGeometry(.018,8,6),eye);e.position.set(x,2.05,.13);G.add(e)});
+ [-1,1].forEach(function(s){var a=new T.Mesh(new T.CylinderGeometry(.04,.03,1.25,6),k);a.position.set(s*.2,1.15,0);a.rotation.z=s*.06;G.add(a)});
+ [-1,1].forEach(function(s){var l=new T.Mesh(new T.CylinderGeometry(.05,.04,.5,6),k);l.position.set(s*.08,.25,0);G.add(l)});
+ G.visible=false;scene.add(G);return G}
+var FO={g:null,on:false,next:45+r()*40,back:0,stepT:0,gaze:0};
+function followerTick(dt){FO.next-=dt;
+ if(!FO.on){if(FO.next>0||TR.length<16)return;try{if(M&&M.state=='chase')return}catch(e){}
+  FO.on=true;FO.back=Math.min(TR.length-1,12);FO.t=0;FO.gaze=0;if(!FO.g)FO.g=mkFollower();FO.g.visible=true;place();return}
+ FO.t+=dt;
+ function place(){var q=TR[Math.max(0,TR.length-1-FO.back)];if(!q)return;FO.g.position.set(q[0],0,q[1]);FO.g.rotation.y=Math.atan2(P.x-q[0],P.z-q[1])}
+ place();
+ var x=FO.g.position.x,z=FO.g.position.z,d=Math.hypot(x-P.x,z-P.z);
+ // footsteps that stop when you turn
+ FO.stepT-=dt;if(FO.stepT<=0){FO.stepT=.62;if(au()&&d<22)try{step(pos3(x,z,.1),.22,false)}catch(e){}}
+ // you looked
+ if(seen(x,z,28)){FO.gaze+=dt;if(FO.gaze>.12){end(true);return}}else FO.gaze=0;
+ // it closes in
+ if(FO.t>3.2){FO.t=0;FO.back=Math.max(0,FO.back-3)}
+ if(d<1.6||FO.back<=0){end(false);return}
+ function end(looked){FO.on=false;FO.g.visible=false;FO.next=70+r()*90;
+  if(looked){sanity(-4);if(au())try{burst({f:2600,q:.7,d:.25,v:.45});tone({f:180,f2:90,d:.4,v:.25})}catch(e){}say('[...the footsteps stop. There was nothing there.]',3)}
+  else{jolt('[breathing, right behind your neck]',12)}}}
+// -----------------------------------------------------------------------------------------------------
+// MANNEQUINS
+function mkMannequin(){var G=new T.Group(),sk=lam(0xd9cbb4,0x141210),jn=lam(0xb8a890,0x0c0a08);
+ var c=function(r1,r2,h,m,y,x){var o=new T.Mesh(new T.CylinderGeometry(r1,r2,h,10),m);o.position.set(x||0,y,0);G.add(o);return o};
+ c(.18,.15,.62,sk,1.25);c(.15,.17,.3,sk,.88);var hd=new T.Mesh(new T.SphereGeometry(.12,14,10),sk);hd.scale.set(.85,1.15,.9);hd.position.y=1.78;G.add(hd);c(.04,.05,.1,jn,1.62);
+ [-1,1].forEach(function(s){var a=c(.045,.04,.62,sk,1.22,s*.24);a.rotation.z=s*.12;var l=c(.06,.05,.78,sk,.38,s*.09);var j=new T.Mesh(new T.SphereGeometry(.05,8,6),jn);j.position.set(s*.24,1.52,0);G.add(j)});
+ var base=new T.Mesh(new T.CylinderGeometry(.22,.22,.03,14),lam(0x222222));base.position.y=.015;G.add(base);
+ scene.add(G);return G}
+var MQ=[];
+(function placeMannequins(){if(typeof CF!='undefined'&&(CF.tile||CF.bal))return;var n=3,tries=0,sx=typeof cc=='function'?cc(1):6;
+ while(MQ.length<n&&tries<600){tries++;var c=open[Math.floor(r()*open.length)];if(!c)continue;var x=cc(c[0]),z=cc(c[1]);if(Math.hypot(x-sx,z-sx)<24)continue;
+  try{if(typeof FURN!='undefined'&&FURN.some(function(f){return Math.hypot(f.x-x,f.z-z)<1.5}))continue}catch(e){}
+  if(MQ.some(function(m){return Math.hypot(m.x-x,m.z-z)<20}))continue;
+  var m={x:x,z:z,g:mkMannequin(),unseen:0,moveT:0,near:false,cool:0};m.g.position.set(x,0,z);m.g.rotation.y=r()*6.28;MQ.push(m)}})();
+function mqTick(dt){MQ.forEach(function(m){var d=Math.hypot(m.x-P.x,m.z-P.z),vis=seen(m.x,m.z,32);m.cool-=dt;
+  if(vis){ // you see it: frozen. If it got right behind you, that's the scare.
+   if(m.near&&d<2.2&&m.cool<=0){m.near=false;m.cool=8;jolt('[the mannequin is RIGHT behind you]',14);setTimeout(function(){reset(m)},700)}
+   m.unseen=0;return}
+  m.unseen+=dt;if(d>34||m.unseen<1.1)return;
+  m.moveT-=dt;if(m.moveT>0)return;m.moveT=1.0+r()*.8;
+  // one step closer along the maze, turned to face you
+  var p=null;try{p=bfs(ce(m.x),ce(m.z),ce(P.x),ce(P.z))}catch(e){}
+  var tx=P.x,tz=P.z;if(p&&p.length>1){tx=cc(p[0][0]);tz=cc(p[0][1])}
+  var dx=tx-m.x,dz=tz-m.z,l=Math.hypot(dx,dz)||1,st=Math.min(1.3,l);var nx=m.x+dx/l*st,nz=m.z+dz/l*st;
+  if(Math.hypot(nx-P.x,nz-P.z)<1.1)return;   // never inside you
+  if(typeof solid=='function'&&solid(nx,nz))return;
+  m.x=nx;m.z=nz;m.g.position.set(nx,0,nz);m.g.rotation.y=Math.atan2(P.x-nx,P.z-nz)+(Math.random()-.5)*.3;
+  if(au()&&d<14)try{burst({f:400,t:'lowpass',d:.12,v:.18,out:pos3(nx,nz,.3)})}catch(e){}
+  if(Math.hypot(nx-P.x,nz-P.z)<2.2)m.near=true})}
+function reset(m){var tries=0;while(tries++<200){var c=open[Math.floor(Math.random()*open.length)];var x=cc(c[0]),z=cc(c[1]);if(Math.hypot(x-P.x,z-P.z)>28){m.x=x;m.z=z;m.g.position.set(x,0,z);break}}}
+// -----------------------------------------------------------------------------------------------------
+// FLARES
+var FLR={n:0,picks:[],live:null};
+var flLight=new T.PointLight(0xff3a1a,0,13,1.6);scene.add(flLight);   // made once at load (no shader rebuild later)
+function mkFlareStick(){var G=new T.Group();var s=new T.Mesh(new T.CylinderGeometry(.03,.03,.28,8),lam(0xc0201a,0x300404));s.rotation.z=PI/2;G.add(s);var cp=new T.Mesh(new T.CylinderGeometry(.032,.032,.05,8),lam(0x222222));cp.rotation.z=PI/2;cp.position.x=.15;G.add(cp);
+ var cv=document.createElement('canvas');cv.width=cv.height=64;var x=cv.getContext('2d'),gr=x.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(255,90,60,.6)');gr.addColorStop(1,'rgba(255,60,30,0)');x.fillStyle=gr;x.fillRect(0,0,64,64);
+ var h=new T.Sprite(new T.SpriteMaterial({map:new T.CanvasTexture(cv),transparent:true,depthWrite:false,blending:T.AdditiveBlending,fog:false}));h.scale.set(.7,.7,1);G.add(h);G.userData.halo=h;return G}
+(function placeFlares(){var tries=0,sx=typeof cc=='function'?cc(1):6;while(FLR.picks.length<2&&tries<500){tries++;var c=open[Math.floor(r()*open.length)];if(!c)continue;var x=cc(c[0])+(r()-.5),z=cc(c[1])+(r()-.5);if(Math.hypot(x-sx,z-sx)<14)continue;
+ if(FLR.picks.some(function(q){return Math.hypot(q.x-x,q.z-z)<30}))continue;var m=mkFlareStick();m.position.set(x,.06,z);scene.add(m);FLR.picks.push({x:x,z:z,m:m,got:false})}})();
+var FH=document.createElement('div');FH.style.cssText='position:fixed;left:16px;bottom:200px;font:13px monospace;color:#ff9a7a;text-shadow:0 0 6px #000;pointer-events:none;display:none;z-index:5';document.body.appendChild(FH);
+function flareHUD(){FH.style.display=FLR.n>0&&playing()?'block':'none';FH.textContent='🧨 FLARES: '+FLR.n+(touch()?'  (FLARE button)':'  (X to throw)');
+ try{var hr=document.getElementById('gun').style.display!='none'?document.getElementById('gun').getBoundingClientRect():document.getElementById('hud').getBoundingClientRect();if(hr.height)FH.style.bottom=Math.round(innerHeight-hr.top+4)+'px'}catch(e){}}
+function throwFlare(){if(!playing()||FLR.n<=0||P.hide)return;if(FLR.live){say('One flare at a time.',1.5);return}FLR.n--;
+ var m=mkFlareStick();scene.add(m);var cy=Math.cos(P.pit||0),dir=[-Math.sin(P.yaw)*cy,Math.sin(P.pit||0),-Math.cos(P.yaw)*cy];
+ FLR.live={m:m,x:P.x+dir[0]*.5,y:1.3,z:P.z+dir[2]*.5,vx:dir[0]*7,vy:2.4+dir[1]*5,vz:dir[2]*7,t:25,cool:0};
+ if(au())try{burst({f:1800,q:.8,d:.5,v:.4});tone({f:520,f2:300,d:.3,v:.15})}catch(e){}say('🧨 Flare thrown. The monster hates the light.',2.5)}
+addEventListener('keydown',function(e){if(e.code!='KeyX'||e.repeat)return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;if(!playing())return;throwFlare()},false);
+function flareTick(dt){
+ FLR.picks.forEach(function(q){if(q.got)return;q.m.rotation.y+=dt*1.5;var s=.6+Math.sin(performance.now()/180)*.15;q.m.userData.halo.scale.set(s,s,1);
+  if(Math.hypot(q.x-P.x,q.z-P.z)<1.2&&playing()){q.got=true;q.m.visible=false;FLR.n++;if(au())try{tone({f:700,f2:1000,d:.2,v:.2})}catch(e){}say('🧨 Picked up a FLARE ('+FLR.n+'). '+(touch()?'Tap FLARE':'Press X')+' to throw it. The monster won\'t come near it.',5)}});
+ var L=FLR.live;if(!L){flLight.intensity=0;return}
+ L.t-=dt;
+ // flight with a bounce, then it lies on the floor
+ if(L.vy!==0||Math.abs(L.vx)+Math.abs(L.vz)>.05){L.vy-=14*dt;var nx=L.x+L.vx*dt,nz=L.z+L.vz*dt;if(typeof solid=='function'&&solid(nx,nz)){L.vx*=-.3;L.vz*=-.3}else{L.x=nx;L.z=nz}L.y+=L.vy*dt;if(L.y<=.05){L.y=.05;L.vy=Math.abs(L.vy)>1.5?-L.vy*.3:0;L.vx*=.5;L.vz*=.5;if(Math.abs(L.vx)+Math.abs(L.vz)<.2){L.vx=L.vz=0}}}
+ L.m.position.set(L.x,L.y,L.z);L.m.rotation.y+=dt*(L.vx?8:0);
+ var fl=L.t>2?1:Math.max(0,L.t/2);flLight.position.set(L.x,L.y+.35,L.z);flLight.intensity=(2.3+Math.random()*.9)*fl;var hs=(.9+Math.random()*.3)*fl;L.m.userData.halo.scale.set(hs,hs,1);
+ if(Math.random()<.5)try{sparkAt(L.x,L.y+.05,L.z,1)}catch(e){}
+ // the monster won't come near a burning flare
+ L.cool-=dt;if(hostOrSolo()&&L.cool<=0){try{targets().forEach(function(t){var o=t.o;if(Math.hypot(t.x-L.x,t.z-L.z)<5.5&&!(o.stun>0)){o.stun=4;o.immUntil=performance.now()+6000;L.cool=6;say('The monster recoils from the flare!',2.5)}})}catch(e){}}
+ if(L.t<=0){scene.remove(L.m);FLR.live=null;flLight.intensity=0}}
+function flareBtn(){try{var acts=document.getElementById('tc-acts');if(acts&&!document.getElementById('b-FL')){var b=document.createElement('div');b.className='tb';b.id='b-FL';b.innerHTML='<i>🧨</i><b>FLARE</b>';acts.appendChild(b);
+ b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();throwFlare()});var st=document.createElement('style');st.textContent='#b-FL{right:214px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}
+ var bb=document.getElementById('b-FL');if(bb)bb.style.display=FLR.n>0?'':'none'}catch(e){}}
+// -----------------------------------------------------------------------------------------------------
+// LOCKERS: sometimes something is already inside (never while the monster is chasing you)
+var lkPrev=null;
+function lockerTick(){if(P.hide&&P.hide!==lkPrev){lkPrev=P.hide;var ud=P.hide.userData||(P.hide.userData={});if(ud.occ==null){var ch=false;try{ch=M.state=='chase'}catch(e){}ud.occ=!ch&&Math.random()<.07}
+  if(ud.occ){ud.occ=false;var hx=P.hx,hz=P.hz;setTimeout(function(){if(P.hide){P.hide=null;try{document.getElementById('vig').className=''}catch(e){}if(hx!=null){P.x=hx;P.z=hz}}jolt('[SOMETHING WAS ALREADY IN THE LOCKER]',10)},900)}}
+ if(!P.hide)lkPrev=null}
+// -----------------------------------------------------------------------------------------------------
+var last=performance.now(),hudT=0;
+(function tick(){requestAnimationFrame(tick);var now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;
+ shake=Math.max(0,shake-dt*1.4);
+ hudT-=dt;if(hudT<=0){hudT=.25;flareHUD();flareBtn()}
+ if(!playing()){return}
+ try{trT-=dt;if(trT<=0){trT=.5;var l=TR[TR.length-1];if(!l||Math.hypot(l[0]-P.x,l[1]-P.z)>.9){TR.push([P.x,P.z]);if(TR.length>120)TR.shift()}}}catch(e){}
+ try{if(!P.hide)followerTick(dt)}catch(e){console.warn('follower',e)}
+ try{mqTick(dt)}catch(e){console.warn('mannequin',e)}
+ try{flareTick(dt)}catch(e){console.warn('flare',e)}
+ try{lockerTick()}catch(e){}})();
+window.HU=window.HU||{};HU.scares={follower:FO,mannequins:MQ,flares:FLR,jolt:jolt,spawnFollower:function(){FO.next=0}};
+})();
+</script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
