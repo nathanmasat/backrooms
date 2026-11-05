@@ -1,5 +1,10 @@
 # Changelog
 
+## Co-op: nobody leaves until the team gives up
+- In co-op you **always go down and spectate** when you're caught, even if you were the last one standing. You watch your teammates (click / tap to switch) until someone revives you with a 📜 Revival Scroll.
+- **The run no longer ends by itself** when everyone is down. It only ends when **every player votes 🏳 GIVE UP**: press **G** or use the GIVE UP button (top right). The button shows the votes, for example 1/3. Players who are still standing see the button as soon as someone votes, and must agree too.
+- If you get revived, your give-up vote is taken back automatically. You can also take it back yourself by pressing G again.
+
 ## New hazmat suit model + the white suit
 - **New player model** (co-op teammates, the rag doll, the phone camera, selfies): a baggy hazmat suit with soft wrinkled fabric, a loose hood around a black gas mask with two round eye lenses and three filter canisters, a big biohazard symbol on the chest and back, a black belt with a suit-coloured buckle and a pouch, black gloves and tall black rubber boots. The old reflective stripes and air tank are gone.
 - **White by default:** until you wear a suit from a closet or the shop, your suit is plain white. Every coloured suit uses the same new model in its colour.

@@ -7159,6 +7159,7 @@ function onClientMsg(c,d){var id=c.peer,pl=NET.players[id];
  if(d.t=='st'){applySt(pl,d);d.id=id;bcast(slim(d),id);return}
  if(d.t=='pick'){if(addPick(d.k,d.x,d.z,true))bcast({t:'pick',k:d.k,x:d.x,z:d.z,by:pl.name},id);return}
  if(d.t=='next'){var n=d.n|0;if(n===curLv()+1&&inLevelOrMenu()){note(pl.name+' called the elevator. Everyone goes up!',4);goNext(n,true)}return}
+ if(d.t=='gu'){var v=d.v?1:0;gotGU(id,v,pl.name);bcast({t:'gu',id:id,v:v,name:pl.name},id);return}
  if(d.t=='rev'){var to=String(d.to||''),pb=pl.b;if(!pb||pb.dead)return;if(to==='host'){if(DOWN&&Math.hypot(pb.x-DOWN.x,pb.z-DOWN.z)<5)reviveMe(pl.name)}else{var tc=NET.conns[to],tp=NET.players[to];if(tc&&tc.open&&tp&&tp.b&&tp.b.dead&&Math.hypot(pb.x-tp.b.x,pb.z-tp.b.z)<5)try{tc.send({t:'rev',to:to,by:pl.name})}catch(e){}}return}
  if(d.t=='bye'){try{c.close()}catch(e){}}}
 function inLevelOrMenu(){return true}
@@ -7178,6 +7179,7 @@ function onHostMsg(d){if(!d||typeof d!='object')return;HOSTT=performance.now();
  if(d.t=='go'){var n=d.n|0,s2=d.seed|0;if(n<0||n>20)return;ST.lv=n;ST.seed=s2;ST.picks=[];ST.auto=1;saveST();NET.reloading=true;
   if(inLevel()&&!P.dead&&typeof oNext=='function'){say('The group is taking the elevator...',3);oNext(n)}else moveTo('The group moved to '+((LV[n]||{}).n||('Level '+n))+'...');return}
  if(d.t=='open'){if((d.seed|0)===curSeed())openDoors(true);return}
+ if(d.t=='gu'){if(d.id&&d.id!==NET.myId)gotGU(String(d.id),d.v,d.name);return}
  if(d.t=='rev'){if(DOWN)reviveMe(cleanName(d.by));return}
  if(d.t=='bye'){NET.status=d.why?String(d.why).slice(0,120):'The host closed the room.';toast(NET.status);leaveNet();NET.on=false;ST=null;saveST();render()}}
 var RL=0;
@@ -7427,7 +7429,7 @@ hookBtn();addEventListener('load',function(){hookBtn();setTimeout(hookBtn,500)})
 // ---------------------------------------------------------------- CO-OP: rag doll, spectating, Revival Scrolls, teammates on the map
 // When you are caught in co-op and a teammate is still standing, you go DOWN instead of dying: your body falls like a rag doll
 // (everyone sees it), then you watch your teammates. A teammate with a REVIVAL SCROLL can bring you back.
-// Scrolls only appear in co-op. If nobody is left standing, everyone who is down dies for real.
+// Scrolls only appear in co-op. Nobody is ever kicked out: the run only ends when the WHOLE team votes GIVE UP (G / the button).
 var DOWN=null,REVU=0,TRAIL={},DEATHS={},SCR=[],SPC={},trailT=0,specT=0;
 function coopHere(p){var b=p&&p.b;return !!(b&&b.lv===curLv()&&b.seed===curSeed()&&performance.now()-p.last<4000)}
 function isTouch(){return document.body.classList.contains('touch')}
@@ -7435,16 +7437,33 @@ function chime(up){try{if(typeof AC!='undefined'&&AC&&!(typeof muted!='undefined
 // ---- going down
 // teammates still standing in this level; a short lag spike or a reconnect does not count as everyone being down
 function mates(){return Object.keys(NET.players).map(function(k){return NET.players[k]}).filter(function(p){var b=p.b;return b&&b.lv===curLv()&&b.seed===curSeed()&&!b.dead&&performance.now()-p.last<10000})}
-function coopDie(){if(!NET.on||!inLevel())return false;if(DOWN||performance.now()<REVU)return true;if(!mates().length)return false;goDown();return true}
+// in co-op you always go down and spectate (even if you were the last one standing); the run only ends when the whole team votes GIVE UP
+function teamHere(){return Object.keys(NET.players).map(function(k){return NET.players[k]}).filter(function(p){return coopHere(p)})}
+function coopDie(){if(!NET.on||!inLevel()||GUdone)return false;if(DOWN||performance.now()<REVU)return true;if(!teamHere().length)return false;goDown();return true}
 function goDown(){DOWN={x:P.x,z:P.z,yaw:P.yaw,pit:P.pit||0,t:0,watch:null,alone:0,t0:performance.now(),side:Math.random()<.5?-1:1};P.dead=true;P.fl=false;P.hide=null;try{P.scan=false}catch(e){}
  try{if(typeof AC!='undefined'&&AC){tone({t:'sawtooth',f:260,f2:70,d:.9,v:.3,lp:1800});tone({f:55,d:1.6,v:.35,a:.01})}}catch(e){}
  try{var r=document.getElementById('red');r.style.transition='opacity .15s';r.style.opacity=.65;setTimeout(function(){r.style.transition='opacity 2s';r.style.opacity=.22},250)}catch(e){}
  say('You are DOWN! A teammate can bring you back with a 📜 Revival Scroll.',5)}
-function reviveMe(by){if(!DOWN)return;var d=DOWN;DOWN=null;SPEC.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;P.yaw=d.yaw;P.pit=0;P.para=0;P.vx=P.vz=0;
+function reviveMe(by){if(!DOWN)return;var d=DOWN;DOWN=null;SPEC.style.display='none';try{if(GU.me)voteGU(0)}catch(e){}P.dead=false;P.x=d.x;P.z=d.z;P.yaw=d.yaw;P.pit=0;P.para=0;P.vx=P.vz=0;
  try{P.san=Math.max(P.san,60);P.st=100}catch(e){}REVU=performance.now()+4000;chime(true);
  try{var r=document.getElementById('red');r.style.transition='opacity 1s';r.style.opacity=0}catch(e){}
  say('✨ '+by+' revived you with a Revival Scroll! You are safe for a few seconds.',5)}
-function reallyDie(){var d=DOWN;DOWN=null;SPEC.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;try{die()}catch(e){}}
+function reallyDie(){var d=DOWN;DOWN=null;SPEC.style.display='none';GUB.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;try{die()}catch(e){}}
+// ---- GIVE UP: everyone in the game has to agree before the run ends
+var GU={},GUdone=false;
+function myGU(){return !!GU.me}
+function voteGU(v){v=v?1:0;GU.me=v;var nm=myName();
+ if(NET.isHost())bcast({t:'gu',id:'host',v:v,name:nm});else send({t:'gu',v:v});
+ if(v)note('You voted to GIVE UP. The run ends when everyone agrees.',4);else note('You took back your give-up vote.',3);checkGU()}
+function gotGU(id,v,name){if(!id)return;var was=!!GU[id];GU[id]=v?1:0;if(v&&!was)note(cleanName(name||'A teammate')+' voted to GIVE UP. '+(isTouch()?'Tap GIVE UP':'Press G')+' to agree.',4);checkGU()}
+function guCount(){var team=teamHere(),n=team.length+1,y=(GU.me?1:0)+team.filter(function(p){return GU[p.id]}).length;return {y:y,n:n}}
+function checkGU(){if(GUdone||!NET.on||!inLevel())return;var c=guCount();if(c.y>=c.n&&GU.me){GUdone=true;note('Everyone gave up. The run is over.',4);setTimeout(function(){try{if(DOWN)reallyDie();else if(!P.dead)die()}catch(e){}},1200)}}
+var GUB=document.createElement('button');GUB.id='mpgu';GUB.style.cssText='position:fixed;right:16px;top:64px;z-index:9;display:none;font:bold 13px monospace;padding:8px 12px;border-radius:8px;border:1px solid #f88;background:#2a0a0acc;color:#fcc;cursor:pointer';document.body.appendChild(GUB);
+GUB.addEventListener('pointerdown',function(e){e.stopPropagation()},true);
+GUB.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();voteGU(!GU.me)});
+addEventListener('keydown',function(e){if(e.code!='KeyG'||e.repeat||!NET.on||!inLevel())return;var t=e.target;if(t&&(t.tagName=='INPUT'||t.tagName=='TEXTAREA'))return;var c=guCount();if(!DOWN&&!(c.y>0))return;e.preventDefault();voteGU(!GU.me)},true);
+function guUI(){if(!NET.on||!inLevel()){GUB.style.display='none';return}var c=guCount();var show=!!DOWN||c.y>0;GUB.style.display=show?'block':'none';if(!show)return;
+ GUB.textContent=(GU.me?'✔ GAVE UP':'🏳 GIVE UP')+' ('+c.y+'/'+c.n+')'+(isTouch()?'':' [G]');GUB.style.borderColor=GU.me?'#8f8':'#f88'}
 // ---- the camera while down: fall to the floor, then watch a teammate
 function watchList(){return others().filter(function(p){return p.model&&p.model.visible})}
 function watchTarget(){var L=watchList();if(!L.length)return null;var w=L.find(function(p){return p.id===DOWN.watch});if(!w){w=L[0];DOWN.watch=w.id}return w}
@@ -7522,12 +7541,13 @@ function coopTick(dt){
  if(trailT<=0)trailT=.5;
  // revive prompt
  REVT=nearDown();if(REVT){REVP.style.display='block';REVP.innerHTML=ST&&ST.scrolls>0?'📜 '+(isTouch()?'Tap <span style="color:#ffe07a">ACT</span>':'Press <span style="color:#ffe07a">F</span>')+' to revive <span style="color:#7fb4ff">'+e2(REVT.name)+'</span> <span style="opacity:.7">(Revival Scrolls: '+ST.scrolls+')</span>':'<span style="color:#7fb4ff">'+e2(REVT.name)+'</span> is down. You need a 📜 Revival Scroll to bring them back.'}else REVP.style.display='none';
+ guUI();checkGU();
  // while down
  if(!DOWN){SPEC.style.display='none';return}
  if(!inLevel()){return}
  DOWN.t=(performance.now()-DOWN.t0)/1000;SPC.dt=dt;P.x=DOWN.x;P.z=DOWN.z;P.vx=P.vz=0;P.para=Math.max(P.para||0,.3);P.fl=false;P.dead=true;
- var up=mates(),nw=performance.now();if(!up.length){if(!DOWN.alone)DOWN.alone=nw;if(nw-DOWN.alone>5000){say('Nobody is left standing...',3);reallyDie();return}}else DOWN.alone=0;
- specT-=dt;if(specT<=0){specT=.25;if(DOWN.t<2.6){SPEC.style.display='none'}else{var w=watchTarget();SPEC.style.display='block';SPEC.innerHTML=w?'👁 SPECTATING <span style="color:#7fb4ff">'+e2(w.name)+'</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">You are down. '+(up.length>1?(isTouch()?'Tap':'Click')+' to watch someone else. ':'')+'A teammate with a 📜 Revival Scroll can bring you back.</span>':'<span style="color:#f99">Nobody is left standing...</span>'}}}
+ var up=mates();
+ specT-=dt;if(specT<=0){specT=.25;if(DOWN.t<2.6){SPEC.style.display='none'}else{var w=watchTarget();SPEC.style.display='block';var gc=guCount();SPEC.innerHTML=w?'👁 SPECTATING <span style="color:#7fb4ff">'+e2(w.name)+'</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">You are down. '+(up.length>1?(isTouch()?'Tap':'Click')+' to watch someone else. ':'')+'A teammate with a 📜 Revival Scroll can bring you back.<br>The run only ends if the whole team gives up ('+gc.y+'/'+gc.n+').</span>':'<span style="color:#f99">Everyone is down.</span><br><span style="font-size:12px;font-weight:normal;opacity:.85">Nobody can reach a scroll right now. Wait for a teammate who is still in the game, or vote 🏳 GIVE UP together ('+gc.y+'/'+gc.n+').</span>'}}}
 NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;NET.down=function(){return DOWN};NET.revive=reviveMe;NET.scrolls=function(){return SCR};
 })();
 </script>
