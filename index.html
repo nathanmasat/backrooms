@@ -7254,6 +7254,7 @@ function animPlayers(dt){var now=performance.now();Object.keys(NET.players).forE
  if(U.arms)U.arms.forEach(function(ar,i){ar.rotation.x=i&&b.fl?-1.2:(i?sw:-sw)*.8;if(ar.userData.el)ar.userData.el.rotation.x=i&&b.fl?-.2:-.25*mv});
  try{emotePose(p,g,dt)}catch(e){}
  if(p.tag){var d=Math.hypot(x-P.x,z-P.z);p.tag.visible=d>2.2;p.tag.scale.set(1.2+d*.03,.3+d*.0075,1)}
+ try{shiftPose(p,g)}catch(e){}
  if(p.light){p.light.position.set(x-Math.sin(yaw)*.3,b.cr?1.05:1.45,z-Math.cos(yaw)*.3);p.lt.position.set(x-Math.sin(yaw)*6,(b.cr?1.05:1.45)-.4,z-Math.cos(yaw)*6)}})}
 
 // ---------------------------------------------------------------- the monster: the host runs it, everyone sees the same one
@@ -7399,7 +7400,7 @@ var HUD2=document.createElement('div');HUD2.id='mphud';HUD2.style.cssText='posit
 var TOAST=document.createElement('div');TOAST.style.cssText='position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;pointer-events:none;font:13px monospace;color:#e8f8ff;background:rgba(0,10,20,.8);border:1px solid #3a6a7a;padding:6px 12px;border-radius:6px;display:none;max-width:90vw;text-align:center';document.body.appendChild(TOAST);var toastT=0;
 function toast(t){TOAST.textContent=t;TOAST.style.display='block';clearTimeout(toastT);toastT=setTimeout(function(){TOAST.style.display='none'},4200)}
 function hud(){if(!inLevel()){HUD2.style.display='none';return}HUD2.style.display='block';var h='<b style="color:#7fe6ff">👥 CO-OP · '+e2(NET.code)+'</b><br>'+(VC.on?'<span style="color:#7f7">🎤 LIVE</span> ':'')+e2(myName())+(NET.isHost()?' (host)':'')+' · you'+(VC.on?'':' <span style="opacity:.6">('+(document.body.classList.contains('touch')?'tap MIC':'Y = mic')+')</span>')+'<br>';
- Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(b.dead)st='<span style="color:#7fb4ff">DOWN — revive them!</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
+ Object.keys(NET.players).forEach(function(k){var p=NET.players[k],b=p.b,st;if(!b||performance.now()-p.last>4000)st='connecting…';else if(b.lv!==curLv()||b.seed!==curSeed())st='in another level';else if(mmMode()&&RND.on)st='in the level';else if(b.dead)st='<span style="color:#7fb4ff">DOWN — revive them!</span>';else if(b.hd)st='hiding · '+Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';else st=Math.round(Math.hypot(b.x-P.x,b.z-P.z))+'m';h+=(b&&b.mic?(VC.muted[p.name]?'🔇 ':'🎤 '):'')+e2(p.name)+(k==='host'?' (host)':'')+' · '+st+'<br>'});
  if(ST&&ST.scrolls>0)h+='<span style="color:#ffe07a">📜 Revival Scrolls: '+ST.scrolls+'</span><br>';if(DOWN)h+='<span style="color:#7fb4ff">you are DOWN</span><br>';
  if(NET.role=='client'&&!(NET.host&&NET.host.open))h+='<span style="color:#fc6">reconnecting to host…</span>';HUD2.innerHTML=h}
 
@@ -7486,7 +7487,7 @@ function specCam(c){var t=DOWN.t;
  var m=p.model,b=p.b,x=m.position.x,z=m.position.z,ey=(b.cr?1.05:1.62)+(b.y||0),yaw=m.rotation.y-PI,pt=b.pt||0;
  if(SPC.snap||SPC.yaw==null){SPC.yaw=yaw;SPC.pt=pt;SPC.ey=ey;SPC.snap=0}else{var f=Math.min(1,(SPC.dt||.016)*14);SPC.yaw+=Math.atan2(Math.sin(yaw-SPC.yaw),Math.cos(yaw-SPC.yaw))*f;SPC.pt+=(pt-SPC.pt)*f;SPC.ey+=(ey-SPC.ey)*f}
  c.rotation.order='YXZ';c.position.set(x,SPC.ey,z);c.rotation.set(SPC.pt,SPC.yaw,0);SPC.hide=m;m.visible=false;if(p.tag)p.tag.visible=false}
-var oPFXc=window.PFX;window.PFX=function(s,c){SPC.hide=null;try{if(NET.on&&mmMode()&&inLevel())mon.visible=false}catch(e){}try{if(DOWN&&NET.on&&inLevel())specCam(c)}catch(e){}try{if(oPFXc)oPFXc(s,c);else ren.render(s,c)}finally{if(SPC.hide){SPC.hide.visible=true;SPC.hide=null}}};
+var oPFXc=window.PFX;window.PFX=function(s,c){SPC.hide=null;try{if(NET.on&&mmMode()&&inLevel()){mon.visible=false;ghost.visible=false;grin.visible=false}}catch(e){}try{if(DOWN&&NET.on&&inLevel())specCam(c)}catch(e){}try{if(oPFXc)oPFXc(s,c);else ren.render(s,c)}finally{if(SPC.hide){SPC.hide.visible=true;SPC.hide=null}}};
 var SPEC=document.createElement('div');SPEC.id='mpspec';SPEC.style.cssText='position:fixed;left:50%;top:15%;transform:translateX(-50%);z-index:8;pointer-events:none;font:bold 16px monospace;color:#cfe6ff;text-align:center;text-shadow:0 0 6px #000,0 0 3px #000;display:none;line-height:1.5;max-width:80vw';document.body.appendChild(SPEC);
 addEventListener('pointerdown',function(e){if(!DOWN||DOWN.t<2.6)return;var t=e.target;if(t&&t.closest&&t.closest('#mpbox,#pm,.pn,#mp,button,a,input'))return;specNext()},true);
 addEventListener('keydown',function(e){if(!DOWN||DOWN.t<2.6)return;if(e.code=='Space'||e.code=='ArrowRight'||e.code=='KeyE'){e.preventDefault();specNext()}},true);
@@ -7536,7 +7537,7 @@ function mapTeam(){var c=mc,k=4/S;c.save();c.lineCap='round';c.lineJoin='round';
   (DEATHS[id]||[]).forEach(function(d){if(d.lv!==curLv()||d.seed!==curSeed())return;var x=d.x*k,y=d.z*k;c.lineWidth=3;c.strokeStyle='rgba(0,0,0,.8)';c.beginPath();c.moveTo(x-4,y-4);c.lineTo(x+4,y+4);c.moveTo(x+4,y-4);c.lineTo(x-4,y+4);c.stroke();c.lineWidth=1.8;c.strokeStyle='#5aa8ff';c.stroke()});
   if(coopHere(p)&&!p.b.dead){var x=p.b.x*k,y=p.b.z*k;c.fillStyle='#3d8bff';c.strokeStyle='#e8f4ff';c.lineWidth=1.2;c.beginPath();c.arc(x,y,3.4,0,7);c.fill();c.stroke();c.strokeStyle='#bfe0ff';c.beginPath();c.moveTo(x,y);c.lineTo(x-Math.sin(p.b.yaw)*6,y-Math.cos(p.b.yaw)*6);c.stroke()}});
  c.restore()}
-if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.apply(this,arguments);try{if(NET.on&&MAPON&&mapT>.199){mapTeam();mapPings();mapTasks()}}catch(e){}return r}}
+if(typeof mapTick=='function'){var oMT=mapTick;mapTick=function(dt){var r=oMT.apply(this,arguments);try{if(NET.on&&MAPON&&mapT>.199){if(!(mmMode()&&RND.on))mapTeam();mapPings();mapTasks()}}catch(e){}return r}}
 // ---- every frame
 function coopTick(dt){
  if(inLevel()){buildScrolls();var tm=performance.now()/1000;SCR.forEach(function(q){if(q.got)return;q.m.rotation.y=tm*1.3+q.ph;q.m.position.y=.95+Math.sin(tm*2+q.ph)*.07;if(!P.dead&&!DOWN&&!waiting()&&Math.hypot(q.x-P.x,q.z-P.z)<1.3)grabScroll(q)})}
@@ -7659,6 +7660,7 @@ function mmStart(){if(!NET.isHost()||!mmMode()||!inLevel())return;var ids=mmIds(
  ids.forEach(function(id){var imp=MMH.role[id]=='imp';hostTo(id,{a:'role',role:MMH.role[id],tasks:MMH.tasks[id],imps:imp?imps.map(mmName):[],cd:15000})});
  hostAll({a:'start',n:ids.length,nImp:nImp,total:MMH.total})}
 function mmHost(id,d){var H=MMH;if(!H||!H.on)return;var now=performance.now();
+ if(d.a=='shift'){if(H.meet||H.role[id]!=='imp'||!H.alive[id])return;H.shift=H.shift||{};H.shiftCd=H.shiftCd||{};if(H.shift[id]||now<(H.shiftCd[id]||0))return;H.shift[id]=1;H.shiftCd[id]=now+45000;hostAll({a:'shift',id:id,on:1,ms:15000});setTimeout(function(){mmShiftOff(id)},15000);return}
  if(d.a=='kill'){var to=String(d.to||'');if(H.meet||H.role[id]!=='imp'||!H.alive[id]||!H.alive[to]||H.role[to]=='imp'||now<H.kill[id])return;var a=mmPos(id),b=mmPos(to);if(!a||!b||Math.hypot(a.x-b.x,a.z-b.z)>2.6)return;
   H.alive[to]=0;H.kill[id]=now+25000;H.bodies[to]={x:b.x,z:b.z};hostTo(to,{a:'dead',why:'kill'});hostTo(id,{a:'cd',ms:25000});mmWin();return}
  if(d.a=='report'){if(H.meet||!H.alive[id])return;var p=mmPos(id);if(!p)return;
@@ -7668,7 +7670,7 @@ function mmHost(id,d){var H=MMH;if(!H||!H.on)return;var now=performance.now();
   var need=Object.keys(H.alive).filter(function(k){return H.alive[k]}).length,n=Object.keys(M2.votes).length;hostAll({a:'voted',n:n,need:need});if(n>=need)mmTally();return}
  if(d.a=='task'){var k=String(d.k||'');if(H.role[id]!=='crew'||!H.alive[id]||H.tasks[id].indexOf(k)<0||H.done[id][k])return;var st=STN.find(function(q){return q.k===k}),pp=mmPos(id);if(!st||!pp||Math.hypot(pp.x-st.x,pp.z-st.z)>2.6)return;
   H.done[id][k]=1;H.prog++;hostAll({a:'prog',done:H.prog,total:H.total});mmWin();return}}
-function mmMeet(by,body){var H=MMH;H.bodies={};var al=Object.keys(H.alive).filter(function(k){return H.alive[k]});H.meet={votes:{},ends:performance.now()+40000};
+function mmMeet(by,body){var H=MMH;Object.keys(H.shift||{}).forEach(mmShiftOff);H.bodies={};var al=Object.keys(H.alive).filter(function(k){return H.alive[k]});H.meet={votes:{},ends:performance.now()+40000};
  hostAll({a:'meet',by:by,body:body,alive:al.map(function(k){return {id:k,name:mmName(k)}}),secs:40})}
 function mmTally(){var H=MMH,M2=H.meet;if(!M2)return;H.meet=null;var c={};Object.keys(M2.votes).forEach(function(k){var f=M2.votes[k];c[f]=(c[f]|0)+1});
  var best=null,bn=0,tie=false;Object.keys(c).forEach(function(f){if(c[f]>bn){bn=c[f];best=f;tie=false}else if(c[f]===bn)tie=true});
@@ -7678,16 +7680,17 @@ function mmTally(){var H=MMH,M2=H.meet;if(!M2)return;H.meet=null;var c={};Object
  res.left=Object.keys(H.role).filter(function(k){return H.role[k]=='imp'&&H.alive[k]}).length;hostAll(res);setTimeout(mmWin,4500)}
 function mmWin(){var H=MMH;if(!H||!H.on)return;var ia=0,ca=0;Object.keys(H.role).forEach(function(k){if(!H.alive[k])return;if(H.role[k]=='imp')ia++;else ca++});
  var side=null;if(H.total&&H.prog>=H.total)side='crew';else if(ia===0)side='crew';else if(ia>=ca)side='imp';
- if(!side)return;H.on=false;H.meet=null;hostAll({a:'win',side:side,imps:Object.keys(H.role).filter(function(k){return H.role[k]=='imp'}).map(mmName)})}
+ if(!side)return;Object.keys(H.shift||{}).forEach(mmShiftOff);H.on=false;H.meet=null;hostAll({a:'win',side:side,imps:Object.keys(H.role).filter(function(k){return H.role[k]=='imp'}).map(mmName)})}
 // ---- every player (host included) reacts to the referee
 function clearDown(){if(!DOWN)return;var d=DOWN;DOWN=null;SPEC.style.display='none';P.dead=false;P.x=d.x;P.z=d.z;P.para=0;P.vx=P.vz=0;try{P.san=100;P.st=100}catch(e){}try{document.getElementById('red').style.opacity=0}catch(e){}}
 function mmRecv(m){var now=performance.now();
- if(m.a=='reset'){clearDown();ME={role:null,tasks:[],done:{},alive:true,imps:[],killAt:0,emUsed:false};RND={on:false,prog:0,total:0,meet:null,seen:{}};closeMeet();return}
+ if(m.a=='reset'){Object.keys(NET.players).forEach(function(k){NET.players[k].shift=0});clearDown();ME={role:null,tasks:[],done:{},alive:true,imps:[],killAt:0,emUsed:false};RND={on:false,prog:0,total:0,meet:null,seen:{}};closeMeet();return}
  if(m.a=='role'){ME.role=m.role=='imp'?'imp':'crew';ME.tasks=(m.tasks||[]).slice(0,6).map(String);ME.done={};ME.alive=true;ME.imps=(m.imps||[]).map(cleanName);ME.killAt=now+(m.cd|0);
   card(ME.role=='imp'?'<div style="color:#ff4a4a;font-size:34px">🔪 YOU ARE THE SKIN-STEALER</div><div>Strike the crew without getting caught: walk up to someone and press <b>F</b> (25 s cooldown).<br>Do fake tasks to blend in. Win when there are as many of you as crew left.</div>'+(ME.imps.length>1?'<div>Your partner: '+e2(ME.imps.filter(function(n){return n!==myName()}).join(', '))+'</div>':'')
    :'<div style="color:#7fd0ff;font-size:34px">🧑‍🔧 YOU ARE CREW</div><div>One of you is the <b style="color:#ff6a6a">Skin-Stealer</b>. Finish your 3 tasks at the glowing terminals (hold <b>F</b>), report bodies (<b>F</b>) and vote them out.</div>',6);return}
  if(m.a=='start'){RND.on=true;RND.prog=0;RND.total=m.total|0;RND.seen={};chime(true);return}
  if(m.a=='cd'){ME.killAt=now+(m.ms|0);return}
+ if(m.a=='shift'){var sid=String(m.id||'');if(sid===myKey()){ME.shiftOn=m.on?now+(m.ms|0):0;if(m.on){ME.shiftCd=now+45000;say('🧟 You are a MONSTER for 15 s. Nobody can see your name.',3)}else say('You look like yourself again.',2)}else{var sp=NET.players[sid];if(sp){sp.shift=m.on?now+(m.ms|0):0;if(m.on&&coopHere(sp)&&typeof AC!='undefined'&&AC)try{tone({t:'sawtooth',f:70,f2:45,d:1.2,v:.35,out:P3(sp.b.x,sp.b.z,1.6,false)})}catch(e){}}}return}
  if(m.a=='dead'){ME.alive=false;if(!DOWN)goDown();say(m.why=='eject'?'You were voted out. You can still watch the others.':'🔪 You were killed by the Skin-Stealer! You can still watch the others.',6);return}
  if(m.a=='prog'){RND.prog=m.done|0;RND.total=m.total|0;return}
  if(m.a=='meet'){RND.seen={};openMeet(m);return}
@@ -7727,9 +7730,10 @@ addEventListener('keydown',function(e){if(e.code!='KeyF'||e.repeat||!NET.on||!mm
  var st=myStation(1.7);if(st&&!TK){hit();TK={q:st,t:0,t0:performance.now()};return}},true);
 function mmTick(dt){var on=NET.on&&mmMode()&&inLevel();
  cardT-=dt;if(cardT<=0)CARD.style.display='none';
- if(!on){MMHUD.style.display='none';MMP.style.display='none';MMB.style.display='none';if(MEET.style.display!='none'&&!RND.meet)MEET.style.display='none';return}
+ if(!on){MMHUD.style.display='none';MMP.style.display='none';MMB.style.display='none';SHV.style.display='none';mmBtn();if(MEET.style.display!='none'&&!RND.meet)MEET.style.display='none';return}
  buildStations();
  // the monster is switched off in Murder Mystery: the Skin-Stealer is the danger (the host parks it far away)
+ try{GR.on=false;GR.stun=Math.max(GR.stun||0,1)}catch(e){}
  try{if(NET.isHost()){M.stun=Math.max(M.stun||0,5);if(!mmTick.parked){mmTick.parked=1;var far=open[open.length-1];M.x=cc(far[0]);M.z=cc(far[1])}}}catch(e){}
  if(RND.meet){P.para=Math.max(P.para||0,.3);if((mmTick.n=(mmTick.n|0)+1)%10==0)drawMeet();if(NET.isHost()&&MMH&&MMH.meet&&performance.now()>MMH.meet.ends)mmTally()}
  // the task you're doing
@@ -7741,8 +7745,8 @@ function mmTick(dt){var on=NET.on&&mmMode()&&inLevel();
  if(!RND.on){h+='<br><span style="font-weight:normal">'+(nP<3?'Needs 3–4 players in the level ('+nP+' now). Invite friends with the room code.':NET.isHost()?nP+' players ready. Press ▶ START ROUND (Esc to free the mouse). The elevator doors open when it starts.':'Waiting for the host to start the round ('+nP+' players).')+'</span>'}
  else{var bar='',pc=RND.total?RND.prog/RND.total:0;for(var i=0;i<12;i++)bar+=i<Math.round(pc*12)?'█':'░';
   var mine=ME.tasks.filter(function(k){return ME.done[k]}).length;
-  h+=' · <span style="color:'+(ME.role=='imp'?'#ff6a6a':'#7fd0ff')+'">'+(ME.role=='imp'?'SKIN-STEALER':'CREW')+'</span>'+(ME.alive?'':' · <span style="color:#aaa">OUT</span>')+'<br><span style="font-weight:normal">Crew tasks '+bar+' '+Math.round(pc*100)+'% · your tasks '+mine+'/'+ME.tasks.length+(ME.role=='imp'?' (fake)':'')+(ME.role=='imp'&&ME.alive?' · strike '+(performance.now()>=ME.killAt?'<b style="color:#ff6a6a">READY</b>':Math.ceil((ME.killAt-performance.now())/1000)+'s'):'')+'</span>'}
- MMHUD.innerHTML=h;MMHUD.style.display='block';
+  h+=' · <span style="color:'+(ME.role=='imp'?'#ff6a6a':'#7fd0ff')+'">'+(ME.role=='imp'?'SKIN-STEALER':'CREW')+'</span>'+(ME.alive?'':' · <span style="color:#aaa">OUT</span>')+'<br><span style="font-weight:normal">Crew tasks '+bar+' '+Math.round(pc*100)+'% · your tasks '+mine+'/'+ME.tasks.length+(ME.role=='imp'?' (fake)':'')+(ME.role=='imp'&&ME.alive?' · strike '+(performance.now()>=ME.killAt?'<b style="color:#ff6a6a">READY</b>':Math.ceil((ME.killAt-performance.now())/1000)+'s')+' · 🧟 '+(ME.shiftOn>performance.now()?'<b style="color:#ff6a6a">MONSTER '+Math.ceil((ME.shiftOn-performance.now())/1000)+'s</b>':performance.now()>=(ME.shiftCd||0)?'right-click: monster form':Math.ceil((ME.shiftCd-performance.now())/1000)+'s'):'')+'</span>'}
+ MMHUD.innerHTML=h;MMHUD.style.display='block';SHV.style.display=ME.shiftOn>performance.now()&&RND.on?'block':'none';mmBtn();
  MMB.style.display=NET.isHost()&&!RND.on&&nP>=3&&!(MMH&&MMH.on)?'block':'none';
  // prompts
  var pr='';if(RND.on&&ME.alive&&!RND.meet&&!P.dead){
@@ -7752,12 +7756,26 @@ function mmTick(dt){var on=NET.on&&mmMode()&&inLevel();
   else if(EMB&&Math.hypot(EMB.x-P.x,EMB.z-P.z)<1.8)pr=ME.emUsed?'You already used your emergency meeting.':'🚨 Press <span style="color:#ffe07a">F</span> to call an EMERGENCY MEETING';
   else{var st=myStation(1.7);if(st)pr='🔧 Press <span style="color:#ffe07a">F</span>: '+st.n}}
  MMP.innerHTML=pr;MMP.style.display=pr?'block':'none'}
+
+// ---- the Skin-Stealer can TURN INTO A MONSTER for 15 s (right-click / phone: MONSTER): its body and name tag are hidden, its flashlight goes out
+function myKey(){return NET.isHost()?'host':NET.myId}
+function mmShiftReq(){if(!NET.on||!mmMode()||!RND.on||ME.role!=='imp'||!ME.alive||RND.meet||P.dead)return;var now=performance.now();if(ME.shiftOn>now)return;if(now<(ME.shiftCd||0)){say('Monster form not ready ('+Math.ceil((ME.shiftCd-now)/1000)+' s).',1.5);return}ME.shiftCd=now+1500;mmAct('shift',{})}
+function mmShiftOff(id){var H=MMH;if(!H||!H.shift||!H.shift[id])return;delete H.shift[id];hostAll({a:'shift',id:id,on:0})}
+var MONTPL=null;function monModel(){try{var m=MART.boiled(STM,GFX.monCore);m.scale.multiplyScalar(.82);return m}catch(e){var G=new T.Group(),b=new T.Mesh(new T.CylinderGeometry(.25,.4,2.1,10),new T.MeshLambertMaterial({color:0x3a0e08}));b.position.y=1.05;G.add(b);return G}}
+function shiftPose(p,g){var on=p.shift>performance.now();
+ if(on){if(!p.monG){p.monG=monModel();p.hid=[];g.children.forEach(function(c){if(c.visible){c.visible=false;p.hid.push(c)}});g.add(p.monG)}
+  if(p.tag)p.tag.visible=false;if(p.bub)p.bub.visible=false;if(p.light)p.light.intensity=0;return}
+ if(p.monG){g.remove(p.monG);p.monG=null;(p.hid||[]).forEach(function(c){c.visible=true});p.hid=null}}
+addEventListener('mousedown',function(e){if(e.button!==2||!NET.on||!mmMode()||!document.pointerLockElement)return;e.preventDefault();mmShiftReq()},true);
+addEventListener('contextmenu',function(e){if(NET.on&&mmMode()&&inLevel())e.preventDefault()},true);
+var SHV=document.createElement('div');SHV.style.cssText='position:fixed;inset:0;z-index:5;pointer-events:none;display:none;box-shadow:inset 0 0 160px 60px rgba(120,0,0,.75)';document.body.appendChild(SHV);
+function mmBtn(){try{var acts=document.getElementById('tc-acts');if(!acts)return;var b=document.getElementById('b-MS');if(!b){b=document.createElement('div');b.className='tb';b.id='b-MS';b.innerHTML='<i>🧟</i><b>MONSTER</b>';acts.appendChild(b);b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();mmShiftReq()});var st=document.createElement('style');st.textContent='#b-MS{right:394px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}b.style.display=NET.on&&mmMode()&&RND.on&&ME.role=='imp'&&ME.alive?'':'none'}catch(e){}}
 function mapTasks(){if(!mmMode()||!RND.on)return;var c=mc,k=4/S;STN.forEach(function(q){if(ME.tasks.indexOf(q.k)<0||ME.done[q.k])return;c.fillStyle='#ffd23a';c.fillRect(q.x*k-3,q.z*k-3,6,6)});if(EMB){c.fillStyle='#ff3a3a';c.beginPath();c.arc(EMB.x*k,EMB.z*k,3,0,7);c.fill()}}
 // the host picks the game mode in the co-op menu (Murder Mystery always plays on Level 0)
 function setMode(m){if(!NET.isHost()||!ST)return;m=m=='mm'?'mm':'coop';if(ST.mode===m)return;ST.mode=m;saveST();bcast({t:'mode',m:m});MMH=null;mmRecv({a:'reset'});
  toast(m=='mm'?'🔪 Game mode: MURDER MYSTERY':'🧭 Game mode: CO-OP ESCAPE');
  if(m=='mm'&&curLv()!==0){var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=0;ST.seed=seed;ST.picks=[];ST.auto=1;saveST();bcast({t:'go',n:0,seed:seed});NET.reloading=true;try{SV.lv=0;save()}catch(e){}setTimeout(function(){location.reload()},700)}}
-NET.mm=function(){return {exit:(typeof CAR!='undefined'&&CAR)?toWorld(0,-.8):null,stations:STN.map(function(q){return {k:q.k,x:q.x,z:q.z}}),emb:EMB?{x:EMB.x,z:EMB.z}:null,me:{role:ME.role,tasks:ME.tasks,done:ME.done,alive:ME.alive},round:{on:RND.on,prog:RND.prog,total:RND.total,meet:!!RND.meet}}};
+NET.mmMode=function(){return NET.on&&mmMode()};NET.mmShift=function(){mmShiftReq()};NET.mm=function(){return {exit:(typeof CAR!='undefined'&&CAR)?toWorld(0,-.8):null,stations:STN.map(function(q){return {k:q.k,x:q.x,z:q.z}}),emb:EMB?{x:EMB.x,z:EMB.z}:null,me:{role:ME.role,tasks:ME.tasks,done:ME.done,alive:ME.alive},round:{on:RND.on,prog:RND.prog,total:RND.total,meet:!!RND.meet}}};
 NET.menu=menu;NET.startHost=startHost;NET.joinGame=joinGame;NET.down=function(){return DOWN};NET.revive=reviveMe;NET.scrolls=function(){return SCR};
 })();
 </script>
@@ -8280,6 +8298,7 @@ var last=performance.now(),hudT=0;
  shake=Math.max(0,shake-dt*1.4);
  hudT-=dt;if(hudT<=0){hudT=.25;flareHUD();flareBtn()}
  if(!playing()){return}
+ var MMON=!!(window.NET&&NET.mmMode&&NET.mmMode());if(MMON){if(FO.g)FO.g.visible=false;FO.on=false;MQ.forEach(function(m){m.g.visible=false});try{flareTick(dt)}catch(e){}return}else MQ.forEach(function(m){m.g.visible=true});
  try{trT-=dt;if(trT<=0){trT=.5;var l=TR[TR.length-1];if(!l||Math.hypot(l[0]-P.x,l[1]-P.z)>.9){TR.push([P.x,P.z]);if(TR.length>120)TR.shift()}}}catch(e){}
  try{if(!P.hide)followerTick(dt)}catch(e){console.warn('follower',e)}
  try{mqTick(dt)}catch(e){console.warn('mannequin',e)}

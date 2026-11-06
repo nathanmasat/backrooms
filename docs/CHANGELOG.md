@@ -1,5 +1,10 @@
 # Changelog
 
+## Murder Mystery: no monsters, and the Skin-Stealer's monster form
+- **No monsters at all in Murder Mystery:** the Boiled One, the ghost, the grinning thing in blackouts, the Follower, the mannequins and the locker scares are all switched off. The only danger is the Skin-Stealer.
+- **Monster form:** the Skin-Stealer can **right-click** (phone: **🧟 MONSTER**) to turn into a monster for **15 seconds** (45 s cooldown, the HUD shows when it's ready). In monster form everyone else sees a monster instead of their suit, with **no name tag** and no flashlight. It can still strike with F. Meetings and the end of a round turn it back.
+- **No give-aways:** during a round the player list shows no distances and doesn't say who is down (bodies have to be found), and teammates' dots and trails are hidden on the map.
+
 ## Co-op game modes + MURDER MYSTERY
 - **Pick a game mode:** in the co-op menu the host chooses **🧭 CO-OP ESCAPE** (the normal game) or **🔪 MURDER MYSTERY**. Everyone in the room plays the mode the host picks, and friends who join later get it too.
 - **Murder Mystery (3–4 players, like Among Us):** it plays on Level 0 with the monster switched off. In the game the host presses **▶ START ROUND**, and the elevator doors open.
