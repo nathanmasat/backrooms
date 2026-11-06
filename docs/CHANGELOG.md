@@ -1,5 +1,16 @@
 # Changelog
 
+## Co-op game modes + MURDER MYSTERY
+- **Pick a game mode:** in the co-op menu the host chooses **🧭 CO-OP ESCAPE** (the normal game) or **🔪 MURDER MYSTERY**. Everyone in the room plays the mode the host picks, and friends who join later get it too.
+- **Murder Mystery (3–4 players, like Among Us):** it plays on Level 0 with the monster switched off. In the game the host presses **▶ START ROUND**, and the elevator doors open.
+  - One player is secretly the **SKIN-STEALER**. Each player only sees their own role.
+  - **Crew:** finish your 3 tasks at the glowing green terminals (yellow **!** above them and on the map, hold **F** for 2.5 s). Report a body with **F**, or press the **red EMERGENCY button** near the start (once per round).
+  - **Skin-Stealer:** walk up to someone and press **F** to strike (25 s cooldown, 15 s at the start and after meetings). Do fake tasks to blend in.
+  - **Meetings:** everyone gets a voting screen for 40 s (talk on voice chat with Y). Vote for a player or SKIP. The player with the most votes is voted out, and everyone sees whether they WERE or were NOT the Skin-Stealer.
+  - **Crew wins** when all crew tasks are done or the Skin-Stealer is voted out. **The Skin-Stealer wins** when there are as many of them as crew left. Out players watch the others. Then the host can start another round.
+  - **No cheating:** the host's game is the referee. It deals the roles (players are only told their own), and checks every strike, report, vote and task (distance, cooldown, who is still in).
+  - No Revival Scrolls and no elevator during Murder Mystery.
+
 ## Fun with friends + no tracker bar
 - **Emote & quick-chat wheel (U, phone: EMOTE):** 1 Wave, 2 Dance, 3 Point, 4 Thumbs up, 5 "Help!", 6 "Follow me!", 7 "Monster here!", 8 "Found something!". Your friends see your hazmat suit do it, with a speech bubble over your head. The phrases also pop up on their screen with how far away you are. Only these fixed emotes and phrases can be sent, no free typing.
 - **High five:** wave at a friend standing right next to you while they wave back (within 3.5 s), and you both get a HIGH FIVE and +10 sanity.
