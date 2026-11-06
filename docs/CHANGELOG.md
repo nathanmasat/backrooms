@@ -1,5 +1,16 @@
 # Changelog
 
+## Murder Mystery: bots
+- **Bots fill empty spots:** in the co-op menu, Murder Mystery now has **🤖 BOTS: 0 / 1 / 2 / 3** (2 by default; 4 players in all). With 2 bots you can even play on your own. Bots show up for everyone like normal players, in a coloured hazmat suit, named "Bot …".
+- **What bots do:**
+  - walk the halls and do their tasks (each one goes for its nearest unfinished task and they spread out);
+  - spot bodies, walk over and **report** them;
+  - **vote** in meetings a few seconds in. A crew bot that **saw** someone strike votes for them, otherwise it follows the others, picks someone or skips.
+- **A bot can be the Skin-Stealer:** it waits a while, then hunts someone who is **alone** (no one else in sight), sometimes in **monster form**, and walks away after striking. It does fake tasks to blend in.
+- If a real player joins and the room is full, a bot leaves to make space. Bots never change in the middle of a round, and they don't vote to GIVE UP. Switching back to CO-OP ESCAPE removes them.
+- The host's game runs the bots, and they go through the same checks as real players (distance, cooldown, who is still in).
+- Fix: during a Murder Mystery round there's no more "X is DOWN!" message (it gave strikes away).
+
 ## Murder Mystery: no monsters, and the Skin-Stealer's monster form
 - **No monsters at all in Murder Mystery:** the Boiled One, the ghost, the grinning thing in blackouts, the Follower, the mannequins and the locker scares are all switched off. The only danger is the Skin-Stealer.
 - **Monster form:** the Skin-Stealer can **right-click** (phone: **🧟 MONSTER**) to turn into a monster for **15 seconds** (45 s cooldown, the HUD shows when it's ready). In monster form everyone else sees a monster instead of their suit, with **no name tag** and no flashlight. It can still strike with F. Meetings and the end of a round turn it back.

@@ -7409,7 +7409,7 @@ var BOX=null;
 function menu(){if(BOX){BOX.remove();BOX=null}BOX=document.createElement('div');BOX.id='mpbox';BOX.style.cssText='position:fixed;inset:0;z-index:95;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;font-family:monospace';
  BOX.innerHTML='<div style="background:#0d0c08;border:1px solid #6a5f2a;border-radius:10px;padding:18px 20px;width:min(560px,92vw);max-height:88vh;overflow:auto;color:#e8e0b8;font-size:13px;line-height:1.55" data-in=1></div>';document.body.appendChild(BOX);
  BOX.addEventListener('click',function(e){if(e.target===BOX){BOX.remove();BOX=null;return}var a=e.target.closest('[data-mp]');if(!a)return;var k=a.dataset.mp;
-  if(k.indexOf('mode:')===0)setMode(k.slice(5));if(k=='host')hostNew(false);if(k=='hostpub')hostNew(true);if(k.indexOf('lj:')===0){lobbyStop();joinGame(k.slice(3))}if(k=='pub'&&NET.isHost()&&ST){ST.pub=ST.pub?0:1;saveST();announce();toast(ST.pub?'Your game is now in the public list.':'Your game is private now (code only).')}if(k=='join'){lobbyStop();var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='mic'){VC.on?vcStop():vcStart()}if(k=='prox'){VC.prox=!VC.prox;vcSave()}if(k.indexOf('mute:')===0){var pl=NET.players[k.slice(5)];if(pl){VC.muted[pl.name]=!VC.muted[pl.name];vcSave()}}if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
+  if(k.indexOf('mode:')===0)setMode(k.slice(5));if(k.indexOf('bots:')===0&&NET.isHost()&&ST){ST.bots=Math.max(0,Math.min(3,k.slice(5)|0));saveST();toast('🤖 Bots: '+ST.bots+(RND.on?' (from the next round)':''))}if(k=='host')hostNew(false);if(k=='hostpub')hostNew(true);if(k.indexOf('lj:')===0){lobbyStop();joinGame(k.slice(3))}if(k=='pub'&&NET.isHost()&&ST){ST.pub=ST.pub?0:1;saveST();announce();toast(ST.pub?'Your game is now in the public list.':'Your game is private now (code only).')}if(k=='join'){lobbyStop();var v=BOX.querySelector('#mpcode').value;joinGame(v)}if(k=='leave')leave();if(k=='mic'){VC.on?vcStop():vcStart()}if(k=='prox'){VC.prox=!VC.prox;vcSave()}if(k.indexOf('mute:')===0){var pl=NET.players[k.slice(5)];if(pl){VC.muted[pl.name]=!VC.muted[pl.name];vcSave()}}if(k=='close'){BOX.remove();BOX=null;return}if(k=='copy'){try{navigator.clipboard.writeText(NET.code);toast('Room code copied.')}catch(x){}}
   if(k=='turn'){var cur2=localStorage.getItem('brmpice')||'';var v3=prompt('TURN servers for direct connections and voice chat, as a JSON list, e.g. [{"urls":"turn:your.server:3478","username":"name","credential":"password"}]\nUse a TURN service you signed up for. Leave empty to remove.',cur2);if(v3!==null){try{if(v3.trim()){var a3=JSON.parse(v3);if(!Array.isArray(a3))throw 0;localStorage.setItem('brmpice',JSON.stringify(a3.slice(0,6)))}else localStorage.removeItem('brmpice');toast('TURN setting saved.')}catch(x){toast('That was not a valid JSON list.')}}}
   if(k=='srv'){var cur=localStorage.getItem('brmpsrv')||'';var v2=prompt('Custom PeerJS server as JSON, e.g. {"host":"my.server.com","port":443,"path":"/","secure":true}\nLeave empty to use the free public server.',cur);if(v2!==null){try{if(v2.trim()){var o=JSON.parse(v2);if(!o.host)throw 0;localStorage.setItem('brmpsrv',JSON.stringify({host:String(o.host),port:+o.port||443,path:String(o.path||'/'),secure:o.secure!==false}))}else localStorage.removeItem('brmpsrv');toast('Server setting saved.')}catch(x){toast('That was not valid JSON.')}}}
   render()});
@@ -7421,7 +7421,7 @@ function render(){if(!BOX)return;var IN=BOX.querySelector('[data-in]');if(!IN)re
   if(NET.isHost()){var ru=NET.relay?Object.keys(NET.relay.up).length:0,dok=!!(NET.peer&&NET.peer.open);h+='<div style="font-size:12px;opacity:.85">Ways in: '+(dok?'<span style="color:#7f7">direct ✓</span>':'<span style="color:#fc6">direct ✗ (matchmaking server not reachable)</span>')+' · '+(ru?'<span style="color:#7f7">relay ✓ ('+ru+'/'+BROKERS.length+' servers)</span>':'<span style="color:#f88">relay connecting…</span>')+'</div>'+(!dok&&!ru?'<div style="font-size:12px;color:#f88">Your network is blocking both ways in. Try another network (for example a phone hotspot), or check that the game is not blocked by a firewall.</div>':'')}
   else h+='<div style="font-size:12px;opacity:.85">Connection: '+(NET.via==='relay'?'relay through '+e2(brokerName(NET.relayUrl||''))+' (encrypted; voice chat needs a direct connection)':NET.via==='direct'?'direct (peer-to-peer)':'trying direct first, then the relay…')+'</div>';
   if(NET.isHost())h+='<div style="text-align:center;margin:10px 0">Room code<br><span style="font:bold 34px monospace;letter-spacing:.25em;color:#bff3ff">'+e2(NET.code)+'</span><br><span data-mp="copy" style="cursor:pointer;text-decoration:underline;font-size:12px">copy code</span></div><div data-mp="pub" style="'+bt+';font-size:12px;'+(ST&&ST.pub?'color:#7fffb0;border-color:#3a7a5a':'')+'">'+(ST&&ST.pub?'🌐 PUBLIC — listed in OPEN GAMES (tap to make it private)':'🔒 PRIVATE — code only (tap to list it in OPEN GAMES)')+'</div><div style="opacity:.8">Send this code to your friends. They can join any time, even mid-level. Every co-op game starts on the host\'s last level (where they left off), and each elevator takes the group to a random level. Your solo save is not changed.</div>';
-  h+='<div style="margin-top:10px;border-top:1px solid #3a3420;padding-top:8px"><b>🎮 GAME MODE</b>'+(NET.isHost()?' <span style="opacity:.7;font-size:11px">(you pick, everyone plays it)</span>':'')+'<div style="display:flex;gap:8px">'+[['coop','🧭 CO-OP ESCAPE','find the keycards together and escape'],['mm','🔪 MURDER MYSTERY','one of you is the Skin-Stealer (3–4 players)']].map(function(o){var on=(ST&&ST.mode=='mm'?'mm':'coop')===o[0];return '<div '+(NET.isHost()?'data-mp="mode:'+o[0]+'"':'')+' style="'+bt+';flex:1;font-size:12px;'+(on?'color:#7fffb0;border-color:#3a7a5a;background:#12201a':'opacity:.8')+'">'+o[1]+'<br><span style="font-weight:normal;font-size:10.5px;opacity:.8">'+o[2]+'</span></div>'}).join('')+'</div>'+(ST&&ST.mode=='mm'?'<div style="font-size:11.5px;opacity:.8">Murder Mystery plays on Level 0 with the monster switched off. In the game the host presses ▶ START ROUND. Crew: hold F at your glowing terminals, F to report a body or press the red emergency button. Skin-Stealer: F next to someone to strike.</div>':'')+'</div>';
+  h+='<div style="margin-top:10px;border-top:1px solid #3a3420;padding-top:8px"><b>🎮 GAME MODE</b>'+(NET.isHost()?' <span style="opacity:.7;font-size:11px">(you pick, everyone plays it)</span>':'')+'<div style="display:flex;gap:8px">'+[['coop','🧭 CO-OP ESCAPE','find the keycards together and escape'],['mm','🔪 MURDER MYSTERY','one of you is the Skin-Stealer (3–4 players)']].map(function(o){var on=(ST&&ST.mode=='mm'?'mm':'coop')===o[0];return '<div '+(NET.isHost()?'data-mp="mode:'+o[0]+'"':'')+' style="'+bt+';flex:1;font-size:12px;'+(on?'color:#7fffb0;border-color:#3a7a5a;background:#12201a':'opacity:.8')+'">'+o[1]+'<br><span style="font-weight:normal;font-size:10.5px;opacity:.8">'+o[2]+'</span></div>'}).join('')+'</div>'+(ST&&ST.mode=='mm'?'<div style="font-size:11.5px;opacity:.8">Murder Mystery plays on Level 0 with the monster switched off. In the game the host presses ▶ START ROUND. Crew: hold F at your glowing terminals, F to report a body or press the red emergency button. Skin-Stealer: F next to someone to strike.</div>':'')+(ST&&ST.mode=='mm'?'<div style="margin-top:6px"><b>🤖 BOTS</b> <span style="opacity:.7;font-size:11px">fill empty spots with computer players (max 4 players in all)</span><div style="display:flex;gap:6px">'+[0,1,2,3].map(function(n){var cur=ST.bots==null?2:ST.bots|0,on=cur===n;return '<div '+(NET.isHost()?'data-mp="bots:'+n+'"':'')+' style="'+bt+';flex:1;margin:4px 0;padding:6px;'+(on?'color:#7fffb0;border-color:#3a7a5a;background:#12201a':'opacity:.75')+'">'+n+'</div>'}).join('')+'</div></div>':'')+'</div>';
   h+='<div style="margin-top:10px"><b>Players ('+NET.count()+'/4)</b><br>• '+e2(myName())+(NET.isHost()?' (host)':'')+' — you';Object.keys(NET.players).forEach(function(k){var nm=NET.players[k].name;h+='<br>• '+e2(nm)+(k==='host'?' (host)':'')+(NET.players[k].b&&NET.players[k].b.mic?' 🎤':'')+' <span data-mp="mute:'+e2(k)+'" style="cursor:pointer;text-decoration:underline;font-size:11px;opacity:.85">'+(VC.muted[nm]?'unmute':'mute')+'</span>'});h+='</div>';
   h+='<div style="margin-top:10px;border-top:1px solid #3a3420;padding-top:8px"><b>🎤 Voice chat</b><div data-mp="mic" style="'+bt+';'+(VC.on?'color:#7f7;border-color:#3a7a3a':'')+'">'+(VC.on?'🎤 MIC ON — press to turn it off':'🎤 TURN ON YOUR MIC')+'</div><div style="opacity:.8;font-size:12px">In the game press <b>Y</b> to turn your mic on or off. <span data-mp="prox" style="cursor:pointer;text-decoration:underline">'+(VC.prox?'Proximity voice: ON (friends far away sound quieter)':'Proximity voice: OFF (everyone at full volume)')+'</span></div></div>';
   h+='<div style="opacity:.75;margin-top:8px">Press PLAY to enter the level. '+(NET.isHost()?'':'You will play on the host\'s level and seed. ')+'Each of you keeps your own save, cash and suits.</div><div data-mp="close" style="'+bt+'">CLOSE (stay connected)</div><div data-mp="leave" style="'+bt+';color:#f88;border-color:#733">LEAVE MULTIPLAYER</div>'}
@@ -7466,7 +7466,7 @@ function voteGU(v){v=v?1:0;GU.me=v;var nm=myName();
  if(NET.isHost())bcast({t:'gu',id:'host',v:v,name:nm});else send({t:'gu',v:v});
  if(v)note('You voted to GIVE UP. The run ends when everyone agrees.',4);else note('You took back your give-up vote.',3);checkGU()}
 function gotGU(id,v,name){if(!id)return;var was=!!GU[id];GU[id]=v?1:0;if(v&&!was)note(cleanName(name||'A teammate')+' voted to GIVE UP. '+(isTouch()?'Tap GIVE UP':'Press G')+' to agree.',4);checkGU()}
-function guCount(){var team=teamHere(),n=team.length+1,y=(GU.me?1:0)+team.filter(function(p){return GU[p.id]}).length;return {y:y,n:n}}
+function guCount(){var team=teamHere().filter(function(p){return !p.bot}),n=team.length+1,y=(GU.me?1:0)+team.filter(function(p){return GU[p.id]}).length;return {y:y,n:n}}
 function checkGU(){if(GUdone||!NET.on||!inLevel())return;var c=guCount();if(c.y>=c.n&&GU.me){GUdone=true;note('Everyone gave up. The run is over.',4);setTimeout(function(){try{if(DOWN)reallyDie();else if(!P.dead)die()}catch(e){}},1200)}}
 var GUB=document.createElement('button');GUB.id='mpgu';GUB.style.cssText='position:fixed;right:16px;top:64px;z-index:9;display:none;font:bold 13px monospace;padding:8px 12px;border-radius:8px;border:1px solid #f88;background:#2a0a0acc;color:#fcc;cursor:pointer';document.body.appendChild(GUB);
 GUB.addEventListener('pointerdown',function(e){e.stopPropagation()},true);
@@ -7548,8 +7548,8 @@ function coopTick(dt){
  trailT-=dt;Object.keys(NET.players).forEach(function(id){var p=NET.players[id];if(!coopHere(p))return;var b=p.b,tr=TRAIL[id];
   if(!tr||tr.lv!==b.lv||tr.seed!==b.seed)tr=TRAIL[id]={lv:b.lv,seed:b.seed,pts:[]};
   if(trailT<=0&&!b.dead){var l=tr.pts[tr.pts.length-1];if(!l||Math.hypot(l[0]-b.x,l[1]-b.z)>1.2){tr.pts.push([b.x,b.z]);if(tr.pts.length>900)tr.pts.shift()}}
-  if(b.dead&&!p.wasDown){p.wasDown=1;(DEATHS[id]=DEATHS[id]||[]).push({x:b.x,z:b.z,lv:b.lv,seed:b.seed});if(DEATHS[id].length>12)DEATHS[id].shift();note(p.name+' is DOWN! Bring them a 📜 Revival Scroll.',4)}
-  else if(!b.dead&&p.wasDown){p.wasDown=0;note(p.name+' is back on their feet!',3)}});
+  if(b.dead&&!p.wasDown){p.wasDown=1;(DEATHS[id]=DEATHS[id]||[]).push({x:b.x,z:b.z,lv:b.lv,seed:b.seed});if(DEATHS[id].length>12)DEATHS[id].shift();if(!(mmMode()&&RND.on))note(p.name+' is DOWN! Bring them a 📜 Revival Scroll.',4)}
+  else if(!b.dead&&p.wasDown){p.wasDown=0;if(!(mmMode()&&RND.on))note(p.name+' is back on their feet!',3)}});
  if(trailT<=0)trailT=.5;
  // revive prompt
  REVT=nearDown();if(REVT){REVP.style.display='block';REVP.innerHTML=ST&&ST.scrolls>0?'📜 '+(isTouch()?'Tap <span style="color:#ffe07a">ACT</span>':'Press <span style="color:#ffe07a">F</span>')+' to revive <span style="color:#7fb4ff">'+e2(REVT.name)+'</span> <span style="opacity:.7">(Revival Scrolls: '+ST.scrolls+')</span>':'<span style="color:#7fb4ff">'+e2(REVT.name)+'</span> is down. You need a 📜 Revival Scroll to bring them back.'}else REVP.style.display='none';
@@ -7655,6 +7655,7 @@ function mmStart(){if(!NET.isHost()||!mmMode()||!inLevel())return;var ids=mmIds(
  var sh=ids.slice().sort(function(){return Math.random()-.5}),nImp=ids.length>=6?2:1,imps=sh.slice(0,nImp);
  MMH={on:true,role:{},alive:{},tasks:{},done:{},kill:{},bodies:{},em:{},meet:null,prog:0,total:0};
  hostAll({a:'reset'});
+ Object.keys(BOTS).forEach(function(k){var B=BOTS[k],s0=botStart();B.done={};B.sus={};B.body=null;B.hunt=null;B.task=null;B.wait=0;B.path=[];B.flee=performance.now()+60000+Math.random()*30000;B.idle=Math.random()*5;B.x=s0.x+(Math.random()-.5)*1.4;B.z=s0.z+(Math.random()-.5)*1.4});
  var keys=STN.map(function(q){return q.k});
  ids.forEach(function(id){var imp=imps.indexOf(id)>=0;MMH.role[id]=imp?'imp':'crew';MMH.alive[id]=1;var t=keys.slice().sort(function(){return Math.random()-.5}).slice(0,3);MMH.tasks[id]=t;MMH.done[id]={};MMH.kill[id]=performance.now()+15000;if(!imp)MMH.total+=t.length});
  ids.forEach(function(id){var imp=MMH.role[id]=='imp';hostTo(id,{a:'role',role:MMH.role[id],tasks:MMH.tasks[id],imps:imp?imps.map(mmName):[],cd:15000})});
@@ -7662,7 +7663,7 @@ function mmStart(){if(!NET.isHost()||!mmMode()||!inLevel())return;var ids=mmIds(
 function mmHost(id,d){var H=MMH;if(!H||!H.on)return;var now=performance.now();
  if(d.a=='shift'){if(H.meet||H.role[id]!=='imp'||!H.alive[id])return;H.shift=H.shift||{};H.shiftCd=H.shiftCd||{};if(H.shift[id]||now<(H.shiftCd[id]||0))return;H.shift[id]=1;H.shiftCd[id]=now+45000;hostAll({a:'shift',id:id,on:1,ms:15000});setTimeout(function(){mmShiftOff(id)},15000);return}
  if(d.a=='kill'){var to=String(d.to||'');if(H.meet||H.role[id]!=='imp'||!H.alive[id]||!H.alive[to]||H.role[to]=='imp'||now<H.kill[id])return;var a=mmPos(id),b=mmPos(to);if(!a||!b||Math.hypot(a.x-b.x,a.z-b.z)>2.6)return;
-  H.alive[to]=0;H.kill[id]=now+25000;H.bodies[to]={x:b.x,z:b.z};hostTo(to,{a:'dead',why:'kill'});hostTo(id,{a:'cd',ms:25000});mmWin();return}
+  H.alive[to]=0;try{botWitness(id)}catch(e){}H.kill[id]=now+25000;H.bodies[to]={x:b.x,z:b.z};hostTo(to,{a:'dead',why:'kill'});hostTo(id,{a:'cd',ms:25000});mmWin();return}
  if(d.a=='report'){if(H.meet||!H.alive[id])return;var p=mmPos(id);if(!p)return;
   if(d.em){if(H.em[id]||!EMB||Math.hypot(p.x-EMB.x,p.z-EMB.z)>2.4)return;H.em[id]=1;mmMeet(mmName(id),null);return}
   var bdId=String(d.body||''),body=H.bodies[bdId];if(!body||Math.hypot(p.x-body.x,p.z-body.z)>4)return;mmMeet(mmName(id),mmName(bdId));return}
@@ -7671,7 +7672,7 @@ function mmHost(id,d){var H=MMH;if(!H||!H.on)return;var now=performance.now();
  if(d.a=='task'){var k=String(d.k||'');if(H.role[id]!=='crew'||!H.alive[id]||H.tasks[id].indexOf(k)<0||H.done[id][k])return;var st=STN.find(function(q){return q.k===k}),pp=mmPos(id);if(!st||!pp||Math.hypot(pp.x-st.x,pp.z-st.z)>2.6)return;
   H.done[id][k]=1;H.prog++;hostAll({a:'prog',done:H.prog,total:H.total});mmWin();return}}
 function mmMeet(by,body){var H=MMH;Object.keys(H.shift||{}).forEach(mmShiftOff);H.bodies={};var al=Object.keys(H.alive).filter(function(k){return H.alive[k]});H.meet={votes:{},ends:performance.now()+40000};
- hostAll({a:'meet',by:by,body:body,alive:al.map(function(k){return {id:k,name:mmName(k)}}),secs:40})}
+ hostAll({a:'meet',by:by,body:body,alive:al.map(function(k){return {id:k,name:mmName(k)}}),secs:40});try{botVotes()}catch(e){}}
 function mmTally(){var H=MMH,M2=H.meet;if(!M2)return;H.meet=null;var c={};Object.keys(M2.votes).forEach(function(k){var f=M2.votes[k];c[f]=(c[f]|0)+1});
  var best=null,bn=0,tie=false;Object.keys(c).forEach(function(f){if(c[f]>bn){bn=c[f];best=f;tie=false}else if(c[f]===bn)tie=true});
  var ej=(!best||tie||best==='skip')?null:best;var res={a:'eject',none:!ej};
@@ -7731,7 +7732,7 @@ addEventListener('keydown',function(e){if(e.code!='KeyF'||e.repeat||!NET.on||!mm
 function mmTick(dt){var on=NET.on&&mmMode()&&inLevel();
  cardT-=dt;if(cardT<=0)CARD.style.display='none';
  if(!on){MMHUD.style.display='none';MMP.style.display='none';MMB.style.display='none';SHV.style.display='none';mmBtn();if(MEET.style.display!='none'&&!RND.meet)MEET.style.display='none';return}
- buildStations();
+ buildStations();try{botTick(dt)}catch(e){console.warn('bots',e)}
  // the monster is switched off in Murder Mystery: the Skin-Stealer is the danger (the host parks it far away)
  try{GR.on=false;GR.stun=Math.max(GR.stun||0,1)}catch(e){}
  try{if(NET.isHost()){M.stun=Math.max(M.stun||0,5);if(!mmTick.parked){mmTick.parked=1;var far=open[open.length-1];M.x=cc(far[0]);M.z=cc(far[1])}}}catch(e){}
@@ -7770,9 +7771,66 @@ addEventListener('mousedown',function(e){if(e.button!==2||!NET.on||!mmMode()||!d
 addEventListener('contextmenu',function(e){if(NET.on&&mmMode()&&inLevel())e.preventDefault()},true);
 var SHV=document.createElement('div');SHV.style.cssText='position:fixed;inset:0;z-index:5;pointer-events:none;display:none;box-shadow:inset 0 0 160px 60px rgba(120,0,0,.75)';document.body.appendChild(SHV);
 function mmBtn(){try{var acts=document.getElementById('tc-acts');if(!acts)return;var b=document.getElementById('b-MS');if(!b){b=document.createElement('div');b.className='tb';b.id='b-MS';b.innerHTML='<i>🧟</i><b>MONSTER</b>';acts.appendChild(b);b.addEventListener('pointerdown',function(e){e.preventDefault();e.stopPropagation();mmShiftReq()});var st=document.createElement('style');st.textContent='#b-MS{right:394px;bottom:4px;width:56px!important;height:56px!important}';document.head.appendChild(st)}b.style.display=NET.on&&mmMode()&&RND.on&&ME.role=='imp'&&ME.alive?'':'none'}catch(e){}}
+// ---- BOTS for Murder Mystery: computer players run by the host's game. They walk the halls, do their tasks, report bodies they
+//      find, vote in meetings (they remember who they saw strike), and a bot can be the Skin-Stealer: it hunts people who are alone,
+//      sometimes in monster form. Everyone sees them like normal players (they show up as "Bot <name>"). They don't vote to GIVE UP.
+var BOTS={},botSendT=0,BOTN=['Rex','Mia','Ozzy','Luna','Finn','Ivy','Milo','Zoe'],BOTC=['#e6c722','#e8791c','#2f6fb0','#c0392b','#6b7a3a','#9ccbe6','#26305a','#c8e61c'];
+function isBot(id){return !!(NET.players[id]&&NET.players[id].bot)}
+function humans(){return 1+Object.keys(NET.conns).length}
+function botStart(){var x=cc(1),z=cc(1);try{if(typeof CAR!='undefined'&&CAR){var w=toWorld(0,-1.6);x=w.x;z=w.z}}catch(e){}return {x:x,z:z}}
+function addBot(){var i=1;while(BOTS['bot'+i])i++;if(i>3)return;var id='bot'+i,nm='Bot '+BOTN[(i*3+(curSeed()&7))%BOTN.length],col=BOTC[(i*5+curSeed())%BOTC.length];
+ var p=mkPlayer(id,{name:nm,si:{col:col,haz:true},eq:{}});p.bot=true;var s0=botStart();
+ BOTS[id]={id:id,p:p,x:s0.x+(i-2)*.7,z:s0.z,yaw:0,path:[],goal:null,wait:0,think:0,sus:{},hunt:null,flee:0};NET.players[id]=p;botState(BOTS[id]);
+ bcast({t:'join',p:{id:id,name:nm,si:p.si,eq:{}}})}
+function dropBot(id){if(!BOTS[id])return;delete BOTS[id];dropPlayer(id);bcast({t:'left',id:id,quiet:1})}
+function dropAllBots(){Object.keys(BOTS).forEach(dropBot)}
+function ensureBots(){if(!NET.isHost())return;var want=(mmMode()&&inLevel())?Math.max(0,Math.min(ST.bots==null?2:ST.bots|0,MAXP-humans())):0,have=Object.keys(BOTS);
+ if(RND.on&&want>=have.length)return;   // never add bots in the middle of a round
+ while(have.length>want){dropBot(have.pop())}if(!RND.on)while(Object.keys(BOTS).length<want)addBot()}
+function botState(B){var dead=!!(MMH&&MMH.on&&MMH.alive[B.id]===0);if(!dead&&B.deadAt)B.deadAt=0;
+ var s={x:B.x,z:B.z,yaw:B.yaw,cr:0,fl:1,hd:0,dead:dead?1:0,lv:curLv(),seed:curSeed(),mic:0,y:0,ic:0,pt:0};applySt(B.p,s);return s}
+function cellOf(x,z){return [ce(x),ce(z)]}
+function goTo(B,x,z){var a=cellOf(B.x,B.z),b=cellOf(x,z),p=[];try{p=bfs(a[0],a[1],b[0],b[1])}catch(e){}B.path=p.map(function(c){return [cc(c[0]),cc(c[1])]});B.path.push([x,z]);B.goal={x:x,z:z}}
+function wander(B){for(var t=0;t<30;t++){var c=open[Math.floor(Math.random()*open.length)],x=cc(c[0]),z=cc(c[1]),d=Math.hypot(x-B.x,z-B.z);if(d>8&&d<40){goTo(B,x,z);return}}}
+function aliveIds(){return MMH?Object.keys(MMH.alive).filter(function(k){return MMH.alive[k]}):[]}
+function seesPos(B,x,z,r){return Math.hypot(x-B.x,z-B.z)<r&&los(B.x,B.z,x,z)}
+// called by the referee when someone is struck: bots that saw it remember who did it
+function botWitness(killer,at){Object.keys(BOTS).forEach(function(k){var B=BOTS[k];if(k===killer||!MMH.alive[k]||MMH.role[k]!=='crew')return;var kp=mmPos(killer);if(kp&&seesPos(B,kp.x,kp.z,11))B.sus[killer]=(B.sus[killer]|0)+10})}
+// bots vote a few seconds into a meeting
+function botVotes(){Object.keys(BOTS).forEach(function(k){if(!MMH.alive[k])return;setTimeout(function(){if(!MMH||!MMH.meet||(k in MMH.meet.votes)||!MMH.alive[k])return;var B=BOTS[k];if(!B)return;var al=aliveIds().filter(function(q){return q!==k}),v='skip';
+  if(MMH.role[k]=='imp'){if(Math.random()<.55)v=al.filter(function(q){return MMH.role[q]!=='imp'})[Math.floor(Math.random()*al.length)]||'skip'}
+  else{var best=null,bs=0;al.forEach(function(q){if((B.sus[q]|0)>bs){bs=B.sus[q];best=q}});if(best)v=best;else{var mv=Object.keys(MMH.meet.votes).map(function(q){return MMH.meet.votes[q]}).filter(function(q){return q!=='skip'&&q!==k});if(mv.length&&Math.random()<.5)v=mv[0];else if(Math.random()<.35)v=al[Math.floor(Math.random()*al.length)]}}
+  mmHost(k,{a:'vote',for:v||'skip'})},4000+Math.random()*12000)})}
+function botTick(dt){if(!NET.isHost())return;ensureBots();var ids=Object.keys(BOTS);if(!ids.length)return;var now=performance.now(),H=MMH&&MMH.on?MMH:null;
+ ids.forEach(function(k){var B=BOTS[k];var alive=!H||H.alive[k]!==0;
+  if(!alive||RND.meet){B.path=[];if(RND.meet)B.flee=Math.max(B.flee,now+30000+Math.random()*20000);return}
+  if(B.idle>0){B.idle-=dt;return}
+  B.think-=dt;
+  if(H&&B.think<=0){B.think=.4+Math.random()*.3;
+   // a body in sight: go and report it (the Skin-Stealer only sometimes reports its own work)
+   Object.keys(H.bodies).forEach(function(bid){var bd=H.bodies[bid];if(!B.body&&seesPos(B,bd.x,bd.z,9)&&(H.role[k]!=='imp'||Math.random()<.04)){B.body=bid;goTo(B,bd.x,bd.z)}});
+   if(B.body&&H.bodies[B.body]&&Math.hypot(H.bodies[B.body].x-B.x,H.bodies[B.body].z-B.z)<3.2){var bid2=B.body;B.body=null;mmHost(k,{a:'report',body:bid2});return}
+   if(B.body&&!H.bodies[B.body])B.body=null;
+   // the Skin-Stealer hunts someone who is on their own
+   if(H.role[k]==='imp'&&!B.body&&now>=H.kill[k]&&now>B.flee){var al=aliveIds().filter(function(q){return H.role[q]!=='imp'}),best=null,bd3=15;
+    al.forEach(function(q){var qp=mmPos(q);if(!qp)return;var d=Math.hypot(qp.x-B.x,qp.z-B.z);if(d>=bd3)return;
+     var wit=aliveIds().some(function(w){if(w===q||w===k)return false;var wp=mmPos(w);return wp&&Math.hypot(wp.x-qp.x,wp.z-qp.z)<10&&los(wp.x,wp.z,qp.x,qp.z)});if(!wit){bd3=d;best=q}});
+    if(best){B.hunt=best;var tp=mmPos(best);goTo(B,tp.x,tp.z);if(!(H.shift&&H.shift[k])&&now>=((H.shiftCd||{})[k]||0)&&Math.random()<.25)mmHost(k,{a:'shift'});
+     if(Math.hypot(tp.x-B.x,tp.z-B.z)<1.7){mmHost(k,{a:'kill',to:best});B.hunt=null;B.flee=now+30000+Math.random()*25000;wander(B)}}else B.hunt=null}}
+  // tasks (real for crew, fake for the Skin-Stealer)
+  if(B.wait>0){B.wait-=dt;if(B.wait<=0&&B.task){if(H&&H.role[k]==='crew')mmHost(k,{a:'task',k:B.task});B.done=B.done||{};B.done[B.task]=1;B.task=null}return}
+  if(!B.path.length){var todo=H&&H.tasks[k]?H.tasks[k].filter(function(t){return !(B.done&&B.done[t])&&!(H.done[k]&&H.done[k][t])}):[];
+   // the nearest unfinished task, but not the one another bot right next to us is heading for
+   var st=null,sd=1e9;if(!B.hunt)todo.forEach(function(t){var q=STN.find(function(s){return s.k===t});if(!q)return;var d=Math.hypot(q.x-B.x,q.z-B.z);var crowd=Object.keys(BOTS).some(function(o){return o!==k&&BOTS[o].goal&&Math.hypot(BOTS[o].x-B.x,BOTS[o].z-B.z)<5&&Math.hypot(BOTS[o].goal.x-q.x,BOTS[o].goal.z-q.z)<1});if(crowd)d+=60;if(d<sd){sd=d;st=q}});
+   if(st&&Math.hypot(st.x-B.x,st.z-B.z)<1.4){B.task=st.k;B.wait=2.7;return}
+   if(st)goTo(B,st.x,st.z);else wander(B)}
+  // walk the path
+  var nx=B.path[0];if(nx){var dx=nx[0]-B.x,dz=nx[1]-B.z,d=Math.hypot(dx,dz),sp=(B.hunt?3.4:2.6)*dt;if(d<=sp+.05){B.x=nx[0];B.z=nx[1];B.path.shift()}else{B.x+=dx/d*sp;B.z+=dz/d*sp}
+   var ty=Math.atan2(-dx,-dz);B.yaw+=Math.atan2(Math.sin(ty-B.yaw),Math.cos(ty-B.yaw))*Math.min(1,dt*8)}});
+ botSendT-=dt;if(botSendT<=0){botSendT=1/12;ids.forEach(function(k){var B=BOTS[k];var s=botState(B);s.t='st';s.id=k;s.name=B.p.name;s.si=B.p.si;s.eq={};bcast(s)})}else ids.forEach(function(k){botState(BOTS[k])})}
 function mapTasks(){if(!mmMode()||!RND.on)return;var c=mc,k=4/S;STN.forEach(function(q){if(ME.tasks.indexOf(q.k)<0||ME.done[q.k])return;c.fillStyle='#ffd23a';c.fillRect(q.x*k-3,q.z*k-3,6,6)});if(EMB){c.fillStyle='#ff3a3a';c.beginPath();c.arc(EMB.x*k,EMB.z*k,3,0,7);c.fill()}}
 // the host picks the game mode in the co-op menu (Murder Mystery always plays on Level 0)
-function setMode(m){if(!NET.isHost()||!ST)return;m=m=='mm'?'mm':'coop';if(ST.mode===m)return;ST.mode=m;saveST();bcast({t:'mode',m:m});MMH=null;mmRecv({a:'reset'});
+function setMode(m){if(!NET.isHost()||!ST)return;m=m=='mm'?'mm':'coop';if(ST.mode===m)return;ST.mode=m;saveST();bcast({t:'mode',m:m});MMH=null;mmRecv({a:'reset'});if(m!=='mm')dropAllBots();
  toast(m=='mm'?'🔪 Game mode: MURDER MYSTERY':'🧭 Game mode: CO-OP ESCAPE');
  if(m=='mm'&&curLv()!==0){var seed=((Date.now()*7+Math.random()*1e6)%1e9|0)||1;ST.lv=0;ST.seed=seed;ST.picks=[];ST.auto=1;saveST();bcast({t:'go',n:0,seed:seed});NET.reloading=true;try{SV.lv=0;save()}catch(e){}setTimeout(function(){location.reload()},700)}}
 NET.mmMode=function(){return NET.on&&mmMode()};NET.mmShift=function(){mmShiftReq()};NET.mm=function(){return {exit:(typeof CAR!='undefined'&&CAR)?toWorld(0,-.8):null,stations:STN.map(function(q){return {k:q.k,x:q.x,z:q.z}}),emb:EMB?{x:EMB.x,z:EMB.z}:null,me:{role:ME.role,tasks:ME.tasks,done:ME.done,alive:ME.alive},round:{on:RND.on,prog:RND.prog,total:RND.total,meet:!!RND.meet}}};
