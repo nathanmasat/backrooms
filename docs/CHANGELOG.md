@@ -1,5 +1,11 @@
 # Changelog
 
+## Co-op: up to 10 players
+- Co-op rooms now hold **10 players** (it was 4). The menu, the room-full message, the public games list and the elevator TV all show /10.
+- The co-op elevator has **10 spots** (three rows of three plus one by the doors), so everyone starts in their own place.
+- **Murder Mystery:** 3–10 players, with **2 Skin-Stealers** from 6 players. The meeting screen lists everyone, and **bots** can now fill up to 9 spots (0, 1, 2, 3, 5, 7 or 9).
+- Good to know: it's still peer-to-peer, so the host's computer and internet carry everyone. With 10 players the host needs a decent connection. Voice chat with many people uses more data; proximity voice helps. Only the 3 nearest teammates' flashlights cast real light, to keep the game smooth.
+
 ## Murder Mystery: bots
 - **Bots fill empty spots:** in the co-op menu, Murder Mystery now has **🤖 BOTS: 0 / 1 / 2 / 3** (2 by default; 4 players in all). With 2 bots you can even play on your own. Bots show up for everyone like normal players, in a coloured hazmat suit, named "Bot …".
 - **What bots do:**
