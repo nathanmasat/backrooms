@@ -1,5 +1,10 @@
 # Changelog
 
+## Smoother: light budget + nothing drawn past the fog
+- **Light budget:** before, every lamp in a level was worked out for every pixel on screen, even when it was switched off or 150 m away (the stun-gun flash, the flare, the three tape-room lamps, the elevator, glow sticks…). Level 0 had 9 of them. Now only a few real lights exist (**5 on High, 4 on Medium, 3 on Low** quality). Every frame they go to the lamps that matter right now: switched on, closest and brightest. The lamps still work exactly as before, and the number of real lights never changes, so nothing has to be rebuilt mid-game.
+- **Draw distance follows the fog:** the camera used to draw everything up to 80 m, but the fog hides everything past about 35–40 m. Now the view ends where the fog is solid (it reaches further again when the fog thins). On Level 0 that's about **half the draw calls** (487 → about 250 per frame) with no visible difference.
+- Measured on the test machine (software graphics, so real computers are much faster): Level 0 **9.7 → 12 fps**, Level 3 **14.8 → 17 fps**. The automatic resolution drop when frames get slow is still there on top of this.
+
 ## Co-op: up to 10 players
 - Co-op rooms now hold **10 players** (it was 4). The menu, the room-full message, the public games list and the elevator TV all show /10.
 - The co-op elevator has **10 spots** (three rows of three plus one by the doors), so everyone starts in their own place.

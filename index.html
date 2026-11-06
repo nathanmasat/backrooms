@@ -8365,6 +8365,44 @@ var last=performance.now(),hudT=0;
 window.HU=window.HU||{};HU.scares={follower:FO,mannequins:MQ,flares:FLR,jolt:jolt,spawnFollower:function(){FO.next=0}};
 })();
 </script>
+<!-- ===== LIGHT BUDGET: only the few lamps that matter right now are real lights (5 / 4 / 3 by quality); the rest cost nothing. Also: nothing is drawn past the fog ===== -->
+<script>
+(function(){
+// Every real light in the scene is worked out for every pixel on screen, even when it is switched off or 150 m away.
+// So the game's lamps (gun flash, flares, the tape-room lamps, glow sticks, the elevator, fires...) become "virtual": they
+// keep working exactly as before for the code that owns them, and a small fixed set of real lights is handed each frame to
+// the virtual lamps that matter most right now (switched on, closest, brightest). The number of real lights never changes,
+// so nothing has to be rebuilt while you play.
+if(typeof THREE=='undefined'||typeof scene=='undefined'||typeof cam=='undefined')return;
+var T=THREE,q=(typeof SET!='undefined'&&SET.q)||'High',K=q=='Low'?3:q=='Medium'?4:5;
+var REAL=[],VIRT=[],tmp=new T.Vector3(),cp=new T.Vector3();
+for(var i=0;i<K;i++){var l=new T.PointLight(0xffffff,0,10,2);l.userData.budget=1;scene.add(l);REAL.push({l:l,v:null,cur:0})}
+function adopt(L){if(L.userData.budget)return;var par=L.parent;if(!par)return;L.userData.par=par;par.remove(L);if(!L.userData.virt){L.userData.virt=1;VIRT.push(L)}}
+function scan(){var found=[];scene.traverse(function(o){if(o.isPointLight&&!o.userData.budget)found.push(o)});found.forEach(adopt)}
+// is the lamp's owner on screen at all (a hidden group switches its lamp off too)?
+function shown(o){while(o){if(o.visible===false)return false;if(o===scene)return true;o=o.parent}return false}
+var scanT=0,last=performance.now();
+function tick(){var now=performance.now(),dt=Math.min(.1,(now-last)/1000);last=now;
+ scanT-=dt;if(scanT<=0){scanT=.5;try{scan()}catch(e){}}
+ // don't draw what the fog hides: the view ends where the fog is solid (it reaches further again when the fog thins)
+ try{var fg=scene.fog,want=80;if(fg&&fg.isFogExp2&&fg.density>0)want=Math.max(26,Math.min(80,2.45/fg.density+6));if(Math.abs(cam.far-want)>.5){cam.far=want;cam.updateProjectionMatrix()}}catch(e){}
+ if(!VIRT.length)return;cam.getWorldPosition(cp);
+ // score every virtual lamp
+ var C=[];for(var i=0;i<VIRT.length;i++){var L=VIRT[i],par=L.userData.par;if(!L.visible||!(L.intensity>.01)||!shown(par))continue;
+  tmp.copy(L.position);par.updateMatrixWorld();tmp.applyMatrix4(par.matrixWorld);var d=tmp.distanceTo(cp),rg=(L.distance||40)+3;if(d>rg)continue;
+  C.push({L:L,x:tmp.x,y:tmp.y,z:tmp.z,s:L.intensity*(1-d/rg)+(d<3?2:0)})}
+ C.sort(function(a,b){return b.s-a.s});var pick=C.slice(0,K);
+ // keep a slot on the same lamp while it stays in the top group (no flicker), hand free slots to newcomers
+ REAL.forEach(function(r){if(r.v&&!pick.some(function(c){return c.L===r.v}))r.v=null});
+ pick.forEach(function(c){if(REAL.some(function(r){return r.v===c.L}))return;var f=REAL.find(function(r){return !r.v});if(f){f.v=c.L;f.cur=0}});
+ REAL.forEach(function(r){var l=r.l;if(!r.v){r.cur=Math.max(0,r.cur-dt*8);l.intensity=r.cur;return}var c=pick.find(function(x){return x.L===r.v});var V=r.v;
+  l.position.set(c.x,c.y,c.z);l.color.copy(V.color);l.distance=V.distance;l.decay=V.decay;r.cur=Math.min(V.intensity,r.cur+dt*Math.max(6,V.intensity*12));if(V.intensity<r.cur)r.cur=V.intensity;l.intensity=r.cur})}
+// run right before every frame is drawn (after all the game logic has set its lamps)
+var oPFX=window.PFX;window.PFX=function(s,c){try{if(s===scene)tick()}catch(e){}if(oPFX)return oPFX(s,c);ren.render(s,c)};
+try{scan()}catch(e){}
+window.HU=window.HU||{};HU.lights={real:REAL,virt:VIRT,K:K};
+})();
+</script>
 <!-- ===== ADMIN PANEL (hidden; admin account: nathen) ===== -->
 <style>
 #adm{position:fixed;inset:0;z-index:60;display:none;background:rgba(0,0,0,.86);font:13px/1.45 'Courier New',monospace;color:#3f3;overflow:hidden}
