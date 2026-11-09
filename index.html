@@ -7196,7 +7196,7 @@ function moveTo(msg){var k=0;try{var r=JSON.parse(sessionStorage.getItem('brmpRL
 
 // ---------------------------------------------------------------- shared keycards / objective items
 function sanePicks(a){return (Array.isArray(a)?a:[]).slice(0,60).filter(function(p){return p&&typeof p.k=='string'&&p.k.length<20}).map(function(p){return {k:p.k,x:num(p.x,2000),z:num(p.z,2000)}})}
-function pkey(k,x,z){return k+'@'+Math.round(x)+','+Math.round(z)}
+function pkey(k,x,z){return k+'@'+(Math.round(x*10)/10)+','+(Math.round(z*10)/10)}   // to 0.1 m: two keycards in the same glass case are 0.3 m apart
 function addPick(k,x,z,fromRemote,by){if(k!=='card'&&k!=='scroll')return false;x=num(x,2000);z=num(z,2000);var key=pkey(k,x,z);if(NET.picks[key])return false;NET.picks[key]=1;
  ST.picks=ST.picks||[];if(!ST.picks.some(function(p){return pkey(p.k,p.x,p.z)===key}))ST.picks.push({k:k,x:x,z:z});saveST();
  applyPick(k,x,z,by);return true}
@@ -8017,7 +8017,7 @@ HU.jumpY=function(){return P.y};
 var CH=null,CHS=[],CUTR=[],WIDX=null,RR=null;
 var OPENLV=!!(typeof CF!='undefined'&&CF.open);
 // one room per escape item, up to three (Level 9 has a single item, so it gets one room); the tape is in the first room
-if(LV0<=9&&typeof wm!='undefined'){try{var nR=Math.max(1,Math.min(3,(CF.k|0)-(HU.extraCard?1:0)));
+if(LV0<=9&&typeof wm!='undefined'){try{var nR=Math.max(1,Math.min(4,CF.k|0));   // one room per escape item (Nightmare / Don't Look Back's extra item gets a 4th room)
  for(var q=0;q<nR;q++){var c=build(q);if(!c)break;CHS.push(c)}CH=CHS[0]||null}catch(e){console.error('tape challenge',e);CH=CHS[0]||null}}
 HU.tapeChallenges=function(){return CHS};
 HU.tapeChallenge=function(){return CH};
@@ -8181,6 +8181,8 @@ function tickChallenge(C,dt){var TA=HU.tapeObj?HU.tapeObj():null,inRoom=P.x>C.x0
 function what(C){return C.q==0?'the tape and one of the '+KN():'one of the '+KN()}
 // every room: tick it, put the escape items in the cases (one per room, extras in the last room), lock them, show one hint
 function tickAll(dt){if(!CHS||!CHS.length)return;near=null;var h='';
+ // safety net: the counter can never ask for more items than this level really has
+ try{if(!(window.LVX&&LVX.on)&&typeof items!='undefined'){var nCard=items.filter(function(it){return it.type=='card'}).length;if(nCard>0&&nCard<CF.k)CF.k=nCard}}catch(e){}
  CHS.forEach(function(C){var x=tickChallenge(C,dt);if(x&&!h)h=x});
  if(typeof items!='undefined'){var nC=0;
   items.forEach(function(it){if(it.type!='card'||it._chOut)return;

@@ -1,5 +1,10 @@
 # Changelog
 
+## Fix: "it says 4 keycards but there are only 3"
+- On **Nightmare** and **Don't Look Back**, Levels 0–9 have one extra escape item, so the counter says 4. Before, that 4th keycard was tucked into the 3rd tape room's glass case together with the 3rd one, so it looked like there were only 3. **Now every keycard gets its own tape challenge room**: 4 rooms when the counter says 4 (Level 9 on those difficulties: 2 rooms).
+- **Co-op fix:** shared keycards were matched by their position rounded to a whole metre, so two keycards in the same case counted as one for your teammates, who got stuck at 3/4. They're now matched to 0.1 m.
+- **Safety net:** on Levels 0–9 the counter can never ask for more items than the level really has.
+
 ## Smoother: light budget + nothing drawn past the fog
 - **Light budget:** before, every lamp in a level was worked out for every pixel on screen, even when it was switched off or 150 m away (the stun-gun flash, the flare, the three tape-room lamps, the elevator, glow sticks…). Level 0 had 9 of them. Now only a few real lights exist (**5 on High, 4 on Medium, 3 on Low** quality). Every frame they go to the lamps that matter right now: switched on, closest and brightest. The lamps still work exactly as before, and the number of real lights never changes, so nothing has to be rebuilt mid-game.
 - **Draw distance follows the fog:** the camera used to draw everything up to 80 m, but the fog hides everything past about 35–40 m. Now the view ends where the fog is solid (it reaches further again when the fog thins). On Level 0 that's about **half the draw calls** (487 → about 250 per frame) with no visible difference.
