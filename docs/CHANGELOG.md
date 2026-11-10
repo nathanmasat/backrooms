@@ -1,5 +1,18 @@
 # Changelog
 
+## Better character design
+- **The player character is rebuilt** (it's the model your friends see in co-op, Murder Mystery, rag dolls, the phone camera and selfies). It used to be made of plain tubes, balls and boxes. Now it's shaped:
+  - a smooth, slightly baggy suit body with sloped shoulders, a collar, and a taped zipper flap (hazmat);
+  - tapered sleeves and trouser legs with elbows and knees;
+  - **gloves with four fingers and a thumb**, and taped rubber gauntlets on the hazmat suit;
+  - **shaped boots** with a toe cap and sole (tall rubber boots on the hazmat suit);
+  - the hood gets a drawstring, the mask lenses get a reflection, and the filters get ribs;
+  - outfits (shop clothes) get **a proper face**: jaw, ears, nose, eyes with irises, eyebrows, mouth and hair with a fringe, plus an open jacket over a lighter shirt with buttons and lapels, and darker trousers;
+  - a relaxed standing pose, so the arms no longer hang ruler-straight.
+- All the animations, emotes, rag dolls and poses work the same, because the joints didn't move.
+- Fix: after a friend's **Dance** emote, their arms no longer stay stuck out to the side.
+- The monsters were already detailed sculpted models, so they're unchanged.
+
 ## Bug hunt
 - **Checked everything automatically:** all 20 levels were played by a test (walking the maze, pressing every key, firing the stun gun, picking up items, getting caught, taking the elevator). Every main-menu button and its panels were also opened, the phone layout was checked, and every script was syntax-checked. **No errors** came up anywhere, and no two scripts fight over the same name.
 - **Fix:** in Murder Mystery, a player who **leaves in the middle of a round** (10 s gone) now counts as out. Their unfinished tasks are dropped and the winner is checked again. Before, the round could never end if the Skin-Stealer left, or if a crewmate left with tasks undone.
