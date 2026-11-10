@@ -1,5 +1,14 @@
 # Changelog
 
+## Better monster designs
+- **The Boiled One (Level 0) is redesigned.** It's still made of static over a black core, but now it's a gaunt, hunched creature:
+  - a pinched waist and sunken belly, with **bone-pale ribs, a breastbone and collarbones** showing through the static;
+  - a **ridged spine** and jutting shoulder blades down its back, and hip bones sticking out;
+  - **far too long, sinewy arms** with clawed hands that hang below its knees, knee caps, and **clawed toes**;
+  - a long skull jutting forward, with **cheekbones, a brow ridge, deep sockets with burning eyes**, two rows of teeth, a dark open mouth and a **hanging lower jaw**.
+- **Every humanoid monster got real anatomy** (the Bellhop, the Hall Monitor, the Treestalker, the nurse, the diver, the ringmaster and the others on Levels 3–19, plus the Skin-Stealer's monster form). Their arms and legs used to be evenly tapering sticks; now they have upper-arm and thigh mass, a narrower knobbly elbow and knee, a forearm and calf swell, and slim wrists and ankles. They also got shoulder muscles, collarbones and rounded hips.
+- All the jerky poses, the jaw and head movements, and the animations work the same.
+
 ## Better character design
 - **The player character is rebuilt** (it's the model your friends see in co-op, Murder Mystery, rag dolls, the phone camera and selfies). It used to be made of plain tubes, balls and boxes. Now it's shaped:
   - a smooth, slightly baggy suit body with sloped shoulders, a collar, and a taped zipper flap (hazmat);

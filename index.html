@@ -257,8 +257,11 @@ function cone(r,h,mat,x,y,z,n){var m=new T.Mesh(new T.ConeGeometry(r,h,n||6),mat
 function A(p,m){p.add(m);return m}
 function add(p){for(var i=1;i<arguments.length;i++)A(p,arguments[i]);return arguments[arguments.length-1]}
 // a limb that hangs from its joint (pivot at 0, tip at -len); elbow/knee bulge in the middle
+// shaped like a real limb: mass near the top (thigh / upper arm), a narrower joint in the middle with a bony knob,
+// a second swell below it (calf / forearm), then a slim wrist / ankle
+function bump(t,c,w){return Math.exp(-Math.pow((t-c)/w,2))}
 function limb(L,r0,r1,mz,ez,mat,knob){var p=new T.Group(),tip=V(0,-L,ez);knob=knob==null?.22:knob;
- A(p,tubeR([V(0,0,0),V(0,-L*.27,mz*.6),V(0,-L*.5,mz),V(0,-L*.75,(mz+ez)/2),tip],function(t){return (r0+(r1-r0)*t)*(1+knob*Math.exp(-Math.pow((t-.5)/.06,2)))},18,8,mat));
+ A(p,tubeR([V(0,0,0),V(0,-L*.27,mz*.6),V(0,-L*.5,mz),V(0,-L*.75,(mz+ez)/2),tip],function(t){return (r0+(r1-r0)*t)*(1.04+.2*bump(t,.2,.13)-.1*bump(t,.43,.05)+knob*bump(t,.5,.05)+.16*bump(t,.68,.1)-.08*bump(t,.94,.05))},26,10,mat));
  A(p,ball(r1*1.05,mat,tip.x,tip.y,tip.z));p.tip=tip;return p}
 // hand: palm and curled fingers that hang down
 function hand(mat,o){o=o||{};var h=new T.Group(),n=o.n||4,fl=o.fl||.11,pr=o.pr||.04,fr=o.fr||.013;
@@ -271,6 +274,8 @@ function hand(mat,o){o=o||{};var h=new T.Group(),n=o.n||4,fl=o.fl||.11,pr=o.pr||
 function human(o){var G=new T.Group(),hip=o.hip||.95,sh=o.sh||1.95,sw=o.sw||.34,hy=o.hy||2.2;
  var tp=o.tp||[[0,hip-.06],[.16,hip-.04],[.18,hip+.1],[.14,hip+.4],[.19,sh-.32],[.22,sh-.1],[.19,sh+.01],[.08,sh+.07],[0,sh+.08]];
  var to=lathe(tp,o.cloth,22,o.twob);to.scale.z=o.dz||.6;A(G,to);
+ A(G,ball(.13,o.pants||o.cloth,0,hip+.02,0,1.05,.62,.6));   // pelvis (tucked inside the hips, it only rounds them out)
+ [-1,1].forEach(function(s){A(G,ball(.1,o.cloth,s*sw*.55,sh+.0,-.01,1.5,.55,.85)).rotation.z=-s*.35;A(G,tube([V(s*.04,sh+.04,.06),V(s*sw*.55,sh+.03,.07),V(s*sw*.95,sh,.03)],.018,.014,6,5,o.cloth))});   // shoulder muscles + collarbones
  A(G,tube([V(0,sh-.02,-.01),V(0,sh+.1,.02),V(0,hy-.1,.06)],o.nr||.05,(o.nr||.05)*.85,4,8,o.neck||o.skin));
  var hd=new T.Group();hd.position.set(0,hy,.05);hd.rotation.x=.08;A(G,hd);
  var arms=[-1,1].map(function(s){var p=new T.Group(),q=limb(o.al||1,(o.ar||[.06,.035])[0],(o.ar||[.06,.035])[1],-.05,.07,o.sleeve||o.cloth);p.position.set(s*sw,sh-.04,0);A(G,p);A(p,q);q.rotation.z=s*.07;
@@ -288,26 +293,45 @@ function burnR(R,n){for(var i=0;i<n;i++)R()}
 
 var MART={};
 // =========== THE BOILED ONE: a gaunt figure made of static over a black core ===========
-MART.boiled=function(shell,core){var G=new T.Group(),U=G.userData,both=function(f){f(shell,1);f(core,.8)};
- // body: thin ribcage, pinched waist
- both(function(m,k){var t=lathe([[0,.95],[.14*k,.97],[.15*k,1.12],[.1*k,1.4],[.13*k,1.6],[.21*k,1.85],[.25*k,2.08],[.22*k,2.22],[.08*k,2.3],[0,2.32]],m,18);t.scale.z=.58;A(G,t)});
- for(var i=0;i<5;i++){var y=1.62+i*.11,r=.16+i*.02;A(G,tube(wrap(r*1.02,[[-r*.92,y-.03,-.02],[-r*.5,y+.01],[0,y+.03],[r*.5,y+.01],[r*.92,y-.03,-.02]]).map(function(v){v.z*=.6;return v}),.012,.012,10,4,shell))}
- A(G,tube([V(0,1.05,-.08),V(0,1.6,-.1),V(0,2.25,-.07)],.03,.03,8,5,shell));// spine ridge
- both(function(m,k){A(G,tube([V(0,2.26,0),V(0,2.33,.03),V(0,2.42,.05)],.045*k,.04*k,4,6,m))});
- // arms: very long with long fingers (U.l), legs (U.g)
- var mkL=function(L,r0,r1,mz,ez,x,y,z,fing){var p=new T.Group();p.position.set(x,y,z);[[shell,1],[core,.75]].forEach(function(q){var l=limb(L,r0*q[1],r1*q[1],mz,ez,q[0],.35);while(l.children.length)A(p,l.children[0]);p.tip=l.tip});
-  if(fing){var h=hand(shell,{n:4,fl:.24,pr:.035,fr:.011,curl:.09});h.position.copy(p.tip);A(p,h)}else{var f=ball(.05,shell,0,-L+.03,.07,.8,.45,2.2);A(p,f)}A(G,p);return p};
- U.l=[mkL(1.6,.055,.032,-.05,.08,-.3,2.2,.04,1),mkL(1.6,.055,.032,-.05,.08,.3,2.2,.04,1)];
- U.l.forEach(function(p,i){A(p,ball(.075,shell,0,0,0))});
- U.g=[mkL(1.1,.07,.04,.05,0,-.13,1.1,0),mkL(1.1,.07,.04,.05,0,.13,1.1,0)];
- // head: long skull, sunken eyes, gaping jaw
- var hd=new T.Group();hd.position.set(0,2.45,.05);A(G,hd);U.h=hd;
- var sk=skull(.15,shell,.04);sk.scale.set(.95,1.25,1.05);A(hd,sk);var sc=skull(.12,core);sc.scale.set(.95,1.25,1.05);A(hd,sc);
- [-.065,.065].forEach(function(x){A(hd,ball(.042,core,x,.03,.13,1,.75,.5))});
+MART.boiled=function(shell,core){var G=new T.Group(),U=G.userData,both=function(f){f(shell,1);f(core,.82)},bone=new T.MeshBasicMaterial({color:0xd8d4c4,transparent:true,opacity:.55});
+ // ---- a gaunt, hunched body: pinched waist, sunken belly, ribcage that flares out, pelvis
+ var body=new T.Group();body.position.set(0,0,0);A(G,body);
+ both(function(m,k){var t=lathe([[0,.92],[.13*k,.94],[.16*k,1.04],[.12*k,1.18],[.09*k,1.36],[.12*k,1.52],[.2*k,1.7],[.25*k,1.88],[.27*k,2.04],[.25*k,2.16],[.17*k,2.26],[.07*k,2.31],[0,2.32]],m,22,function(a,y){return y>1.55&&y<2.15?.06*Math.sin(a*2):0});t.scale.z=.6;A(body,t)});
+ A(body,ball(.17,shell,0,.97,-.01,1.2,.55,.75));   // pelvis
+ [-1,1].forEach(function(s){A(body,tube([V(s*.05,1.0,.08),V(s*.15,.95,.07),V(s*.19,.88,0)],.02,.012,6,5,shell))});   // hip bones jutting out
+ // ribs that wrap round the chest (bone-pale lines under the static)
+ for(var i=0;i<7;i++){var y=1.6+i*.085,r=.17+Math.sin(i/6*PI)*.08;
+  [-1,1].forEach(function(s){A(body,tube([V(s*.03,y+.03,r*.66),V(s*r*.5,y+.005,r*.6),V(s*r*.88,y-.05,r*.3),V(s*r*.96,y-.1,0)],.013,.008,10,4,bone))})}
+ A(body,tube([V(0,1.58,.15),V(0,1.85,.17),V(0,2.12,.13)],.016,.012,8,4,bone));   // breastbone
+ // spine: a ridge of knobs down the back, and jutting shoulder blades
+ for(i=0;i<16;i++){var yy=1.0+i*.08,zz=-.12-Math.sin((i/15)*PI)*.06;A(body,ball(.024+(i%2)*.006,shell,0,yy,zz,1,.8,1.2))}
+ [-1,1].forEach(function(s){var sb=A(body,ball(.11,shell,s*.13,2.04,-.11,.9,1.25,.35));sb.rotation.z=s*.3});
+ // collarbones and a stringy neck that juts forward (hunched)
+ [-1,1].forEach(function(s){A(body,tube([V(s*.03,2.24,.08),V(s*.15,2.25,.06),V(s*.3,2.2,0)],.016,.013,6,5,bone))});
+ both(function(m,k){A(body,tube([V(0,2.24,0),V(0,2.34,.05),V(0,2.42,.11)],.05*k,.042*k,5,7,m))});
+ [-1,1].forEach(function(s){A(body,tube([V(s*.035,2.25,.04),V(s*.02,2.4,.11)],.009,.007,4,4,shell))});   // neck tendons
+ // ---- arms: far too long, sinewy, with clawed hands that hang below the knees (U.l)
+ var mkL=function(L,r0,r1,mz,ez,x,y,z,fing){var p=new T.Group();p.position.set(x,y,z);[[shell,1],[core,.72]].forEach(function(q){var l=limb(L,r0*q[1],r1*q[1],mz,ez,q[0],.42);while(l.children.length)A(p,l.children[0]);p.tip=l.tip});
+  if(fing){var h=hand(shell,{n:4,fl:.27,pr:.04,fr:.012,curl:.12,claw:bone});h.position.copy(p.tip);A(p,h)}
+  else{var ft=ball(.055,shell,0,-L+.03,.09,.85,.42,2.4);A(p,ft);for(var t=0;t<3;t++)A(p,tube([V((t-1)*.03,-L+.02,.18),V((t-1)*.04,-L+.0,.25)],.012,.007,3,4,shell))}
+  A(G,p);return p};
+ U.l=[mkL(1.7,.06,.03,-.06,.1,-.32,2.18,.04,1),mkL(1.7,.06,.03,-.06,.1,.32,2.18,.04,1)];
+ U.l.forEach(function(p){A(p,ball(.08,shell,0,0,0,1.1,.9,1));A(p,ball(.05,core,0,0,0))});   // knobbly shoulders
+ U.g=[mkL(1.08,.075,.04,.07,0,-.13,1.08,0),mkL(1.08,.075,.04,.07,0,.13,1.08,0)];
+ U.g.forEach(function(p){A(p,ball(.05,bone,0,-.54,.07,1,1,.7))});   // knee caps
+ // ---- head: a long skull jutting forward, cheekbones, deep sockets with burning eyes, a jaw that hangs open
+ var hd=new T.Group();hd.position.set(0,2.47,.12);A(G,hd);U.h=hd;
+ var sk=skull(.15,shell,.05);sk.scale.set(.92,1.32,1.12);A(hd,sk);var sc=skull(.12,core);sc.scale.set(.92,1.3,1.1);A(hd,sc);
+ [-1,1].forEach(function(s){A(hd,ball(.035,bone,s*.1,-.01,.11,1.1,.6,.8));A(hd,ball(.05,core,s*.065,.04,.13,1,.85,.55))});   // cheekbones + sockets
+ A(hd,tube([V(-.09,.1,.13),V(0,.12,.16),V(.09,.1,.13)],.014,.014,8,4,bone));   // brow ridge
  var tm=new T.MeshBasicMaterial({color:0xf0f0e0});
- for(var r=0;r<2;r++)for(i=0;i<12;i++){var a=(i/11-.5)*1.5,tt=cone(.007,.06+((i*7)%3)*.012,tm,Math.sin(a)*.1,-.1-r*.035,Math.cos(a)*.11+.04,4);if(!r)tt.rotation.x=PI;A(hd,tt)}
- U.j=[-1,1].map(function(s){var j=new T.Mesh(new T.BoxGeometry(.045,.1,.02),new T.MeshBasicMaterial({color:0x200000}));j.position.set(s*.025,-.095,.15);A(hd,j);return j});
- var e=new T.MeshBasicMaterial({color:0xddddcc});[-.065,.065].forEach(function(x){A(hd,ball(.022,e,x,.03,.155,1,.7,.5));var sp=new T.Sprite(GFX.eyeMat);sp.scale.set(.22,.22,1);sp.position.set(x,.03,.17);A(hd,sp)});
+ for(var rr=0;rr<2;rr++)for(i=0;i<14;i++){var a=(i/13-.5)*1.6,tt=cone(.007,.07+((i*7)%3)*.016,tm,Math.sin(a)*.1,-.11-rr*.05,Math.cos(a)*.11+.05,4);if(!rr)tt.rotation.x=PI;A(hd,tt)}
+ A(hd,ball(.07,new T.MeshBasicMaterial({color:0x1a0000}),0,-.14,.1,1.1,1.1,.6));   // the dark open mouth
+ U.j=[-1,1].map(function(s){var j=new T.Mesh(new T.BoxGeometry(.05,.12,.025),new T.MeshBasicMaterial({color:0x200000}));j.position.set(s*.025,-.1,.16);A(hd,j);return j});
+ var jaw=tube([V(-.1,-.12,.04),V(-.06,-.24,.1),V(0,-.27,.12),V(.06,-.24,.1),V(.1,-.12,.04)],.02,.02,10,5,shell);A(hd,jaw);   // the hanging lower jaw
+ var e=new T.MeshBasicMaterial({color:0xddddcc});[-.065,.065].forEach(function(x){A(hd,ball(.02,e,x,.04,.16,1,.7,.5));var sp=new T.Sprite(GFX.eyeMat);sp.scale.set(.24,.24,1);sp.position.set(x,.04,.18);A(hd,sp)});
+ // hunched: the whole upper body leans forward a little
+ body.rotation.x=.06;
  return G};
 // =========== THE GRINNER: eyes and a mouth of needle teeth, floating in the dark ===========
 MART.grin=function(G){var w=gl(0xf4f0e4),r=gl(0xff2200,{op:.6,add:1}),b=gl(0x2266ff,{op:.6,add:1}),bk=gl(0x000000),gum=gl(0x4a0606);
