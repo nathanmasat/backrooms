@@ -1,5 +1,11 @@
 # Changelog
 
+## Bug hunt
+- **Checked everything automatically:** all 20 levels were played by a test (walking the maze, pressing every key, firing the stun gun, picking up items, getting caught, taking the elevator). Every main-menu button and its panels were also opened, the phone layout was checked, and every script was syntax-checked. **No errors** came up anywhere, and no two scripts fight over the same name.
+- **Fix:** in Murder Mystery, a player who **leaves in the middle of a round** (10 s gone) now counts as out. Their unfinished tasks are dropped and the winner is checked again. Before, the round could never end if the Skin-Stealer left, or if a crewmate left with tasks undone.
+- **Fix:** going to the next level past Level 19 now goes to the ending. In real play the game already did this; the level-change code itself is now safe too.
+- The animated poster on the menu's MOVIE button no longer keeps checking the page layout while you play.
+
 ## Fix: "it says 4 keycards but there are only 3"
 - On **Nightmare** and **Don't Look Back**, Levels 0–9 have one extra escape item, so the counter says 4. Before, that 4th keycard was tucked into the 3rd tape room's glass case together with the 3rd one, so it looked like there were only 3. **Now every keycard gets its own tape challenge room**: 4 rooms when the counter says 4 (Level 9 on those difficulties: 2 rooms).
 - **Co-op fix:** shared keycards were matched by their position rounded to a whole metre, so two keycards in the same case counted as one for your teammates, who got stuck at 3/4. They're now matched to 0.1 m.
