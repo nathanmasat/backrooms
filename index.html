@@ -6592,7 +6592,7 @@ function openHub(view,fromPlayer){if(!HUB){HUB=el('div','position:fixed;inset:0;
 // the main menu entry, right under PLAY
 (function(){function addBtn(){var bp=document.getElementById('b-play');if(!bp||document.getElementById('b-movie'))return;var b=document.createElement('div');b.className='bt';b.id='b-movie';b.style.cssText='position:relative;overflow:hidden;border-color:#e4d56a';
   var cv=document.createElement('canvas');cv.width=240;cv.height=60;cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;opacity:.45;pointer-events:none';b.appendChild(cv);var sp2=document.createElement('span');sp2.style.cssText='position:relative';sp2.textContent='🎬 THE MOVIE: WHAT WENT DOWN';b.appendChild(sp2);bp.after(b);
-  b.onclick=function(e){e.stopPropagation();openHub('main')};var x=cv.getContext('2d');(function an(t){if(!b.isConnected)return;if(b.offsetParent)drawPoster(x,240,60,t/1000);setTimeout(function(){requestAnimationFrame(an)},80)})(0)}
+  b.onclick=function(e){e.stopPropagation();openHub('main')};var x=cv.getContext('2d');(function an(t){if(!b.isConnected)return;var inGame=typeof started!='undefined'&&started&&!(typeof MENU!='undefined'&&MENU);if(!inGame&&b.offsetParent)drawPoster(x,240,60,t/1000);setTimeout(function(){requestAnimationFrame(an)},inGame?500:80)})(0)}
  addBtn();setTimeout(addBtn,600);setTimeout(addBtn,2000)})();
 MV.openHub=openHub;MV.seek=seekG;MV.play=play;MV.pause=pause;MV.CH=CH;MV.total=total;MV.chOff=chOff;MV.load=load;MV.apply=apply;MV.openMovie=openMovie;MV.close=closeMovie;MV.UI=UI;
 // ============================================================================ BACKROOMS MUSIC — "DON'T LOOK BACK" (the music video)
@@ -7736,6 +7736,10 @@ function mmTick(dt){var on=NET.on&&mmMode()&&inLevel();
  // the monster is switched off in Murder Mystery: the Skin-Stealer is the danger (the host parks it far away)
  try{GR.on=false;GR.stun=Math.max(GR.stun||0,1)}catch(e){}
  try{if(NET.isHost()){M.stun=Math.max(M.stun||0,5);if(!mmTick.parked){mmTick.parked=1;var far=open[open.length-1];M.x=cc(far[0]);M.z=cc(far[1])}}}catch(e){}
+ // a player who left in the middle of a round (gone 10 s) is out: their unfinished tasks are dropped and the winner is checked again
+ if(NET.isHost()&&MMH&&MMH.on&&(mmTick.lt=(mmTick.lt||0)+dt)>2){mmTick.lt=0;var gone=Object.keys(MMH.alive).filter(function(k){if(k==='host'||!MMH.alive[k])return false;var p=NET.players[k];return !p||performance.now()-p.last>10000});
+  gone.forEach(function(k){MMH.alive[k]=0;if(MMH.role[k]==='crew'){var left=(MMH.tasks[k]||[]).filter(function(t){return !(MMH.done[k]&&MMH.done[k][t])}).length;MMH.total=Math.max(MMH.prog,MMH.total-left);hostAll({a:'prog',done:MMH.prog,total:MMH.total})}if(MMH.meet&&MMH.meet.votes)delete MMH.meet.votes[k]});
+  if(gone.length){note(gone.length==1?'A player left the round.':'Players left the round.',3);mmWin()}}
  if(RND.meet){P.para=Math.max(P.para||0,.3);if((mmTick.n=(mmTick.n|0)+1)%10==0)drawMeet();if(NET.isHost()&&MMH&&MMH.meet&&performance.now()>MMH.meet.ends)mmTally()}
  // the task you're doing
  if(TK){if(!ME.alive||Math.hypot(TK.q.x-P.x,TK.q.z-P.z)>1.9||RND.meet){TK=null}else{TK.t=(performance.now()-TK.t0)/1000;if(TK.t>=2.5){ME.done[TK.q.k]=1;if(ME.role=='crew')mmAct('task',{k:TK.q.k});chime(true);say('✅ '+TK.q.n+' — done',2);TK=null}}}
